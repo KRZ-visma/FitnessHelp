@@ -318,4 +318,137 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-rest", "1o0");
     await expect(page.locator(".segment-rest")).toHaveValue("10");
   });
+
+  test("heeft PWA-manifest met standalone display", async ({ page }) => {
+    const manifestLink = page.locator('link[rel="manifest"]');
+    await expect(manifestLink).toHaveAttribute("href", /manifest\.webmanifest$/);
+
+    const href = await manifestLink.getAttribute("href");
+    const manifest = await page.evaluate(async (manifestHref) => {
+      const res = await fetch(manifestHref);
+      if (!res.ok) throw new Error(`manifest ${res.status}`);
+      return res.json();
+    }, href);
+
+    expect(manifest.name).toMatch(/FitnessHelp/i);
+    expect(manifest.short_name).toMatch(/FitnessHelp/i);
+    expect(manifest.display).toBe("standalone");
+    expect(manifest.start_url).toBeTruthy();
+    expect(Array.isArray(manifest.icons)).toBe(true);
+    expect(manifest.icons.length).toBeGreaterThanOrEqual(2);
+
+    const iconSizes = manifest.icons.map((icon) => icon.sizes);
+    expect(iconSizes).toEqual(expect.arrayContaining(["192x192", "512x512"]));
+  });
+
+  test("registreert een service worker", async ({ page }) => {
+    await expect
+      .poll(async () =>
+        page.evaluate(async () => {
+          const regs = await navigator.serviceWorker.getRegistrations();
+          return regs.some((reg) => Boolean(reg.active || reg.installing || reg.waiting));
+        })
+      )
+      .toBe(true);
+  });
+
+  test("levert PWA-icons", async ({ page }) => {
+    for (const path of ["/icons/icon-192.png", "/icons/icon-512.png"]) {
+      const res = await page.request.get(path);
+      expect(res.ok()).toBeTruthy();
+      expect(res.headers()["content-type"] || "").toMatch(/image\/png/i);
+    }
+  });
+
+  test("exporteert opgeslagen programma’s als JSON", async ({ page }) => {
+    await page.fill("#program-name", "Export dag");
+    await page.fill(".segment-name", "Lunges");
+    await page.fill(".segment-sets", "3");
+    await page.fill(".segment-duration", "30");
+    await page.fill(".segment-rest", "10");
+    await page.click("#save-btn");
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.click("#export-btn");
+    const download = await downloadPromise;
+    expect(download.suggestedFilename()).toMatch(/fitnesshelp-programmas-.*\.json/);
+
+    const path = await download.path();
+    expect(path).toBeTruthy();
+    const fs = require("fs");
+    const payload = JSON.parse(fs.readFileSync(path, "utf8"));
+    expect(payload).toMatchObject({
+      version: 1,
+      app: "fitnesshelp",
+    });
+    expect(payload.programs).toHaveLength(1);
+    expect(payload.programs[0]).toMatchObject({
+      name: "Export dag",
+      items: [{ type: "timer", name: "Lunges", sets: 3, duration: 30, rest: 10 }],
+    });
+    await expect(page.locator("#transfer-status")).toHaveText("1 programma geëxporteerd.");
+  });
+
+  test("importeert programma’s uit JSON en merged op naam", async ({ page }) => {
+    await page.fill("#program-name", "Bestaand");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "2");
+    await page.fill(".segment-duration", "20");
+    await page.fill(".segment-rest", "5");
+    await page.click("#save-btn");
+
+    const payload = {
+      version: 1,
+      app: "fitnesshelp",
+      programs: [
+        {
+          id: "import_new",
+          name: "Import nieuw",
+          items: [{ type: "reps", name: "Curl", sets: 4, reps: 12 }],
+        },
+        {
+          id: "import_replace",
+          name: "Bestaand",
+          items: [{ type: "timer", name: "Burpees", sets: 5, duration: 40, rest: 15 }],
+        },
+      ],
+    };
+
+    await page.setInputFiles("#import-file", {
+      name: "import.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(payload)),
+    });
+
+    await expect(page.locator("#transfer-status")).toHaveText("2 programma’s geïmporteerd.");
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(2);
+    await expect(page.locator("#saved-list")).toContainText("Import nieuw");
+    await expect(page.locator("#saved-list")).toContainText("Curl");
+    await expect(page.locator("#saved-list")).toContainText("Bestaand");
+    await expect(page.locator("#saved-list")).toContainText("Burpees");
+    await expect(page.locator("#saved-list")).not.toContainText("Plank");
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
+    );
+    expect(stored).toHaveLength(2);
+    const replaced = stored.find((p) => p.name === "Bestaand");
+    expect(replaced.items[0]).toMatchObject({
+      type: "timer",
+      name: "Burpees",
+      sets: 5,
+      duration: 40,
+      rest: 15,
+    });
+  });
+
+  test("toont fout bij ongeldige import", async ({ page }) => {
+    await page.setInputFiles("#import-file", {
+      name: "kapot.json",
+      mimeType: "application/json",
+      buffer: Buffer.from("{ niet-json"),
+    });
+    await expect(page.locator("#transfer-status")).toHaveText("Ongeldig JSON-bestand.");
+    await expect(page.locator("#transfer-status")).toHaveAttribute("data-tone", "error");
+  });
 });

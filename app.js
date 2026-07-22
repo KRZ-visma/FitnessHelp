@@ -26,6 +26,13 @@
 
   const savedEmpty = document.getElementById("saved-empty");
   const savedList = document.getElementById("saved-list");
+  const exportBtn = document.getElementById("export-btn");
+  const importBtn = document.getElementById("import-btn");
+  const importFile = document.getElementById("import-file");
+  const transferStatus = document.getElementById("transfer-status");
+
+  const EXPORT_APP = "fitnesshelp";
+  const EXPORT_VERSION = 1;
 
   /**
    * @typedef {{ type: 'timer', name: string, sets: number, duration: number, rest: number }} TimerItem
@@ -98,6 +105,176 @@
   /** @param {Program[]} programs */
   function savePrograms(programs) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+  }
+
+  /** @param {string} message @param {'ok'|'error'} [tone] */
+  function setTransferStatus(message, tone = "ok") {
+    transferStatus.hidden = !message;
+    transferStatus.textContent = message;
+    if (tone === "error") {
+      transferStatus.dataset.tone = "error";
+    } else {
+      delete transferStatus.dataset.tone;
+    }
+  }
+
+  /** @param {unknown} data @returns {unknown[] | null} */
+  function extractImportEntries(data) {
+    if (Array.isArray(data)) return data;
+    if (data && typeof data === "object") {
+      const obj = /** @type {Record<string, unknown>} */ (data);
+      if (Array.isArray(obj.programs)) return obj.programs;
+    }
+    return null;
+  }
+
+  /** @param {unknown[]} entries @returns {Program[]} */
+  function programsFromEntries(entries) {
+    const hasLegacy = entries.some(
+      (entry) =>
+        entry &&
+        typeof entry === "object" &&
+        !Array.isArray(/** @type {Record<string, unknown>} */ (entry).items)
+    );
+
+    if (!hasLegacy) {
+      return entries.map(normalizeProgram).filter(Boolean);
+    }
+
+    /** @type {ProgramItem[]} */
+    const migratedItems = [];
+    /** @type {Program[]} */
+    const modernPrograms = [];
+    let migratedId = "";
+
+    entries.forEach((entry) => {
+      if (!entry || typeof entry !== "object") return;
+      const obj = /** @type {Record<string, unknown>} */ (entry);
+      if (Array.isArray(obj.items)) {
+        const program = normalizeProgram(entry);
+        if (program) modernPrograms.push(program);
+        return;
+      }
+      const item = legacyWorkoutToItem(entry);
+      if (!item) return;
+      migratedItems.push(item);
+      if (!migratedId && typeof obj.id === "string") migratedId = obj.id;
+    });
+
+    /** @type {Program[]} */
+    const programs = [...modernPrograms];
+    if (migratedItems.length) {
+      programs.unshift({
+        id: migratedId || uid(),
+        name: "Mijn training",
+        items: migratedItems,
+      });
+    }
+    return programs;
+  }
+
+  /**
+   * @param {Program[]} existing
+   * @param {Program[]} incoming
+   * @returns {Program[]}
+   */
+  function mergePrograms(existing, incoming) {
+    const next = existing.map((program) => ({ ...program, items: [...program.items] }));
+
+    incoming.forEach((program) => {
+      const byId = next.findIndex((p) => p.id === program.id);
+      if (byId >= 0) {
+        next[byId] = { ...program, items: [...program.items] };
+        return;
+      }
+
+      const byName = next.findIndex(
+        (p) => p.name.toLowerCase() === program.name.toLowerCase()
+      );
+      if (byName >= 0) {
+        next[byName] = {
+          ...program,
+          id: next[byName].id,
+          items: [...program.items],
+        };
+        return;
+      }
+
+      next.unshift({ ...program, items: [...program.items] });
+    });
+
+    return next;
+  }
+
+  function exportPrograms() {
+    const programs = loadPrograms();
+    if (!programs.length) {
+      setTransferStatus("Niets om te exporteren.", "error");
+      return;
+    }
+
+    const payload = {
+      version: EXPORT_VERSION,
+      app: EXPORT_APP,
+      exportedAt: new Date().toISOString(),
+      programs,
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
+    const stamp = new Date().toISOString().slice(0, 10);
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `fitnesshelp-programmas-${stamp}.json`;
+    document.body.append(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+
+    const count = programs.length;
+    setTransferStatus(
+      count === 1 ? "1 programma geëxporteerd." : `${count} programma’s geëxporteerd.`
+    );
+  }
+
+  /** @param {File} file */
+  function importProgramsFromFile(file) {
+    const reader = new FileReader();
+    reader.onerror = () => {
+      setTransferStatus("Bestand kon niet worden gelezen.", "error");
+    };
+    reader.onload = () => {
+      try {
+        const text = String(reader.result || "");
+        const data = JSON.parse(text);
+        const entries = extractImportEntries(data);
+        if (!entries) {
+          setTransferStatus("Ongeldig bestand: verwacht een JSON-lijst of exportbestand.", "error");
+          return;
+        }
+
+        const incoming = programsFromEntries(entries);
+        if (!incoming.length) {
+          setTransferStatus("Geen geldige programma’s gevonden in het bestand.", "error");
+          return;
+        }
+
+        const merged = mergePrograms(loadPrograms(), incoming);
+        savePrograms(merged);
+        renderSaved();
+
+        const count = incoming.length;
+        setTransferStatus(
+          count === 1
+            ? "1 programma geïmporteerd."
+            : `${count} programma’s geïmporteerd.`
+        );
+      } catch {
+        setTransferStatus("Ongeldig JSON-bestand.", "error");
+      }
+    };
+    reader.readAsText(file);
   }
 
   /** @param {unknown} raw @returns {TimerItem | null} */
@@ -903,6 +1080,29 @@
     requestWakeLock();
   });
 
+  exportBtn.addEventListener("click", () => {
+    exportPrograms();
+  });
+
+  importBtn.addEventListener("click", () => {
+    importFile.value = "";
+    importFile.click();
+  });
+
+  importFile.addEventListener("change", () => {
+    const file = importFile.files && importFile.files[0];
+    if (!file) return;
+    importProgramsFromFile(file);
+  });
+
   resetDraft();
   renderSaved();
+
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("./sw.js").catch(() => {
+        // Service worker optioneel (bijv. file://)
+      });
+    });
+  }
 })();
