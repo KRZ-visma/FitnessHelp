@@ -29,52 +29,22 @@
 
     <header class="site-header">
       <p class="brand">FitnessHelp</p>
-      <p class="tagline">Programma bouwen. Timer of sets &amp; keer. Lokaal bewaard.</p>
+      <p class="tagline" id="tagline">Programma bouwen. Timer of sets &amp; keer. Lokaal bewaard.</p>
     </header>
 
     <main>
-      <section class="setup" id="setup" aria-labelledby="setup-title">
-        <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
-
-        <form id="workout-form" class="workout-form" autocomplete="off">
-          <label class="field">
-            <span>Programma</span>
-            <input
-              type="text"
-              id="program-name"
-              name="program"
-              list="program-name-suggestions"
-              placeholder="bijv. Full body"
-              maxlength="60"
-              autocomplete="off"
-              autocorrect="off"
-              autocapitalize="words"
-              spellcheck="false"
-              required
-            />
-            <datalist id="program-name-suggestions"></datalist>
-          </label>
-
-          <div class="segments-header">
-            <h2 class="segments-title">Onderdelen</h2>
-            <p class="segments-hint">Timer telt af; sets &amp; keer toont alleen wat je moet doen.</p>
-          </div>
-
-          <div id="segments" class="segments" aria-live="polite"></div>
-
-          <button type="button" class="btn btn-ghost" id="add-segment-btn">
-            + Onderdeel
+      <section class="home" id="home" hidden aria-labelledby="home-title">
+        <p class="home-label">Favoriet</p>
+        <h1 id="home-title" class="home-name"></h1>
+        <p class="home-meta" id="home-meta"></p>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="home-start-btn">
+            Start training
           </button>
-
-          <div class="actions">
-            <button type="submit" class="btn btn-primary" id="start-btn">
-              Start training
-            </button>
-            <button type="button" class="btn btn-ghost" id="save-btn">
-              Opslaan
-            </button>
-          </div>
-        </form>
+          <button type="button" class="btn btn-ghost" id="manage-btn">
+            Beheer
+          </button>
+        </div>
       </section>
 
       <section class="timer" id="timer" hidden aria-live="polite">
@@ -102,30 +72,83 @@
         </div>
       </section>
 
-      <section class="saved" id="saved" aria-labelledby="saved-title">
-        <div class="saved-header">
-          <h2 id="saved-title">Opgeslagen</h2>
-          <div class="saved-transfer">
-            <button type="button" class="btn btn-ghost" id="export-btn">
-              Exporteren
-            </button>
-            <button type="button" class="btn btn-ghost" id="import-btn">
-              Importeren
-            </button>
-            <input
-              type="file"
-              id="import-file"
-              accept="application/json,.json"
-              hidden
-            />
-          </div>
+      <div class="manage" id="manage">
+        <div class="manage-header" id="manage-header" hidden>
+          <h2 class="manage-title" id="manage-title">Beheer</h2>
+          <button type="button" class="btn btn-ghost" id="manage-done-btn">
+            Klaar
+          </button>
         </div>
-        <p class="transfer-status" id="transfer-status" role="status" hidden></p>
-        <p class="saved-hint" id="saved-empty">
-          Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
-        </p>
-        <ul class="saved-list" id="saved-list"></ul>
-      </section>
+
+        <section class="setup" id="setup" aria-labelledby="setup-title">
+          <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
+
+          <form id="workout-form" class="workout-form" autocomplete="off">
+            <label class="field">
+              <span>Programma</span>
+              <input
+                type="text"
+                id="program-name"
+                name="program"
+                list="program-name-suggestions"
+                placeholder="bijv. Full body"
+                maxlength="60"
+                autocomplete="off"
+                autocorrect="off"
+                autocapitalize="words"
+                spellcheck="false"
+                required
+              />
+              <datalist id="program-name-suggestions"></datalist>
+            </label>
+
+            <div class="segments-header">
+              <h2 class="segments-title">Onderdelen</h2>
+              <p class="segments-hint">Timer telt af; sets &amp; keer toont alleen wat je moet doen.</p>
+            </div>
+
+            <div id="segments" class="segments" aria-live="polite"></div>
+
+            <button type="button" class="btn btn-ghost" id="add-segment-btn">
+              + Onderdeel
+            </button>
+
+            <div class="actions">
+              <button type="submit" class="btn btn-primary" id="start-btn">
+                Start training
+              </button>
+              <button type="button" class="btn btn-ghost" id="save-btn">
+                Opslaan
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <section class="saved" id="saved" aria-labelledby="saved-title">
+          <div class="saved-header">
+            <h2 id="saved-title">Opgeslagen</h2>
+            <div class="saved-transfer">
+              <button type="button" class="btn btn-ghost" id="export-btn">
+                Exporteren
+              </button>
+              <button type="button" class="btn btn-ghost" id="import-btn">
+                Importeren
+              </button>
+              <input
+                type="file"
+                id="import-file"
+                accept="application/json,.json"
+                hidden
+              />
+            </div>
+          </div>
+          <p class="transfer-status" id="transfer-status" role="status" hidden></p>
+          <p class="saved-hint" id="saved-empty">
+            Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
+          </p>
+          <ul class="saved-list" id="saved-list"></ul>
+        </section>
+      </div>
     </main>
 
     <footer class="site-footer">
