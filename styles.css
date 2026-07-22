@@ -342,6 +342,10 @@ main {
   display: none;
 }
 
+.timer[data-mode="reps-prep"] .timer-progress {
+  display: block;
+}
+
 .timer-phase {
   margin: 0.35rem 0 0;
   font-size: 0.9rem;
@@ -364,6 +368,14 @@ main {
 
 .timer[data-phase="rest"] .timer-clock {
   color: #2f6b45;
+}
+
+.timer[data-phase="prep"] .timer-clock {
+  color: #1a5c38;
+}
+
+.timer[data-phase="prep"] .timer-progress-bar {
+  background: #1a5c38;
 }
 
 .timer[data-phase="done"] .timer-clock {
