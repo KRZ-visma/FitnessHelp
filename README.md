@@ -1,12 +1,15 @@
 # FitnessHelp
 
-Simpele browser-tool om sets en duur (in seconden) te plannen, met een countdown-timer.
+Simpele browser-tool om een trainingsprogramma samen te stellen: onderdelen met countdown-timer of alleen sets & keer.
 
 ## Functies
 
-- Oefening, aantal sets, duur per set, rust tussen sets
-- Timer met pauze, overslaan en stop
-- Opgeslagen oefeningen in **localStorage** (blijft in jouw browser)
+- Programma met meerdere onderdelen
+- Onderdeeltype **Timer**: sets, duur per set, rust tussen sets
+- Onderdeeltype **Sets & keer**: alleen weergave van sets en herhalingen (geen aftellen)
+- Training met pauze/overslaan (timer) of “Set klaar” (sets & keer)
+- Opgeslagen programma’s in **localStorage** (blijft in jouw browser)
+- Oude opgeslagen oefeningen (één timer) worden automatisch als programma met één onderdeel geladen
 
 ## Lokaal openen
 

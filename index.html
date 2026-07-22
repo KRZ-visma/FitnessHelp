@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="FitnessHelp — plan je sets en duur, start de timer. Opgeslagen in je browser."
+      content="FitnessHelp — stel een trainingsprogramma samen met timer- en sets/keer-onderdelen. Opgeslagen in je browser."
     />
-    <title>FitnessHelp — Sets & duur</title>
+    <title>FitnessHelp — Trainingsprogramma</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -21,21 +21,21 @@
 
     <header class="site-header">
       <p class="brand">FitnessHelp</p>
-      <p class="tagline">Sets plannen. Timer starten. Lokaal bewaard.</p>
+      <p class="tagline">Programma bouwen. Timer of sets &amp; keer. Lokaal bewaard.</p>
     </header>
 
     <main>
       <section class="setup" id="setup" aria-labelledby="setup-title">
-        <h1 id="setup-title" class="visually-hidden">Nieuwe oefening</h1>
+        <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
 
         <form id="workout-form" class="workout-form" autocomplete="off">
           <label class="field">
-            <span>Oefening</span>
+            <span>Programma</span>
             <input
               type="text"
-              id="exercise"
-              name="exercise"
-              placeholder="bijv. Push-ups"
+              id="program-name"
+              name="program"
+              placeholder="bijv. Full body"
               maxlength="60"
               autocomplete="off"
               autocorrect="off"
@@ -45,57 +45,20 @@
             />
           </label>
 
-          <div class="field-row">
-            <label class="field">
-              <span>Aantal sets</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                id="sets"
-                name="sets"
-                min="1"
-                max="99"
-                value="3"
-                autocomplete="off"
-                required
-              />
-            </label>
-            <label class="field">
-              <span>Duur per set (sec)</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                id="duration"
-                name="duration"
-                min="1"
-                max="3600"
-                value="45"
-                autocomplete="off"
-                required
-              />
-            </label>
-            <label class="field">
-              <span>Rust tussen sets (sec)</span>
-              <input
-                type="text"
-                inputmode="numeric"
-                pattern="[0-9]*"
-                id="rest"
-                name="rest"
-                min="0"
-                max="600"
-                value="15"
-                autocomplete="off"
-                required
-              />
-            </label>
+          <div class="segments-header">
+            <h2 class="segments-title">Onderdelen</h2>
+            <p class="segments-hint">Timer telt af; sets &amp; keer toont alleen wat je moet doen.</p>
           </div>
+
+          <div id="segments" class="segments" aria-live="polite"></div>
+
+          <button type="button" class="btn btn-ghost" id="add-segment-btn">
+            + Onderdeel
+          </button>
 
           <div class="actions">
             <button type="submit" class="btn btn-primary" id="start-btn">
-              Start timer
+              Start training
             </button>
             <button type="button" class="btn btn-ghost" id="save-btn">
               Opslaan
@@ -105,14 +68,18 @@
       </section>
 
       <section class="timer" id="timer" hidden aria-live="polite">
+        <p class="timer-program" id="timer-program"></p>
         <p class="timer-exercise" id="timer-name"></p>
         <p class="timer-phase" id="timer-phase">Set 1</p>
         <p class="timer-clock" id="timer-clock">0:45</p>
-        <div class="timer-progress" aria-hidden="true">
+        <div class="timer-progress" id="timer-progress" aria-hidden="true">
           <div class="timer-progress-bar" id="timer-bar"></div>
         </div>
         <p class="timer-meta" id="timer-meta"></p>
         <div class="actions">
+          <button type="button" class="btn btn-primary" id="done-set-btn" hidden>
+            Set klaar
+          </button>
           <button type="button" class="btn btn-primary" id="pause-btn">
             Pauze
           </button>
