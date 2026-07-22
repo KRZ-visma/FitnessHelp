@@ -584,15 +584,42 @@
 
   /** @type {string[]} */
   const recentBeeps = [];
+  /** @type {AudioContext | null} */
+  let audioCtx = null;
+
+  /** Zet iOS-audiosessie op media-playback zodat tonen ook bij stil-schakelaar klinken. */
+  function enableWorkoutAudio() {
+    try {
+      const session = /** @type {{ type?: string } | undefined} */ (navigator.audioSession);
+      if (session && typeof session.type === "string") {
+        session.type = "playback";
+      }
+    } catch {
+      // AudioSession optioneel (Safari)
+    }
+
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      if (!audioCtx || audioCtx.state === "closed") {
+        audioCtx = new AudioCtx();
+      }
+      if (audioCtx.state === "suspended") {
+        void audioCtx.resume();
+      }
+    } catch {
+      // Audio optional
+    }
+  }
 
   /** @param {'start'|'stop'|'tick'|'rest'|'done'} [kind] */
   function beep(kind = "tick") {
     recentBeeps.push(kind);
     if (recentBeeps.length > 40) recentBeeps.shift();
     try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
+      enableWorkoutAudio();
+      if (!audioCtx) return;
+      const ctx = audioCtx;
       const now = ctx.currentTime;
 
       /** @param {number} freq @param {number} startAt @param {number} duration @param {number} [volume] */
@@ -613,29 +640,24 @@
       if (kind === "start") {
         playTone(523, now, 0.11);
         playTone(784, now + 0.11, 0.14);
-        setTimeout(() => ctx.close(), 400);
         return;
       }
       if (kind === "stop") {
         playTone(698, now, 0.11);
         playTone(349, now + 0.11, 0.16);
-        setTimeout(() => ctx.close(), 400);
         return;
       }
       if (kind === "done") {
         playTone(523, now, 0.09);
         playTone(659, now + 0.09, 0.09);
         playTone(784, now + 0.18, 0.16);
-        setTimeout(() => ctx.close(), 500);
         return;
       }
       if (kind === "rest") {
         playTone(440, now, 0.16, 0.045);
-        setTimeout(() => ctx.close(), 300);
         return;
       }
       playTone(520, now, 0.12, 0.04);
-      setTimeout(() => ctx.close(), 300);
     } catch {
       // Audio optional
     }
@@ -648,7 +670,17 @@
       return recentBeeps;
     },
   });
-
+  Object.defineProperty(window, "__fitnessHelpAudioSessionType", {
+    configurable: true,
+    get() {
+      try {
+        const session = /** @type {{ type?: string } | undefined} */ (navigator.audioSession);
+        return session?.type ?? null;
+      } catch {
+        return null;
+      }
+    },
+  });
   function updateProgramSuggestions(programs = loadPrograms()) {
     if (!(programNameSuggestions instanceof HTMLDataListElement)) return;
     programNameSuggestions.innerHTML = "";
@@ -757,6 +789,7 @@
 
   /** @param {Program} program */
   function startSession(program) {
+    enableWorkoutAudio();
     stopTick();
     session = {
       program: {
@@ -1125,6 +1158,7 @@
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState !== "visible") return;
     if (!session || timerEl.dataset.phase === "done") return;
+    enableWorkoutAudio();
     requestWakeLock();
   });
 
