@@ -1,0 +1,10 @@
+{
+  "name": "FitnessHelp",
+  "install": "npm ci && npx playwright install --with-deps chromium",
+  "terminals": [
+    {
+      "name": "static-server",
+      "command": "python3 -m http.server 8080"
+    }
+  ]
+}
