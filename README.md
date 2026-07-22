@@ -10,6 +10,7 @@ Simpele browser-tool om een trainingsprogramma samen te stellen: onderdelen met 
 - Training met pauze/overslaan (timer) of “Set klaar” (sets & keer)
 - Opgeslagen programma’s in **localStorage** (blijft in jouw browser)
 - Oude opgeslagen oefeningen worden automatisch samengevoegd tot één programma (“Mijn training”)
+- Installeerbaar als **PWA** (manifest + service worker; offline basisassets)
 
 ## Lokaal openen
 
