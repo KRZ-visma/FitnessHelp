@@ -328,6 +328,34 @@ test.describe("FitnessHelp", () => {
     ]);
   });
 
+  test("zet iOS audiosessie op playback bij start (stil-schakelaar)", async ({ page }) => {
+    await page.addInitScript(() => {
+      Object.defineProperty(navigator, "audioSession", {
+        configurable: true,
+        value: { type: "auto" },
+      });
+    });
+    await page.goto("/");
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
+
+    await page.fill("#program-name", "Stil");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "1");
+    await page.fill(".segment-duration", "5");
+    await page.fill(".segment-rest", "0");
+    await page.click("#start-btn");
+
+    await expect
+      .poll(() => page.evaluate(() => window.__fitnessHelpAudioSessionType))
+      .toBe("playback");
+
+    await page.click("#skip-btn");
+    await expect
+      .poll(() => page.evaluate(() => window.__fitnessHelpAudioSessionType))
+      .toBe("playback");
+  });
+
   test("nummervelden gebruiken iOS cijferpad-attributen", async ({ page }) => {
     for (const selector of [".segment-sets", ".segment-duration", ".segment-rest"]) {
       const input = page.locator(selector);
