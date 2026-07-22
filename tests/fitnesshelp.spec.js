@@ -352,6 +352,23 @@ test.describe("FitnessHelp", () => {
       .toBe(true);
   });
 
+  test("service worker gebruikt network-first cache-versie", async ({ page }) => {
+    const swSource = await page.evaluate(async () => {
+      const res = await fetch("./sw.js", { cache: "no-store" });
+      return res.text();
+    });
+    expect(swSource).toMatch(/fitnesshelp-static-v2/);
+    expect(swSource).toMatch(/fetch\(request\)/);
+    expect(swSource).toMatch(/caches\.match\(request\)/);
+  });
+
+  test("toont export- en importknoppen bij Opgeslagen", async ({ page }) => {
+    await expect(page.locator("#export-btn")).toBeVisible();
+    await expect(page.locator("#export-btn")).toHaveText("Exporteren");
+    await expect(page.locator("#import-btn")).toBeVisible();
+    await expect(page.locator("#import-btn")).toHaveText("Importeren");
+  });
+
   test("levert PWA-icons", async ({ page }) => {
     for (const path of ["/icons/icon-192.png", "/icons/icon-512.png"]) {
       const res = await page.request.get(path);

@@ -1100,9 +1100,14 @@
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
-      navigator.serviceWorker.register("./sw.js").catch(() => {
-        // Service worker optioneel (bijv. file://)
-      });
+      navigator.serviceWorker
+        .register("./sw.js")
+        .then((registration) => {
+          registration.update().catch(() => {});
+        })
+        .catch(() => {
+          // Service worker optioneel (bijv. file://)
+        });
     });
   }
 })();
