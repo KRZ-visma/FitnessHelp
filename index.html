@@ -75,7 +75,7 @@
       <div class="manage" id="manage">
         <div class="manage-header" id="manage-header" hidden>
           <h2 class="manage-title" id="manage-title">Beheer</h2>
-          <button type="button" class="btn btn-ghost" id="manage-done-btn">
+          <button type="button" class="btn btn-primary" id="manage-done-btn">
             Klaar
           </button>
         </div>
@@ -89,14 +89,15 @@
               <input
                 type="text"
                 id="program-name"
-                name="program"
+                name="fh-program"
                 list="program-name-suggestions"
                 placeholder="bijv. Full body"
                 maxlength="60"
-                autocomplete="off"
+                autocomplete="fh-program"
                 autocorrect="off"
                 autocapitalize="words"
                 spellcheck="false"
+                enterkeyhint="done"
                 required
               />
               <datalist id="program-name-suggestions"></datalist>
