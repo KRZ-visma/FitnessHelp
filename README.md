@@ -9,7 +9,7 @@ Simpele browser-tool om een trainingsprogramma samen te stellen: onderdelen met 
 - Onderdeeltype **Sets & keer**: alleen weergave van sets en herhalingen (geen aftellen)
 - Training met pauze/overslaan (timer) of “Set klaar” (sets & keer)
 - Opgeslagen programma’s in **localStorage** (blijft in jouw browser)
-- Oude opgeslagen oefeningen (één timer) worden automatisch als programma met één onderdeel geladen
+- Oude opgeslagen oefeningen worden automatisch samengevoegd tot één programma (“Mijn training”)
 
 ## Lokaal openen
 

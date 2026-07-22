@@ -43,7 +43,47 @@
       if (!raw) return [];
       const data = JSON.parse(raw);
       if (!Array.isArray(data)) return [];
-      return data.map(normalizeProgram).filter(Boolean);
+
+      const hasLegacy = data.some(
+        (entry) => entry && typeof entry === "object" && !Array.isArray(/** @type {Record<string, unknown>} */ (entry).items)
+      );
+      if (!hasLegacy) {
+        return data.map(normalizeProgram).filter(Boolean);
+      }
+
+      // Legacy workouts ({ name, sets, duration, rest }) → één programma met alle oefeningen als onderdelen
+      /** @type {ProgramItem[]} */
+      const migratedItems = [];
+      /** @type {Program[]} */
+      const modernPrograms = [];
+      let migratedId = "";
+
+      data.forEach((entry) => {
+        if (!entry || typeof entry !== "object") return;
+        const obj = /** @type {Record<string, unknown>} */ (entry);
+        if (Array.isArray(obj.items)) {
+          const program = normalizeProgram(entry);
+          if (program) modernPrograms.push(program);
+          return;
+        }
+        const item = legacyWorkoutToItem(entry);
+        if (!item) return;
+        migratedItems.push(item);
+        if (!migratedId && typeof obj.id === "string") migratedId = obj.id;
+      });
+
+      /** @type {Program[]} */
+      const programs = [...modernPrograms];
+      if (migratedItems.length) {
+        programs.unshift({
+          id: migratedId || uid(),
+          name: "Mijn training",
+          items: migratedItems,
+        });
+      }
+
+      savePrograms(programs);
+      return programs;
     } catch {
       return [];
     }
@@ -54,40 +94,38 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
   }
 
+  /** @param {unknown} raw @returns {TimerItem | null} */
+  function legacyWorkoutToItem(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const obj = /** @type {Record<string, unknown>} */ (raw);
+    const name = typeof obj.name === "string" ? obj.name.trim() : "";
+    if (!name) return null;
+    const sets = Number(obj.sets);
+    const duration = Number(obj.duration);
+    const rest = Number(obj.rest);
+    if (!Number.isFinite(sets) || sets < 1) return null;
+    if (!Number.isFinite(duration) || duration < 1) return null;
+    if (!Number.isFinite(rest) || rest < 0) return null;
+    return {
+      type: "timer",
+      name,
+      sets: clampInt(sets, 1, 99),
+      duration: clampInt(duration, 1, 3600),
+      rest: clampInt(rest, 0, 600),
+    };
+  }
+
   /** @param {unknown} raw @returns {Program | null} */
   function normalizeProgram(raw) {
     if (!raw || typeof raw !== "object") return null;
     const obj = /** @type {Record<string, unknown>} */ (raw);
     const id = typeof obj.id === "string" ? obj.id : uid();
     const name = typeof obj.name === "string" ? obj.name.trim() : "";
-    if (!name) return null;
+    if (!name || !Array.isArray(obj.items)) return null;
 
-    if (Array.isArray(obj.items)) {
-      const items = obj.items.map(normalizeItem).filter(Boolean);
-      if (!items.length) return null;
-      return { id, name, items: /** @type {ProgramItem[]} */ (items) };
-    }
-
-    // Legacy single timer workout: { name, sets, duration, rest }
-    const sets = Number(obj.sets);
-    const duration = Number(obj.duration);
-    const rest = Number(obj.rest);
-    if (!Number.isFinite(sets) || !Number.isFinite(duration) || !Number.isFinite(rest)) {
-      return null;
-    }
-    return {
-      id,
-      name,
-      items: [
-        {
-          type: "timer",
-          name,
-          sets: clampInt(sets, 1, 99),
-          duration: clampInt(duration, 1, 3600),
-          rest: clampInt(rest, 0, 600),
-        },
-      ],
-    };
+    const items = obj.items.map(normalizeItem).filter(Boolean);
+    if (!items.length) return null;
+    return { id, name, items: /** @type {ProgramItem[]} */ (items) };
   }
 
   /** @param {unknown} raw @returns {ProgramItem | null} */
@@ -394,7 +432,7 @@
       const parts = program.items
         .map((item) => `${escapeHtml(item.name)} (${item.type === "reps" ? "sets & keer" : "timer"})`)
         .join(" · ");
-      info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${program.items.length} onderdeel${program.items.length === 1 ? "" : "en"} · ${parts}</span>`;
+      info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`} · ${parts}</span>`;
 
       const actions = document.createElement("div");
       actions.className = "saved-actions";

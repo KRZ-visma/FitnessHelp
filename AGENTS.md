@@ -9,7 +9,7 @@ Live via GitHub Pages vanaf `main` (root). Geen backend, geen build-step.
 
 - Vanilla HTML / CSS / JS — géén framework, bundler of TypeScript tenzij expliciet gevraagd
 - Bestanden: `index.html`, `app.js`, `styles.css`
-- Storage-key: `fitnesshelp-workouts-v1` (niet breken zonder migratie; legacy single-timer workouts normaliseren naar `{ name, items[] }`)
+- Storage-key: `fitnesshelp-workouts-v1` (niet breken zonder migratie; legacy single-timer workouts samenvoegen tot één programma `{ name: "Mijn training", items[] }`)
 - UI-taal: Nederlands
 
 ## Design

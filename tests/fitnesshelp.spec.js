@@ -136,29 +136,54 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#timer-name")).toHaveText("Plank");
   });
 
-  test("migreert legacy workouts bij laden", async ({ page }) => {
+  test("migreert legacy workouts naar één programma", async ({ page }) => {
     await page.evaluate(() => {
       localStorage.setItem(
         "fitnesshelp-workouts-v1",
         JSON.stringify([
           {
-            id: "w_legacy",
+            id: "w_legacy_1",
             name: "Burpees",
             sets: 2,
             duration: 15,
             rest: 5,
+          },
+          {
+            id: "w_legacy_2",
+            name: "Squats",
+            sets: 3,
+            duration: 40,
+            rest: 20,
           },
         ])
       );
     });
     await page.reload();
 
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
+    await expect(page.locator("#saved-list")).toContainText("Mijn training");
+    await expect(page.locator("#saved-list")).toContainText("2 onderdelen");
     await expect(page.locator("#saved-list")).toContainText("Burpees");
+    await expect(page.locator("#saved-list")).toContainText("Squats");
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
+    );
+    expect(stored).toHaveLength(1);
+    expect(stored[0]).toMatchObject({
+      id: "w_legacy_1",
+      name: "Mijn training",
+      items: [
+        { type: "timer", name: "Burpees", sets: 2, duration: 15, rest: 5 },
+        { type: "timer", name: "Squats", sets: 3, duration: 40, rest: 20 },
+      ],
+    });
+
     await page.locator("#saved-list button", { hasText: "Laden" }).click();
-    await expect(page.locator("#program-name")).toHaveValue("Burpees");
-    await expect(page.locator(".segment-name")).toHaveValue("Burpees");
-    await expect(page.locator(".segment-sets")).toHaveValue("2");
-    await expect(page.locator(".segment-duration")).toHaveValue("15");
+    await expect(page.locator("#program-name")).toHaveValue("Mijn training");
+    await expect(page.locator(".segment")).toHaveCount(2);
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveValue("Burpees");
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveValue("Squats");
   });
 
   test("stopt de training en toont setup weer", async ({ page }) => {
