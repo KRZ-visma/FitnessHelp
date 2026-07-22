@@ -7,6 +7,7 @@ Simpele browser-tool om sets en duur (in seconden) te plannen, met een countdown
 - Oefening, aantal sets, duur per set, rust tussen sets
 - Timer met pauze, overslaan en stop
 - Opgeslagen oefeningen in **localStorage** (blijft in jouw browser)
+- Installeerbaar als **PWA** (manifest + service worker; offline basisassets)
 
 ## Lokaal openen
 
