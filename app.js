@@ -189,8 +189,9 @@
       nameInput.placeholder = "bijv. Push-ups";
       nameInput.maxLength = 60;
       nameInput.autocomplete = "off";
-      nameInput.autocorrect = "off";
       nameInput.spellcheck = false;
+      nameInput.setAttribute("autocorrect", "off");
+      nameInput.setAttribute("autocapitalize", "words");
       nameInput.required = true;
       nameInput.value = item.name;
       nameInput.addEventListener("input", () => {
