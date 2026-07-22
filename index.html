@@ -101,7 +101,24 @@
       </section>
 
       <section class="saved" id="saved" aria-labelledby="saved-title">
-        <h2 id="saved-title">Opgeslagen</h2>
+        <div class="saved-header">
+          <h2 id="saved-title">Opgeslagen</h2>
+          <div class="saved-transfer">
+            <button type="button" class="btn btn-ghost" id="export-btn">
+              Exporteren
+            </button>
+            <button type="button" class="btn btn-ghost" id="import-btn">
+              Importeren
+            </button>
+            <input
+              type="file"
+              id="import-file"
+              accept="application/json,.json"
+              hidden
+            />
+          </div>
+        </div>
+        <p class="transfer-status" id="transfer-status" role="status" hidden></p>
         <p class="saved-hint" id="saved-empty">
           Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
         </p>
@@ -110,7 +127,10 @@
     </main>
 
     <footer class="site-footer">
-      <p>Data blijft in je browser (localStorage). Niets wordt naar een server gestuurd.</p>
+      <p>
+        Data blijft in je browser (localStorage). Exporteer/importeer als JSON-bestand.
+        Niets wordt naar een server gestuurd.
+      </p>
     </footer>
 
     <script src="app.js"></script>
