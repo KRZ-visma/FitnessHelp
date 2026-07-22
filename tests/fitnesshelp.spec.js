@@ -282,6 +282,52 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("body")).not.toHaveClass(/is-running/);
   });
 
+  test("speelt start- en stopgeluid bij onderdelen", async ({ page }) => {
+    await page.fill("#program-name", "Geluid");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "1");
+    await page.fill(".segment-duration", "5");
+    await page.fill(".segment-rest", "0");
+    await page.click("#add-segment-btn");
+    const second = page.locator(".segment").nth(1);
+    await second.locator(".segment-type").selectOption("reps");
+    await second.locator(".segment-name").fill("Squats");
+    await second.locator(".segment-sets").fill("1");
+    await second.locator(".segment-reps").fill("5");
+
+    await page.click("#start-btn");
+    await page.evaluate(() => {
+      window.__fitnessHelpBeeps.length = 0;
+    });
+    await page.click("#skip-btn");
+
+    await expect.poll(() => page.evaluate(() => window.__fitnessHelpBeeps)).toEqual(["start"]);
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+
+    await page.click("#skip-btn");
+    await expect.poll(() => page.evaluate(() => window.__fitnessHelpBeeps)).toEqual([
+      "start",
+      "stop",
+    ]);
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+
+    await page.click("#skip-btn");
+    await expect.poll(() => page.evaluate(() => window.__fitnessHelpBeeps)).toEqual([
+      "start",
+      "stop",
+      "start",
+    ]);
+
+    await page.click("#stop-btn");
+    await expect.poll(() => page.evaluate(() => window.__fitnessHelpBeeps)).toEqual([
+      "start",
+      "stop",
+      "start",
+      "stop",
+    ]);
+  });
+
   test("nummervelden gebruiken iOS cijferpad-attributen", async ({ page }) => {
     for (const selector of [".segment-sets", ".segment-duration", ".segment-rest"]) {
       const input = page.locator(selector);
