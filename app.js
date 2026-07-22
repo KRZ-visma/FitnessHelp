@@ -1,8 +1,11 @@
 (() => {
   const STORAGE_KEY = "fitnesshelp-workouts-v1";
 
+  const PREP_SECONDS = 5;
+
   const form = document.getElementById("workout-form");
   const programNameInput = document.getElementById("program-name");
+  const programNameSuggestions = document.getElementById("program-name-suggestions");
   const segmentsEl = document.getElementById("segments");
   const addSegmentBtn = document.getElementById("add-segment-btn");
   const saveBtn = document.getElementById("save-btn");
@@ -31,8 +34,11 @@
    * @typedef {{ id: string, name: string, items: ProgramItem[] }} Program
    */
 
-  /** @type {{ program: Program, itemIndex: number, setIndex: number, isRest: boolean, remaining: number, total: number, paused: boolean, raf: number|null, lastTs: number|null } | null} */
+  /** @type {{ program: Program, itemIndex: number, setIndex: number, isRest: boolean, isPrep: boolean, remaining: number, total: number, paused: boolean, raf: number|null, lastTs: number|null } | null} */
   let session = null;
+
+  /** @type {WakeLockSentinel | null} */
+  let wakeLock = null;
 
   /** @type {{ type: 'timer'|'reps', name: string, sets: string, duration: string, rest: string, reps: string }[]} */
   let draftItems = [];
@@ -418,10 +424,50 @@
     }
   }
 
+  function updateProgramSuggestions(programs = loadPrograms()) {
+    if (!(programNameSuggestions instanceof HTMLDataListElement)) return;
+    programNameSuggestions.innerHTML = "";
+    const seen = new Set();
+    programs.forEach((program) => {
+      const name = program.name.trim();
+      if (!name) return;
+      const key = name.toLowerCase();
+      if (seen.has(key)) return;
+      seen.add(key);
+      const option = document.createElement("option");
+      option.value = name;
+      programNameSuggestions.append(option);
+    });
+  }
+
+  async function requestWakeLock() {
+    if (!("wakeLock" in navigator) || !navigator.wakeLock) return;
+    try {
+      if (wakeLock) return;
+      wakeLock = await navigator.wakeLock.request("screen");
+      wakeLock.addEventListener("release", () => {
+        wakeLock = null;
+      });
+    } catch {
+      wakeLock = null;
+    }
+  }
+
+  async function releaseWakeLock() {
+    if (!wakeLock) return;
+    try {
+      await wakeLock.release();
+    } catch {
+      // ignore
+    }
+    wakeLock = null;
+  }
+
   function renderSaved() {
     const programs = loadPrograms();
     savedList.innerHTML = "";
     savedEmpty.hidden = programs.length > 0;
+    updateProgramSuggestions(programs);
 
     programs.forEach((program) => {
       const li = document.createElement("li");
@@ -496,6 +542,7 @@
       itemIndex: 0,
       setIndex: 1,
       isRest: false,
+      isPrep: true,
       remaining: 0,
       total: 1,
       paused: false,
@@ -508,6 +555,7 @@
     timerEl.hidden = false;
     pauseBtn.textContent = "Pauze";
     skipBtn.hidden = false;
+    requestWakeLock();
     beginCurrentItem(false);
   }
 
@@ -521,6 +569,28 @@
 
     session.setIndex = 1;
     session.isRest = false;
+    session.isPrep = true;
+    session.paused = false;
+    session.remaining = PREP_SECONDS;
+    session.total = PREP_SECONDS;
+    pauseBtn.textContent = "Pauze";
+    doneSetBtn.hidden = true;
+    pauseBtn.hidden = false;
+    timerProgress.hidden = false;
+    if (playSound) beep("tick");
+    updateTimerUI();
+    startTick();
+  }
+
+  function startWorkAfterPrep() {
+    if (!session) return;
+    const item = currentItem();
+    if (!item) {
+      endSession(true);
+      return;
+    }
+
+    session.isPrep = false;
     session.paused = false;
     pauseBtn.textContent = "Pauze";
 
@@ -530,7 +600,7 @@
       doneSetBtn.hidden = true;
       pauseBtn.hidden = false;
       timerProgress.hidden = false;
-      if (playSound) beep("tick");
+      beep("tick");
       updateTimerUI();
       startTick();
       return;
@@ -542,7 +612,7 @@
     doneSetBtn.hidden = false;
     pauseBtn.hidden = true;
     timerProgress.hidden = true;
-    if (playSound) beep("tick");
+    beep("tick");
     updateTimerUI();
   }
 
@@ -550,6 +620,7 @@
     stopTick();
     if (finished && session) {
       session.isRest = false;
+      session.isPrep = false;
       session.remaining = 0;
       session.total = 1;
       timerEl.dataset.phase = "done";
@@ -564,11 +635,13 @@
       pauseBtn.hidden = true;
       skipBtn.hidden = true;
       doneSetBtn.hidden = true;
+      releaseWakeLock();
       beep("done");
       return;
     }
 
     session = null;
+    releaseWakeLock();
     document.body.classList.remove("is-running");
     timerEl.hidden = true;
     setupEl.hidden = false;
@@ -581,12 +654,27 @@
     const item = currentItem();
     if (!item) return;
 
-    const { setIndex, isRest, remaining, total, itemIndex, program } = session;
+    const { setIndex, isRest, isPrep, remaining, total, itemIndex, program } = session;
     timerProgram.textContent =
       program.items.length > 1
         ? `${program.name} · ${itemIndex + 1}/${program.items.length}`
         : program.name;
     timerName.textContent = item.name;
+
+    if (isPrep) {
+      timerEl.dataset.mode = item.type === "reps" ? "reps-prep" : "timer";
+      timerEl.dataset.phase = "prep";
+      timerClock.classList.remove("is-reps");
+      timerPhase.textContent = "Klaar maken";
+      timerClock.textContent = formatTime(remaining);
+      const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
+      timerBar.style.transform = `scaleX(${ratio})`;
+      timerMeta.textContent =
+        item.type === "reps"
+          ? `Daarna: set 1 · ${item.reps}×`
+          : `Daarna: set 1 · ${item.duration}s`;
+      return;
+    }
 
     if (item.type === "reps") {
       timerEl.dataset.mode = "reps";
@@ -671,7 +759,8 @@
   function tick(ts) {
     if (!session || session.paused) return;
     const item = currentItem();
-    if (!item || item.type !== "timer") return;
+    if (!item) return;
+    if (!session.isPrep && item.type !== "timer") return;
 
     if (session.lastTs == null) session.lastTs = ts;
     const delta = (ts - session.lastTs) / 1000;
@@ -681,10 +770,15 @@
     if (session.remaining <= 0) {
       session.remaining = 0;
       updateTimerUI();
+      if (session.isPrep) {
+        startWorkAfterPrep();
+        return;
+      }
       advancePhase();
       if (
         session &&
         !session.paused &&
+        !session.isPrep &&
         timerEl.dataset.phase !== "done" &&
         currentItem()?.type === "timer"
       ) {
@@ -701,7 +795,8 @@
   function startTick() {
     if (!session) return;
     const item = currentItem();
-    if (!item || item.type !== "timer") return;
+    if (!item) return;
+    if (!session.isPrep && item.type !== "timer") return;
     session.paused = false;
     session.lastTs = null;
     session.raf = requestAnimationFrame(tick);
@@ -756,7 +851,8 @@
   pauseBtn.addEventListener("click", () => {
     if (!session || timerEl.dataset.phase === "done") return;
     const item = currentItem();
-    if (!item || item.type !== "timer") return;
+    if (!item) return;
+    if (!session.isPrep && item.type !== "timer") return;
     if (session.paused) {
       pauseBtn.textContent = "Pauze";
       startTick();
@@ -772,6 +868,11 @@
     const item = currentItem();
     if (!item) return;
 
+    if (session.isPrep) {
+      startWorkAfterPrep();
+      return;
+    }
+
     if (item.type === "reps") {
       advancePhase();
       return;
@@ -783,6 +884,7 @@
     if (
       session &&
       !session.paused &&
+      !session.isPrep &&
       timerEl.dataset.phase !== "done" &&
       currentItem()?.type === "timer"
     ) {
@@ -793,6 +895,12 @@
 
   stopBtn.addEventListener("click", () => {
     endSession(false);
+  });
+
+  document.addEventListener("visibilitychange", () => {
+    if (document.visibilityState !== "visible") return;
+    if (!session || timerEl.dataset.phase === "done") return;
+    requestWakeLock();
   });
 
   resetDraft();
