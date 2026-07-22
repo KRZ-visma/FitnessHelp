@@ -434,18 +434,61 @@ test.describe("FitnessHelp", () => {
 
   test("programma- en oefeningvelden zijn geen contact-autofill", async ({ page }) => {
     const program = page.locator("#program-name");
-    await expect(program).toHaveAttribute("name", "program");
-    await expect(program).toHaveAttribute("autocomplete", "off");
+    await expect(program).toHaveAttribute("name", "fh-program");
+    await expect(program).toHaveAttribute("autocomplete", "fh-program");
     await expect(program).toHaveAttribute("autocorrect", "off");
     await expect(program).toHaveAttribute("spellcheck", "false");
     await expect(program).toHaveAttribute("list", "program-name-suggestions");
 
     const exercise = page.locator(".segment-name");
-    await expect(exercise).toHaveAttribute("autocomplete", "off");
+    await expect(exercise).toHaveAttribute("autocomplete", "fh-exercise");
+    await expect(exercise).toHaveAttribute("name", "fh-exercise-0");
     await expect(exercise).toHaveAttribute("autocorrect", "off");
     await expect(exercise).toHaveAttribute("spellcheck", "false");
     await expect(page.locator("#name")).toHaveCount(0);
     await expect(page.locator('[name="name"]')).toHaveCount(0);
+    await expect(page.locator('[name="program"]')).toHaveCount(0);
+  });
+
+  test("Klaar-knop in beheer is een primaire knop", async ({ page }) => {
+    await page.fill("#program-name", "Push");
+    await page.fill(".segment-name", "Push-ups");
+    await page.click("#save-btn");
+
+    await openManage(page);
+    const done = page.locator("#manage-done-btn");
+    await expect(done).toBeVisible();
+    await expect(done).toHaveClass(/btn-primary/);
+    await expect(done).not.toHaveClass(/btn-ghost/);
+  });
+
+  test("kan volgorde van onderdelen wijzigen", async ({ page }) => {
+    await page.fill("#program-name", "Full body");
+    await page.fill(".segment-name", "Squats");
+    await page.click("#add-segment-btn");
+    await page.locator(".segment").nth(1).locator(".segment-name").fill("Push-ups");
+    await page.click("#add-segment-btn");
+    await page.locator(".segment").nth(2).locator(".segment-name").fill("Rows");
+
+    await expect(page.locator(".segment")).toHaveCount(3);
+    await expect(page.locator(".segment").nth(0).locator(".segment-move-up")).toBeDisabled();
+    await expect(page.locator(".segment").nth(2).locator(".segment-move-down")).toBeDisabled();
+
+    await page.locator(".segment").nth(0).locator(".segment-move-down").click();
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveValue("Push-ups");
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveValue("Squats");
+    await expect(page.locator(".segment").nth(2).locator(".segment-name")).toHaveValue("Rows");
+
+    await page.locator(".segment").nth(2).locator(".segment-move-up").click();
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveValue("Push-ups");
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveValue("Rows");
+    await expect(page.locator(".segment").nth(2).locator(".segment-name")).toHaveValue("Squats");
+
+    await page.click("#save-btn");
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1"))
+    );
+    expect(stored[0].items.map((item) => item.name)).toEqual(["Push-ups", "Rows", "Squats"]);
   });
 
   test("nummervelden filteren niet-cijfers", async ({ page }) => {

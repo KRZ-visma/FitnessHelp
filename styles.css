@@ -164,6 +164,11 @@ main {
   gap: 0.75rem;
 }
 
+.manage-header .btn-primary {
+  min-width: 5.5rem;
+  box-shadow: 0 0 0 1px rgba(212, 255, 58, 0.35);
+}
+
 .manage-title {
   margin: 0;
   font-family: var(--font-display);
@@ -292,7 +297,16 @@ main {
 
 .segment-foot {
   display: flex;
-  justify-content: flex-end;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.segment-order {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
 }
 
 .field {

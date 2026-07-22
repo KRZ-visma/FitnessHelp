@@ -484,12 +484,14 @@
       const nameInput = document.createElement("input");
       nameInput.type = "text";
       nameInput.className = "segment-name";
+      nameInput.name = `fh-exercise-${index}`;
       nameInput.placeholder = "bijv. Push-ups";
       nameInput.maxLength = 60;
-      nameInput.autocomplete = "off";
+      nameInput.autocomplete = "fh-exercise";
       nameInput.spellcheck = false;
       nameInput.setAttribute("autocorrect", "off");
       nameInput.setAttribute("autocapitalize", "words");
+      nameInput.setAttribute("enterkeyhint", "done");
       nameInput.required = true;
       nameInput.value = item.name;
       nameInput.addEventListener("input", () => {
@@ -524,6 +526,28 @@
 
       const foot = document.createElement("div");
       foot.className = "segment-foot";
+
+      const order = document.createElement("div");
+      order.className = "segment-order";
+
+      const upBtn = document.createElement("button");
+      upBtn.type = "button";
+      upBtn.className = "btn btn-ghost segment-move-up";
+      upBtn.textContent = "Omhoog";
+      upBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omhoog`);
+      upBtn.disabled = index === 0;
+      upBtn.addEventListener("click", () => moveSegment(index, -1));
+
+      const downBtn = document.createElement("button");
+      downBtn.type = "button";
+      downBtn.className = "btn btn-ghost segment-move-down";
+      downBtn.textContent = "Omlaag";
+      downBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omlaag`);
+      downBtn.disabled = index >= draftItems.length - 1;
+      downBtn.addEventListener("click", () => moveSegment(index, 1));
+
+      order.append(upBtn, downBtn);
+
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
       removeBtn.className = "btn btn-danger";
@@ -534,11 +558,20 @@
         draftItems.splice(index, 1);
         renderSegments();
       });
-      foot.append(removeBtn);
+      foot.append(order, removeBtn);
 
       article.append(head, nameField, row, foot);
       segmentsEl.append(article);
     });
+  }
+
+  /** @param {number} index @param {-1|1} delta */
+  function moveSegment(index, delta) {
+    const target = index + delta;
+    if (target < 0 || target >= draftItems.length) return;
+    const [item] = draftItems.splice(index, 1);
+    draftItems.splice(target, 0, item);
+    renderSegments();
   }
 
   function makeNumberField(labelText, className, value, onChange) {
