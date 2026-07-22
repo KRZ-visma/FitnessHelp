@@ -1,7 +1,7 @@
 {
   "name": "FitnessHelp",
   "short_name": "FitnessHelp",
-  "description": "Plan je sets en duur, start de timer. Opgeslagen in je browser.",
+  "description": "Stel een trainingsprogramma samen met timer- en sets/keer-onderdelen. Opgeslagen in je browser.",
   "lang": "nl",
   "start_url": "./",
   "scope": "./",

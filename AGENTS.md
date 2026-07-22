@@ -2,14 +2,14 @@
 
 ## Project
 
-Browser-only workout timer: oefening, sets, duur (sec), rust, countdown, opgeslagen workouts in localStorage.
+Browser-only trainingsprogramma: onderdelen met timer (sets/duur/rust) of sets & keer (alleen weergave), countdown of handmatig “Set klaar”, opgeslagen in localStorage.
 Live via GitHub Pages vanaf `main` (root). Geen backend, geen build-step.
 
 ## Stack (houd zo)
 
 - Vanilla HTML / CSS / JS — géén framework, bundler of TypeScript tenzij expliciet gevraagd
 - Bestanden: `index.html`, `app.js`, `styles.css`
-- Storage-key: `fitnesshelp-workouts-v1` (niet breken zonder migratie)
+- Storage-key: `fitnesshelp-workouts-v1` (niet breken zonder migratie; legacy single-timer workouts samenvoegen tot één programma `{ name: "Mijn training", items[] }`)
 - UI-taal: Nederlands
 
 ## Design

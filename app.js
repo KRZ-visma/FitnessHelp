@@ -2,26 +2,21 @@
   const STORAGE_KEY = "fitnesshelp-workouts-v1";
 
   const form = document.getElementById("workout-form");
-  const nameInput = document.getElementById("exercise");
-  const setsInput = document.getElementById("sets");
-  const durationInput = document.getElementById("duration");
-  const restInput = document.getElementById("rest");
+  const programNameInput = document.getElementById("program-name");
+  const segmentsEl = document.getElementById("segments");
+  const addSegmentBtn = document.getElementById("add-segment-btn");
   const saveBtn = document.getElementById("save-btn");
-
-  [setsInput, durationInput, restInput].forEach((input) => {
-    input.addEventListener("input", () => {
-      const digits = input.value.replace(/\D/g, "");
-      if (input.value !== digits) input.value = digits;
-    });
-  });
 
   const setupEl = document.getElementById("setup");
   const timerEl = document.getElementById("timer");
+  const timerProgram = document.getElementById("timer-program");
   const timerName = document.getElementById("timer-name");
   const timerPhase = document.getElementById("timer-phase");
   const timerClock = document.getElementById("timer-clock");
+  const timerProgress = document.getElementById("timer-progress");
   const timerBar = document.getElementById("timer-bar");
   const timerMeta = document.getElementById("timer-meta");
+  const doneSetBtn = document.getElementById("done-set-btn");
   const pauseBtn = document.getElementById("pause-btn");
   const skipBtn = document.getElementById("skip-btn");
   const stopBtn = document.getElementById("stop-btn");
@@ -29,69 +24,372 @@
   const savedEmpty = document.getElementById("saved-empty");
   const savedList = document.getElementById("saved-list");
 
-  /** @typedef {{ id: string, name: string, sets: number, duration: number, rest: number }} Workout */
+  /**
+   * @typedef {{ type: 'timer', name: string, sets: number, duration: number, rest: number }} TimerItem
+   * @typedef {{ type: 'reps', name: string, sets: number, reps: number }} RepsItem
+   * @typedef {TimerItem | RepsItem} ProgramItem
+   * @typedef {{ id: string, name: string, items: ProgramItem[] }} Program
+   */
 
-  /** @type {{ workout: Workout, setIndex: number, isRest: boolean, remaining: number, total: number, paused: boolean, raf: number|null, lastTs: number|null } | null} */
+  /** @type {{ program: Program, itemIndex: number, setIndex: number, isRest: boolean, remaining: number, total: number, paused: boolean, raf: number|null, lastTs: number|null } | null} */
   let session = null;
 
-  function loadWorkouts() {
+  /** @type {{ type: 'timer'|'reps', name: string, sets: string, duration: string, rest: string, reps: string }[]} */
+  let draftItems = [];
+
+  function loadPrograms() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (!raw) return [];
       const data = JSON.parse(raw);
-      return Array.isArray(data) ? data : [];
+      if (!Array.isArray(data)) return [];
+
+      const hasLegacy = data.some(
+        (entry) => entry && typeof entry === "object" && !Array.isArray(/** @type {Record<string, unknown>} */ (entry).items)
+      );
+      if (!hasLegacy) {
+        return data.map(normalizeProgram).filter(Boolean);
+      }
+
+      // Legacy workouts ({ name, sets, duration, rest }) → één programma met alle oefeningen als onderdelen
+      /** @type {ProgramItem[]} */
+      const migratedItems = [];
+      /** @type {Program[]} */
+      const modernPrograms = [];
+      let migratedId = "";
+
+      data.forEach((entry) => {
+        if (!entry || typeof entry !== "object") return;
+        const obj = /** @type {Record<string, unknown>} */ (entry);
+        if (Array.isArray(obj.items)) {
+          const program = normalizeProgram(entry);
+          if (program) modernPrograms.push(program);
+          return;
+        }
+        const item = legacyWorkoutToItem(entry);
+        if (!item) return;
+        migratedItems.push(item);
+        if (!migratedId && typeof obj.id === "string") migratedId = obj.id;
+      });
+
+      /** @type {Program[]} */
+      const programs = [...modernPrograms];
+      if (migratedItems.length) {
+        programs.unshift({
+          id: migratedId || uid(),
+          name: "Mijn training",
+          items: migratedItems,
+        });
+      }
+
+      savePrograms(programs);
+      return programs;
     } catch {
       return [];
     }
   }
 
-  /** @param {Workout[]} workouts */
-  function saveWorkouts(workouts) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(workouts));
+  /** @param {Program[]} programs */
+  function savePrograms(programs) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+  }
+
+  /** @param {unknown} raw @returns {TimerItem | null} */
+  function legacyWorkoutToItem(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const obj = /** @type {Record<string, unknown>} */ (raw);
+    const name = typeof obj.name === "string" ? obj.name.trim() : "";
+    if (!name) return null;
+    const sets = Number(obj.sets);
+    const duration = Number(obj.duration);
+    const rest = Number(obj.rest);
+    if (!Number.isFinite(sets) || sets < 1) return null;
+    if (!Number.isFinite(duration) || duration < 1) return null;
+    if (!Number.isFinite(rest) || rest < 0) return null;
+    return {
+      type: "timer",
+      name,
+      sets: clampInt(sets, 1, 99),
+      duration: clampInt(duration, 1, 3600),
+      rest: clampInt(rest, 0, 600),
+    };
+  }
+
+  /** @param {unknown} raw @returns {Program | null} */
+  function normalizeProgram(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const obj = /** @type {Record<string, unknown>} */ (raw);
+    const id = typeof obj.id === "string" ? obj.id : uid();
+    const name = typeof obj.name === "string" ? obj.name.trim() : "";
+    if (!name || !Array.isArray(obj.items)) return null;
+
+    const items = obj.items.map(normalizeItem).filter(Boolean);
+    if (!items.length) return null;
+    return { id, name, items: /** @type {ProgramItem[]} */ (items) };
+  }
+
+  /** @param {unknown} raw @returns {ProgramItem | null} */
+  function normalizeItem(raw) {
+    if (!raw || typeof raw !== "object") return null;
+    const obj = /** @type {Record<string, unknown>} */ (raw);
+    const itemName = typeof obj.name === "string" ? obj.name.trim() : "";
+    if (!itemName) return null;
+    const sets = Number(obj.sets);
+    if (!Number.isFinite(sets) || sets < 1) return null;
+
+    if (obj.type === "reps") {
+      const reps = Number(obj.reps);
+      if (!Number.isFinite(reps) || reps < 1) return null;
+      return {
+        type: "reps",
+        name: itemName,
+        sets: clampInt(sets, 1, 99),
+        reps: clampInt(reps, 1, 999),
+      };
+    }
+
+    const duration = Number(obj.duration);
+    const rest = Number(obj.rest);
+    if (!Number.isFinite(duration) || duration < 1) return null;
+    if (!Number.isFinite(rest) || rest < 0) return null;
+    return {
+      type: "timer",
+      name: itemName,
+      sets: clampInt(sets, 1, 99),
+      duration: clampInt(duration, 1, 3600),
+      rest: clampInt(rest, 0, 600),
+    };
   }
 
   function uid() {
     return `w_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 8)}`;
   }
 
-  function readForm() {
-    const name = nameInput.value.trim();
-    const sets = Number(setsInput.value);
-    const duration = Number(durationInput.value);
-    const rest = Number(restInput.value);
-
-    if (!name) {
-      nameInput.focus();
-      return null;
-    }
-    if (!Number.isFinite(sets) || sets < 1) {
-      setsInput.focus();
-      return null;
-    }
-    if (!Number.isFinite(duration) || duration < 1) {
-      durationInput.focus();
-      return null;
-    }
-    if (!Number.isFinite(rest) || rest < 0) {
-      restInput.focus();
-      return null;
-    }
-
-    return {
-      id: uid(),
-      name,
-      sets: Math.min(99, Math.floor(sets)),
-      duration: Math.min(3600, Math.floor(duration)),
-      rest: Math.min(600, Math.floor(rest)),
-    };
+  function clampInt(value, min, max) {
+    return Math.min(max, Math.max(min, Math.floor(value)));
   }
 
-  /** @param {Workout} workout */
-  function fillForm(workout) {
-    nameInput.value = workout.name;
-    setsInput.value = String(workout.sets);
-    durationInput.value = String(workout.duration);
-    restInput.value = String(workout.rest);
+  function defaultDraftItem(type = "timer") {
+    if (type === "reps") {
+      return { type: "reps", name: "", sets: "3", duration: "45", rest: "15", reps: "10" };
+    }
+    return { type: "timer", name: "", sets: "3", duration: "45", rest: "15", reps: "10" };
+  }
+
+  function resetDraft() {
+    draftItems = [defaultDraftItem("timer")];
+    programNameInput.value = "";
+    renderSegments();
+  }
+
+  function bindDigits(input) {
+    input.addEventListener("input", () => {
+      const digits = input.value.replace(/\D/g, "");
+      if (input.value !== digits) input.value = digits;
+    });
+  }
+
+  function renderSegments() {
+    segmentsEl.innerHTML = "";
+    draftItems.forEach((item, index) => {
+      const article = document.createElement("article");
+      article.className = "segment";
+      article.dataset.index = String(index);
+      article.dataset.type = item.type;
+
+      const head = document.createElement("div");
+      head.className = "segment-head";
+
+      const label = document.createElement("p");
+      label.className = "segment-label";
+      label.textContent = `Onderdeel ${index + 1}`;
+
+      const typeSelect = document.createElement("select");
+      typeSelect.className = "segment-type";
+      typeSelect.setAttribute("aria-label", `Type onderdeel ${index + 1}`);
+      typeSelect.innerHTML = `
+        <option value="timer"${item.type === "timer" ? " selected" : ""}>Timer</option>
+        <option value="reps"${item.type === "reps" ? " selected" : ""}>Sets &amp; keer</option>
+      `;
+      typeSelect.addEventListener("change", () => {
+        draftItems[index].type = /** @type {'timer'|'reps'} */ (typeSelect.value);
+        renderSegments();
+      });
+
+      head.append(label, typeSelect);
+
+      const nameField = document.createElement("label");
+      nameField.className = "field";
+      nameField.innerHTML = `<span>Oefening</span>`;
+      const nameInput = document.createElement("input");
+      nameInput.type = "text";
+      nameInput.className = "segment-name";
+      nameInput.placeholder = "bijv. Push-ups";
+      nameInput.maxLength = 60;
+      nameInput.autocomplete = "off";
+      nameInput.spellcheck = false;
+      nameInput.setAttribute("autocorrect", "off");
+      nameInput.setAttribute("autocapitalize", "words");
+      nameInput.required = true;
+      nameInput.value = item.name;
+      nameInput.addEventListener("input", () => {
+        draftItems[index].name = nameInput.value;
+      });
+      nameField.append(nameInput);
+
+      const row = document.createElement("div");
+      row.className = "field-row";
+
+      const setsField = makeNumberField("Aantal sets", "segment-sets", item.sets, (value) => {
+        draftItems[index].sets = value;
+      });
+      row.append(setsField);
+
+      if (item.type === "timer") {
+        row.append(
+          makeNumberField("Duur per set (sec)", "segment-duration", item.duration, (value) => {
+            draftItems[index].duration = value;
+          }),
+          makeNumberField("Rust tussen sets (sec)", "segment-rest", item.rest, (value) => {
+            draftItems[index].rest = value;
+          })
+        );
+      } else {
+        row.append(
+          makeNumberField("Keer per set", "segment-reps", item.reps, (value) => {
+            draftItems[index].reps = value;
+          })
+        );
+      }
+
+      const foot = document.createElement("div");
+      foot.className = "segment-foot";
+      const removeBtn = document.createElement("button");
+      removeBtn.type = "button";
+      removeBtn.className = "btn btn-danger";
+      removeBtn.textContent = "Verwijder";
+      removeBtn.disabled = draftItems.length <= 1;
+      removeBtn.addEventListener("click", () => {
+        if (draftItems.length <= 1) return;
+        draftItems.splice(index, 1);
+        renderSegments();
+      });
+      foot.append(removeBtn);
+
+      article.append(head, nameField, row, foot);
+      segmentsEl.append(article);
+    });
+  }
+
+  function makeNumberField(labelText, className, value, onChange) {
+    const field = document.createElement("label");
+    field.className = "field";
+    const span = document.createElement("span");
+    span.textContent = labelText;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.inputMode = "numeric";
+    input.pattern = "[0-9]*";
+    input.className = className;
+    input.autocomplete = "off";
+    input.required = true;
+    input.value = value;
+    bindDigits(input);
+    input.addEventListener("input", () => onChange(input.value));
+    field.append(span, input);
+    return field;
+  }
+
+  /** @returns {Program | null} */
+  function readForm() {
+    const name = programNameInput.value.trim();
+    if (!name) {
+      programNameInput.focus();
+      return null;
+    }
+
+    /** @type {ProgramItem[]} */
+    const items = [];
+    for (let i = 0; i < draftItems.length; i += 1) {
+      const draft = draftItems[i];
+      const itemName = draft.name.trim();
+      const sets = Number(draft.sets);
+      if (!itemName) {
+        const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-name`);
+        if (input instanceof HTMLInputElement) input.focus();
+        return null;
+      }
+      if (!Number.isFinite(sets) || sets < 1) {
+        const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-sets`);
+        if (input instanceof HTMLInputElement) input.focus();
+        return null;
+      }
+
+      if (draft.type === "reps") {
+        const reps = Number(draft.reps);
+        if (!Number.isFinite(reps) || reps < 1) {
+          const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-reps`);
+          if (input instanceof HTMLInputElement) input.focus();
+          return null;
+        }
+        items.push({
+          type: "reps",
+          name: itemName,
+          sets: clampInt(sets, 1, 99),
+          reps: clampInt(reps, 1, 999),
+        });
+      } else {
+        const duration = Number(draft.duration);
+        const rest = Number(draft.rest);
+        if (!Number.isFinite(duration) || duration < 1) {
+          const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-duration`);
+          if (input instanceof HTMLInputElement) input.focus();
+          return null;
+        }
+        if (!Number.isFinite(rest) || rest < 0) {
+          const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-rest`);
+          if (input instanceof HTMLInputElement) input.focus();
+          return null;
+        }
+        items.push({
+          type: "timer",
+          name: itemName,
+          sets: clampInt(sets, 1, 99),
+          duration: clampInt(duration, 1, 3600),
+          rest: clampInt(rest, 0, 600),
+        });
+      }
+    }
+
+    if (!items.length) return null;
+    return { id: uid(), name, items };
+  }
+
+  /** @param {Program} program */
+  function fillForm(program) {
+    programNameInput.value = program.name;
+    draftItems = program.items.map((item) => {
+      if (item.type === "reps") {
+        return {
+          type: "reps",
+          name: item.name,
+          sets: String(item.sets),
+          duration: "45",
+          rest: "15",
+          reps: String(item.reps),
+        };
+      }
+      return {
+        type: "timer",
+        name: item.name,
+        sets: String(item.sets),
+        duration: String(item.duration),
+        rest: String(item.rest),
+        reps: "10",
+      };
+    });
+    if (!draftItems.length) draftItems = [defaultDraftItem("timer")];
+    renderSegments();
   }
 
   function formatTime(totalSeconds) {
@@ -121,17 +419,20 @@
   }
 
   function renderSaved() {
-    const workouts = loadWorkouts();
+    const programs = loadPrograms();
     savedList.innerHTML = "";
-    savedEmpty.hidden = workouts.length > 0;
+    savedEmpty.hidden = programs.length > 0;
 
-    workouts.forEach((workout) => {
+    programs.forEach((program) => {
       const li = document.createElement("li");
       li.className = "saved-item";
 
       const info = document.createElement("div");
       info.className = "saved-info";
-      info.innerHTML = `<strong>${escapeHtml(workout.name)}</strong><span>${workout.sets} sets · ${workout.duration}s · rust ${workout.rest}s</span>`;
+      const parts = program.items
+        .map((item) => `${escapeHtml(item.name)} (${item.type === "reps" ? "sets & keer" : "timer"})`)
+        .join(" · ");
+      info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`} · ${parts}</span>`;
 
       const actions = document.createElement("div");
       actions.className = "saved-actions";
@@ -141,8 +442,8 @@
       start.className = "btn btn-primary";
       start.textContent = "Start";
       start.addEventListener("click", () => {
-        fillForm(workout);
-        startSession(workout);
+        fillForm(program);
+        startSession(program);
       });
 
       const load = document.createElement("button");
@@ -150,8 +451,8 @@
       load.className = "btn btn-ghost";
       load.textContent = "Laden";
       load.addEventListener("click", () => {
-        fillForm(workout);
-        nameInput.focus();
+        fillForm(program);
+        programNameInput.focus();
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
@@ -160,8 +461,8 @@
       remove.className = "btn btn-danger";
       remove.textContent = "Verwijder";
       remove.addEventListener("click", () => {
-        const next = loadWorkouts().filter((w) => w.id !== workout.id);
-        saveWorkouts(next);
+        const next = loadPrograms().filter((p) => p.id !== program.id);
+        savePrograms(next);
         renderSaved();
       });
 
@@ -179,15 +480,24 @@
       .replaceAll('"', "&quot;");
   }
 
-  /** @param {Workout} workout */
-  function startSession(workout) {
+  function currentItem() {
+    return session?.program.items[session.itemIndex] ?? null;
+  }
+
+  /** @param {Program} program */
+  function startSession(program) {
     stopTick();
     session = {
-      workout: { ...workout },
+      program: {
+        id: program.id,
+        name: program.name,
+        items: program.items.map((item) => ({ ...item })),
+      },
+      itemIndex: 0,
       setIndex: 1,
       isRest: false,
-      remaining: workout.duration,
-      total: workout.duration,
+      remaining: 0,
+      total: 1,
       paused: false,
       raf: null,
       lastTs: null,
@@ -198,9 +508,42 @@
     timerEl.hidden = false;
     pauseBtn.textContent = "Pauze";
     skipBtn.hidden = false;
-    pauseBtn.hidden = false;
+    beginCurrentItem(false);
+  }
+
+  function beginCurrentItem(playSound) {
+    if (!session) return;
+    const item = currentItem();
+    if (!item) {
+      endSession(true);
+      return;
+    }
+
+    session.setIndex = 1;
+    session.isRest = false;
+    session.paused = false;
+    pauseBtn.textContent = "Pauze";
+
+    if (item.type === "timer") {
+      session.remaining = item.duration;
+      session.total = item.duration;
+      doneSetBtn.hidden = true;
+      pauseBtn.hidden = false;
+      timerProgress.hidden = false;
+      if (playSound) beep("tick");
+      updateTimerUI();
+      startTick();
+      return;
+    }
+
+    stopTick();
+    session.remaining = 0;
+    session.total = 1;
+    doneSetBtn.hidden = false;
+    pauseBtn.hidden = true;
+    timerProgress.hidden = true;
+    if (playSound) beep("tick");
     updateTimerUI();
-    startTick();
   }
 
   function endSession(finished) {
@@ -210,12 +553,17 @@
       session.remaining = 0;
       session.total = 1;
       timerEl.dataset.phase = "done";
+      timerEl.dataset.mode = "done";
+      timerProgram.textContent = session.program.name;
       timerPhase.textContent = "Klaar";
       timerClock.textContent = "0:00";
+      timerClock.classList.remove("is-reps");
       timerBar.style.transform = "scaleX(0)";
-      timerMeta.textContent = `${session.workout.sets} sets afgerond`;
+      timerProgress.hidden = false;
+      timerMeta.textContent = `${session.program.items.length} onderdelen afgerond`;
       pauseBtn.hidden = true;
       skipBtn.hidden = true;
+      doneSetBtn.hidden = true;
       beep("done");
       return;
     }
@@ -225,44 +573,88 @@
     timerEl.hidden = true;
     setupEl.hidden = false;
     timerEl.dataset.phase = "";
+    timerEl.dataset.mode = "";
   }
 
   function updateTimerUI() {
     if (!session) return;
-    const { workout, setIndex, isRest, remaining, total } = session;
-    timerName.textContent = workout.name;
+    const item = currentItem();
+    if (!item) return;
+
+    const { setIndex, isRest, remaining, total, itemIndex, program } = session;
+    timerProgram.textContent =
+      program.items.length > 1
+        ? `${program.name} · ${itemIndex + 1}/${program.items.length}`
+        : program.name;
+    timerName.textContent = item.name;
+
+    if (item.type === "reps") {
+      timerEl.dataset.mode = "reps";
+      timerEl.dataset.phase = "work";
+      timerPhase.textContent = `Set ${setIndex} van ${item.sets}`;
+      timerClock.textContent = `${item.reps}×`;
+      timerClock.classList.add("is-reps");
+      timerBar.style.transform = "scaleX(1)";
+      timerMeta.textContent = `${item.sets} sets · ${item.reps} keer`;
+      return;
+    }
+
+    timerEl.dataset.mode = "timer";
+    timerClock.classList.remove("is-reps");
     timerEl.dataset.phase = isRest ? "rest" : "work";
     timerPhase.textContent = isRest
       ? `Rust · na set ${setIndex}`
-      : `Set ${setIndex} van ${workout.sets}`;
+      : `Set ${setIndex} van ${item.sets}`;
     timerClock.textContent = formatTime(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
     timerMeta.textContent = isRest
       ? `Volgende: set ${setIndex + 1}`
-      : `Duur ${workout.duration}s · rust ${workout.rest}s`;
+      : `Duur ${item.duration}s · rust ${item.rest}s`;
+  }
+
+  function advanceToNextItem() {
+    if (!session) return;
+    if (session.itemIndex >= session.program.items.length - 1) {
+      endSession(true);
+      return;
+    }
+    session.itemIndex += 1;
+    beginCurrentItem(true);
   }
 
   function advancePhase() {
     if (!session) return;
-    const { workout } = session;
+    const item = currentItem();
+    if (!item) return;
 
-    if (!session.isRest) {
-      if (session.setIndex >= workout.sets) {
-        endSession(true);
+    if (item.type === "reps") {
+      if (session.setIndex >= item.sets) {
+        advanceToNextItem();
         return;
       }
-      if (workout.rest > 0) {
+      session.setIndex += 1;
+      beep("tick");
+      updateTimerUI();
+      return;
+    }
+
+    if (!session.isRest) {
+      if (session.setIndex >= item.sets) {
+        advanceToNextItem();
+        return;
+      }
+      if (item.rest > 0) {
         session.isRest = true;
-        session.remaining = workout.rest;
-        session.total = workout.rest;
+        session.remaining = item.rest;
+        session.total = item.rest;
         beep("rest");
         updateTimerUI();
         return;
       }
       session.setIndex += 1;
-      session.remaining = workout.duration;
-      session.total = workout.duration;
+      session.remaining = item.duration;
+      session.total = item.duration;
       beep("tick");
       updateTimerUI();
       return;
@@ -270,14 +662,17 @@
 
     session.isRest = false;
     session.setIndex += 1;
-    session.remaining = workout.duration;
-    session.total = workout.duration;
+    session.remaining = item.duration;
+    session.total = item.duration;
     beep("tick");
     updateTimerUI();
   }
 
   function tick(ts) {
     if (!session || session.paused) return;
+    const item = currentItem();
+    if (!item || item.type !== "timer") return;
+
     if (session.lastTs == null) session.lastTs = ts;
     const delta = (ts - session.lastTs) / 1000;
     session.lastTs = ts;
@@ -287,7 +682,12 @@
       session.remaining = 0;
       updateTimerUI();
       advancePhase();
-      if (session && !session.paused && timerEl.dataset.phase !== "done") {
+      if (
+        session &&
+        !session.paused &&
+        timerEl.dataset.phase !== "done" &&
+        currentItem()?.type === "timer"
+      ) {
         session.lastTs = performance.now();
         session.raf = requestAnimationFrame(tick);
       }
@@ -300,6 +700,8 @@
 
   function startTick() {
     if (!session) return;
+    const item = currentItem();
+    if (!item || item.type !== "timer") return;
     session.paused = false;
     session.lastTs = null;
     session.raf = requestAnimationFrame(tick);
@@ -313,32 +715,48 @@
     }
   }
 
+  addSegmentBtn.addEventListener("click", () => {
+    draftItems.push(defaultDraftItem("timer"));
+    renderSegments();
+    const last = segmentsEl.querySelector(".segment:last-child .segment-name");
+    if (last instanceof HTMLInputElement) last.focus();
+  });
+
   form.addEventListener("submit", (event) => {
     event.preventDefault();
-    const workout = readForm();
-    if (!workout) return;
-    startSession(workout);
+    const program = readForm();
+    if (!program) return;
+    startSession(program);
   });
 
   saveBtn.addEventListener("click", () => {
-    const workout = readForm();
-    if (!workout) return;
-    const workouts = loadWorkouts();
-    const existingIndex = workouts.findIndex(
-      (w) => w.name.toLowerCase() === workout.name.toLowerCase()
+    const program = readForm();
+    if (!program) return;
+    const programs = loadPrograms();
+    const existingIndex = programs.findIndex(
+      (p) => p.name.toLowerCase() === program.name.toLowerCase()
     );
     if (existingIndex >= 0) {
-      workout.id = workouts[existingIndex].id;
-      workouts[existingIndex] = workout;
+      program.id = programs[existingIndex].id;
+      programs[existingIndex] = program;
     } else {
-      workouts.unshift(workout);
+      programs.unshift(program);
     }
-    saveWorkouts(workouts);
+    savePrograms(programs);
     renderSaved();
+  });
+
+  doneSetBtn.addEventListener("click", () => {
+    if (!session || timerEl.dataset.phase === "done") return;
+    const item = currentItem();
+    if (!item || item.type !== "reps") return;
+    advancePhase();
   });
 
   pauseBtn.addEventListener("click", () => {
     if (!session || timerEl.dataset.phase === "done") return;
+    const item = currentItem();
+    if (!item || item.type !== "timer") return;
     if (session.paused) {
       pauseBtn.textContent = "Pauze";
       startTick();
@@ -351,10 +769,23 @@
 
   skipBtn.addEventListener("click", () => {
     if (!session || timerEl.dataset.phase === "done") return;
+    const item = currentItem();
+    if (!item) return;
+
+    if (item.type === "reps") {
+      advancePhase();
+      return;
+    }
+
     session.remaining = 0;
     updateTimerUI();
     advancePhase();
-    if (session && !session.paused && timerEl.dataset.phase !== "done") {
+    if (
+      session &&
+      !session.paused &&
+      timerEl.dataset.phase !== "done" &&
+      currentItem()?.type === "timer"
+    ) {
       session.lastTs = null;
       if (!session.raf) session.raf = requestAnimationFrame(tick);
     }
@@ -364,6 +795,7 @@
     endSession(false);
   });
 
+  resetDraft();
   renderSaved();
 
   if ("serviceWorker" in navigator) {
