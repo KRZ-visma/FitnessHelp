@@ -179,6 +179,7 @@ test.describe("FitnessHelp", () => {
 
   test("vraagt screen wake lock tijdens training", async ({ page }) => {
     await page.addInitScript(() => {
+      window.__wakeLockRequested = false;
       const sentinel = {
         released: false,
         release: async function release() {
@@ -187,13 +188,17 @@ test.describe("FitnessHelp", () => {
         },
         addEventListener: () => {},
       };
-      // @ts-expect-error test stub
-      navigator.wakeLock = {
+      const fakeWakeLock = {
         request: async () => {
           window.__wakeLockRequested = true;
           return sentinel;
         },
       };
+      Object.defineProperty(navigator, "wakeLock", {
+        configurable: true,
+        enumerable: true,
+        get: () => fakeWakeLock,
+      });
     });
     await page.goto("/");
     await page.evaluate(() => localStorage.clear());
