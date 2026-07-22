@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="nl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="FitnessHelp — plan je sets en duur, start de timer. Opgeslagen in je browser."
+    />
+    <title>FitnessHelp — Sets & duur</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=Figtree:wght@400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="atmosphere" aria-hidden="true"></div>
+
+    <header class="site-header">
+      <p class="brand">FitnessHelp</p>
+      <p class="tagline">Sets plannen. Timer starten. Lokaal bewaard.</p>
+    </header>
+
+    <main>
+      <section class="setup" id="setup" aria-labelledby="setup-title">
+        <h1 id="setup-title" class="visually-hidden">Nieuwe oefening</h1>
+
+        <form id="workout-form" class="workout-form" autocomplete="off">
+          <label class="field">
+            <span>Oefening</span>
+            <input
+              type="text"
+              id="name"
+              name="name"
+              placeholder="bijv. Push-ups"
+              maxlength="60"
+              required
+            />
+          </label>
+
+          <div class="field-row">
+            <label class="field">
+              <span>Aantal sets</span>
+              <input
+                type="number"
+                id="sets"
+                name="sets"
+                min="1"
+                max="99"
+                value="3"
+                required
+              />
+            </label>
+            <label class="field">
+              <span>Duur per set (sec)</span>
+              <input
+                type="number"
+                id="duration"
+                name="duration"
+                min="1"
+                max="3600"
+                value="45"
+                required
+              />
+            </label>
+            <label class="field">
+              <span>Rust tussen sets (sec)</span>
+              <input
+                type="number"
+                id="rest"
+                name="rest"
+                min="0"
+                max="600"
+                value="15"
+                required
+              />
+            </label>
+          </div>
+
+          <div class="actions">
+            <button type="submit" class="btn btn-primary" id="start-btn">
+              Start timer
+            </button>
+            <button type="button" class="btn btn-ghost" id="save-btn">
+              Opslaan
+            </button>
+          </div>
+        </form>
+      </section>
+
+      <section class="timer" id="timer" hidden aria-live="polite">
+        <p class="timer-exercise" id="timer-name"></p>
+        <p class="timer-phase" id="timer-phase">Set 1</p>
+        <p class="timer-clock" id="timer-clock">0:45</p>
+        <div class="timer-progress" aria-hidden="true">
+          <div class="timer-progress-bar" id="timer-bar"></div>
+        </div>
+        <p class="timer-meta" id="timer-meta"></p>
+        <div class="actions">
+          <button type="button" class="btn btn-primary" id="pause-btn">
+            Pauze
+          </button>
+          <button type="button" class="btn btn-ghost" id="skip-btn">
+            Overslaan
+          </button>
+          <button type="button" class="btn btn-ghost" id="stop-btn">
+            Stop
+          </button>
+        </div>
+      </section>
+
+      <section class="saved" id="saved" aria-labelledby="saved-title">
+        <h2 id="saved-title">Opgeslagen</h2>
+        <p class="saved-hint" id="saved-empty">
+          Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
+        </p>
+        <ul class="saved-list" id="saved-list"></ul>
+      </section>
+    </main>
+
+    <footer class="site-footer">
+      <p>Data blijft in je browser (localStorage). Niets wordt naar een server gestuurd.</p>
+    </footer>
+
+    <script src="app.js"></script>
+  </body>
+</html>
