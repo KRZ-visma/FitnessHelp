@@ -21,3 +21,15 @@ Ga naar `http://localhost:8080`.
 ## GitHub Pages
 
 In de repo: **Settings → Pages → Source: Deploy from a branch**, kies `main` en `/ (root)`.
+
+Live: https://krz-visma.github.io/FitnessHelp/
+
+## Tests
+
+Playwright-tests draaien lokaal en via GitHub Actions op elke push/PR:
+
+```bash
+npm install
+npx playwright install chromium
+npm test
+```
