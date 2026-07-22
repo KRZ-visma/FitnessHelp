@@ -582,24 +582,72 @@
     return `${m}:${String(r).padStart(2, "0")}`;
   }
 
+  /** @type {string[]} */
+  const recentBeeps = [];
+
+  /** @param {'start'|'stop'|'tick'|'rest'|'done'} [kind] */
   function beep(kind = "tick") {
+    recentBeeps.push(kind);
+    if (recentBeeps.length > 40) recentBeeps.shift();
     try {
-      const ctx = new (window.AudioContext || window.webkitAudioContext)();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.type = "sine";
-      osc.frequency.value = kind === "done" ? 660 : kind === "rest" ? 440 : 520;
-      gain.gain.value = 0.04;
-      osc.start();
-      gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.18);
-      osc.stop(ctx.currentTime + 0.2);
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+      const now = ctx.currentTime;
+
+      /** @param {number} freq @param {number} startAt @param {number} duration @param {number} [volume] */
+      const playTone = (freq, startAt, duration, volume = 0.06) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = "sine";
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(0.0001, startAt);
+        gain.gain.exponentialRampToValueAtTime(volume, startAt + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, startAt + duration);
+        osc.start(startAt);
+        osc.stop(startAt + duration + 0.02);
+      };
+
+      if (kind === "start") {
+        playTone(523, now, 0.11);
+        playTone(784, now + 0.11, 0.14);
+        setTimeout(() => ctx.close(), 400);
+        return;
+      }
+      if (kind === "stop") {
+        playTone(698, now, 0.11);
+        playTone(349, now + 0.11, 0.16);
+        setTimeout(() => ctx.close(), 400);
+        return;
+      }
+      if (kind === "done") {
+        playTone(523, now, 0.09);
+        playTone(659, now + 0.09, 0.09);
+        playTone(784, now + 0.18, 0.16);
+        setTimeout(() => ctx.close(), 500);
+        return;
+      }
+      if (kind === "rest") {
+        playTone(440, now, 0.16, 0.045);
+        setTimeout(() => ctx.close(), 300);
+        return;
+      }
+      playTone(520, now, 0.12, 0.04);
       setTimeout(() => ctx.close(), 300);
     } catch {
       // Audio optional
     }
   }
+
+  // Test-hook: recente geluidssignalen (start/stop/tick/…)
+  Object.defineProperty(window, "__fitnessHelpBeeps", {
+    configurable: true,
+    get() {
+      return recentBeeps.slice();
+    },
+  });
 
   function updateProgramSuggestions(programs = loadPrograms()) {
     if (!(programNameSuggestions instanceof HTMLDataListElement)) return;
@@ -733,10 +781,10 @@
     pauseBtn.textContent = "Pauze";
     skipBtn.hidden = false;
     requestWakeLock();
-    beginCurrentItem(false);
+    beginCurrentItem();
   }
 
-  function beginCurrentItem(playSound) {
+  function beginCurrentItem() {
     if (!session) return;
     const item = currentItem();
     if (!item) {
@@ -754,7 +802,6 @@
     doneSetBtn.hidden = true;
     pauseBtn.hidden = false;
     timerProgress.hidden = false;
-    if (playSound) beep("tick");
     updateTimerUI();
     startTick();
   }
@@ -770,6 +817,7 @@
     session.isPrep = false;
     session.paused = false;
     pauseBtn.textContent = "Pauze";
+    beep("start");
 
     if (item.type === "timer") {
       session.remaining = item.duration;
@@ -777,7 +825,6 @@
       doneSetBtn.hidden = true;
       pauseBtn.hidden = false;
       timerProgress.hidden = false;
-      beep("tick");
       updateTimerUI();
       startTick();
       return;
@@ -789,7 +836,6 @@
     doneSetBtn.hidden = false;
     pauseBtn.hidden = true;
     timerProgress.hidden = true;
-    beep("tick");
     updateTimerUI();
   }
 
@@ -884,8 +930,9 @@
       endSession(true);
       return;
     }
+    beep("stop");
     session.itemIndex += 1;
-    beginCurrentItem(true);
+    beginCurrentItem();
   }
 
   function advancePhase() {
@@ -1071,6 +1118,7 @@
   });
 
   stopBtn.addEventListener("click", () => {
+    if (session && timerEl.dataset.phase !== "done") beep("stop");
     endSession(false);
   });
 
