@@ -645,7 +645,7 @@
   Object.defineProperty(window, "__fitnessHelpBeeps", {
     configurable: true,
     get() {
-      return recentBeeps.slice();
+      return recentBeeps;
     },
   });
 
