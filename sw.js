@@ -1,4 +1,4 @@
-const CACHE_NAME = "fitnesshelp-static-v1";
+const CACHE_NAME = "fitnesshelp-static-v2";
 
 const PRECACHE_URLS = [
   "./",
@@ -30,6 +30,10 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
+/**
+ * Network-first for app shell so updates (nieuwe knoppen e.d.) niet blijven hangen
+ * achter een oude PWA-cache. Offline valt terug op cache.
+ */
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -38,24 +42,21 @@ self.addEventListener("fetch", (event) => {
   if (url.origin !== self.location.origin) return;
 
   event.respondWith(
-    caches.match(request).then((cached) => {
-      if (cached) return cached;
-
-      return fetch(request)
-        .then((response) => {
-          if (!response || response.status !== 200 || response.type !== "basic") {
-            return response;
-          }
+    fetch(request)
+      .then((response) => {
+        if (response && response.status === 200 && response.type === "basic") {
           const copy = response.clone();
           caches.open(CACHE_NAME).then((cache) => cache.put(request, copy));
-          return response;
-        })
-        .catch(() => {
-          if (request.mode === "navigate") {
-            return caches.match("./index.html");
-          }
-          return undefined;
-        });
-    })
+        }
+        return response;
+      })
+      .catch(async () => {
+        const cached = await caches.match(request);
+        if (cached) return cached;
+        if (request.mode === "navigate") {
+          return caches.match("./index.html");
+        }
+        return undefined;
+      })
   );
 });
