@@ -2,11 +2,18 @@
   const STORAGE_KEY = "fitnesshelp-workouts-v1";
 
   const form = document.getElementById("workout-form");
-  const nameInput = document.getElementById("name");
+  const nameInput = document.getElementById("exercise");
   const setsInput = document.getElementById("sets");
   const durationInput = document.getElementById("duration");
   const restInput = document.getElementById("rest");
   const saveBtn = document.getElementById("save-btn");
+
+  [setsInput, durationInput, restInput].forEach((input) => {
+    input.addEventListener("input", () => {
+      const digits = input.value.replace(/\D/g, "");
+      if (input.value !== digits) input.value = digits;
+    });
+  });
 
   const setupEl = document.getElementById("setup");
   const timerEl = document.getElementById("timer");
