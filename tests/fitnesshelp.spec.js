@@ -1,5 +1,13 @@
 const { test, expect } = require("@playwright/test");
 
+async function openManage(page) {
+  const manageBtn = page.locator("#manage-btn");
+  if (await manageBtn.isVisible()) {
+    await manageBtn.click();
+  }
+  await expect(page.locator("#manage")).toBeVisible();
+}
+
 test.describe("FitnessHelp", () => {
   test.beforeEach(async ({ page }) => {
     await page.goto("/");
@@ -10,6 +18,8 @@ test.describe("FitnessHelp", () => {
   test("toont de pagina met merk en programmaformulier", async ({ page }) => {
     await expect(page).toHaveTitle(/FitnessHelp/i);
     await expect(page.locator(".brand")).toHaveText("FitnessHelp");
+    await expect(page.locator("#home")).toBeHidden();
+    await expect(page.locator("#manage")).toBeVisible();
     await expect(page.locator("#program-name")).toBeVisible();
     await expect(page.locator(".segment")).toHaveCount(1);
     await expect(page.locator(".segment-name")).toBeVisible();
@@ -55,7 +65,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("body")).toHaveClass(/is-running/);
   });
 
-  test("slaat programma op in localStorage", async ({ page }) => {
+  test("slaat programma op als favoriet en toont home", async ({ page }) => {
     await page.fill("#program-name", "Push dag");
     await page.fill(".segment-name", "Push-ups");
     await page.fill(".segment-sets", "4");
@@ -63,9 +73,11 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-rest", "20");
     await page.click("#save-btn");
 
-    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
-    await expect(page.locator("#saved-list")).toContainText("Push dag");
-    await expect(page.locator("#saved-list")).toContainText("Push-ups");
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#home-title")).toHaveText("Push dag");
+    await expect(page.locator("#home-meta")).toContainText("Push-ups");
+    await expect(page.locator("#manage")).toBeHidden();
+    await expect(page.locator("#tagline")).toContainText("favoriet");
 
     const stored = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
@@ -83,6 +95,16 @@ test.describe("FitnessHelp", () => {
         },
       ],
     });
+
+    const favoriteId = await page.evaluate(() =>
+      localStorage.getItem("fitnesshelp-favorite-v1")
+    );
+    expect(favoriteId).toBe(stored[0].id);
+
+    await openManage(page);
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
+    await expect(page.locator("#saved-list")).toContainText("Push dag");
+    await expect(page.locator("#saved-list")).toContainText("Favoriet");
   });
 
   test("ondersteunt gemengd programma met timer en sets & keer", async ({ page }) => {
@@ -111,6 +133,7 @@ test.describe("FitnessHelp", () => {
       { type: "reps", name: "Squats", sets: 3, reps: 12 },
     ]);
 
+    await openManage(page);
     await page.click("#start-btn");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
@@ -148,7 +171,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#timer-phase")).toHaveText("Klaar");
   });
 
-  test("laadt opgeslagen programma en start opnieuw", async ({ page }) => {
+  test("start favoriet vanaf home", async ({ page }) => {
     await page.fill("#program-name", "Core");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "3");
@@ -156,11 +179,35 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-rest", "10");
     await page.click("#save-btn");
 
-    await page.locator("#saved-list button", { hasText: "Start" }).click();
+    await page.click("#home-start-btn");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await page.click("#skip-btn");
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer-name")).toHaveText("Plank");
+  });
+
+  test("kan favoriet wisselen tussen programma’s", async ({ page }) => {
+    await page.fill("#program-name", "Push");
+    await page.fill(".segment-name", "Push-ups");
+    await page.click("#save-btn");
+
+    await openManage(page);
+    await page.fill("#program-name", "Pull");
+    await page.fill(".segment-name", "Rows");
+    await page.click("#save-btn");
+
+    await expect(page.locator("#home-title")).toHaveText("Push");
+    await openManage(page);
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(2);
+
+    await page
+      .locator("#saved-list .saved-item", { hasText: "Pull" })
+      .locator("button", { hasText: "Maak favoriet" })
+      .click();
+
+    await page.click("#manage-done-btn");
+    await expect(page.locator("#home-title")).toHaveText("Pull");
+    await expect(page.locator("#home-meta")).toContainText("Rows");
   });
 
   test("programma-naam toont autocomplete van opgeslagen namen", async ({ page }) => {
@@ -168,6 +215,7 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-name", "Push-ups");
     await page.click("#save-btn");
 
+    await openManage(page);
     const program = page.locator("#program-name");
     await expect(program).toHaveAttribute("list", "program-name-suggestions");
     await expect(page.locator("#program-name-suggestions option")).toHaveCount(1);
@@ -240,11 +288,10 @@ test.describe("FitnessHelp", () => {
     });
     await page.reload();
 
-    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
-    await expect(page.locator("#saved-list")).toContainText("Mijn training");
-    await expect(page.locator("#saved-list")).toContainText("2 onderdelen");
-    await expect(page.locator("#saved-list")).toContainText("Burpees");
-    await expect(page.locator("#saved-list")).toContainText("Squats");
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#home-title")).toHaveText("Mijn training");
+    await expect(page.locator("#home-meta")).toContainText("2 onderdelen");
+    await expect(page.locator("#manage")).toBeHidden();
 
     const stored = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
@@ -259,6 +306,9 @@ test.describe("FitnessHelp", () => {
       ],
     });
 
+    await openManage(page);
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
+    await expect(page.locator("#saved-list")).toContainText("Mijn training");
     await page.locator("#saved-list button", { hasText: "Laden" }).click();
     await expect(page.locator("#program-name")).toHaveValue("Mijn training");
     await expect(page.locator(".segment")).toHaveCount(2);
@@ -279,6 +329,22 @@ test.describe("FitnessHelp", () => {
     await page.click("#stop-btn");
     await expect(page.locator("#timer")).toBeHidden();
     await expect(page.locator("#setup")).toBeVisible();
+    await expect(page.locator("body")).not.toHaveClass(/is-running/);
+  });
+
+  test("na stop met favoriet terug naar home", async ({ page }) => {
+    await page.fill("#program-name", "Core");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "2");
+    await page.fill(".segment-duration", "10");
+    await page.fill(".segment-rest", "5");
+    await page.click("#save-btn");
+    await page.click("#home-start-btn");
+    await page.click("#stop-btn");
+
+    await expect(page.locator("#timer")).toBeHidden();
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#manage")).toBeHidden();
     await expect(page.locator("body")).not.toHaveClass(/is-running/);
   });
 
@@ -385,6 +451,7 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-rest", "10");
     await page.click("#save-btn");
 
+    await openManage(page);
     const downloadPromise = page.waitForEvent("download");
     await page.click("#export-btn");
     const download = await downloadPromise;
@@ -413,6 +480,8 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-duration", "20");
     await page.fill(".segment-rest", "5");
     await page.click("#save-btn");
+
+    await openManage(page);
 
     const payload = {
       version: 1,

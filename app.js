@@ -1,5 +1,6 @@
 (() => {
   const STORAGE_KEY = "fitnesshelp-workouts-v1";
+  const FAVORITE_KEY = "fitnesshelp-favorite-v1";
 
   const PREP_SECONDS = 5;
 
@@ -9,6 +10,16 @@
   const segmentsEl = document.getElementById("segments");
   const addSegmentBtn = document.getElementById("add-segment-btn");
   const saveBtn = document.getElementById("save-btn");
+
+  const taglineEl = document.getElementById("tagline");
+  const homeEl = document.getElementById("home");
+  const homeName = document.getElementById("home-title");
+  const homeMeta = document.getElementById("home-meta");
+  const homeStartBtn = document.getElementById("home-start-btn");
+  const manageBtn = document.getElementById("manage-btn");
+  const manageEl = document.getElementById("manage");
+  const manageHeader = document.getElementById("manage-header");
+  const manageDoneBtn = document.getElementById("manage-done-btn");
 
   const setupEl = document.getElementById("setup");
   const timerEl = document.getElementById("timer");
@@ -33,6 +44,8 @@
 
   const EXPORT_APP = "fitnesshelp";
   const EXPORT_VERSION = 1;
+  const TAGLINE_EMPTY = "Programma bouwen. Timer of sets & keer. Lokaal bewaard.";
+  const TAGLINE_READY = "Één favoriet. Start en train. Lokaal bewaard.";
 
   /**
    * @typedef {{ type: 'timer', name: string, sets: number, duration: number, rest: number }} TimerItem
@@ -49,6 +62,9 @@
 
   /** @type {{ type: 'timer'|'reps', name: string, sets: string, duration: string, rest: string, reps: string }[]} */
   let draftItems = [];
+
+  /** Beheer blijft open tot de gebruiker klaar is of opnieuw start vanuit home. */
+  let managing = false;
 
   function loadPrograms() {
     try {
@@ -105,6 +121,66 @@
   /** @param {Program[]} programs */
   function savePrograms(programs) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+  }
+
+  /** @returns {string | null} */
+  function loadFavoriteId() {
+    try {
+      const id = localStorage.getItem(FAVORITE_KEY);
+      return id && typeof id === "string" ? id : null;
+    } catch {
+      return null;
+    }
+  }
+
+  /** @param {string | null} id */
+  function saveFavoriteId(id) {
+    try {
+      if (!id) {
+        localStorage.removeItem(FAVORITE_KEY);
+        return;
+      }
+      localStorage.setItem(FAVORITE_KEY, id);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * @param {Program[]} programs
+   * @returns {Program | null}
+   */
+  function resolveFavorite(programs) {
+    if (!programs.length) {
+      saveFavoriteId(null);
+      return null;
+    }
+    const favoriteId = loadFavoriteId();
+    const match = favoriteId ? programs.find((p) => p.id === favoriteId) : null;
+    if (match) return match;
+    saveFavoriteId(programs[0].id);
+    return programs[0];
+  }
+
+  /** @param {string} id */
+  function setFavorite(id) {
+    const programs = loadPrograms();
+    if (!programs.some((p) => p.id === id)) return;
+    saveFavoriteId(id);
+    renderApp();
+  }
+
+  /**
+   * @param {Program} program
+   * @returns {string}
+   */
+  function programSummary(program) {
+    const parts = program.items.map((item) =>
+      item.type === "reps" ? `${item.name} (sets & keer)` : `${item.name} (timer)`
+    );
+    const count =
+      program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`;
+    return `${count} · ${parts.join(" · ")}`;
   }
 
   /** @param {string} message @param {'ok'|'error'} [tone] */
@@ -262,7 +338,8 @@
 
         const merged = mergePrograms(loadPrograms(), incoming);
         savePrograms(merged);
-        renderSaved();
+        resolveFavorite(merged);
+        renderApp();
 
         const count = incoming.length;
         setTransferStatus(
@@ -642,6 +719,8 @@
 
   function renderSaved() {
     const programs = loadPrograms();
+    const favorite = resolveFavorite(programs);
+    const favoriteId = favorite?.id ?? null;
     savedList.innerHTML = "";
     savedEmpty.hidden = programs.length > 0;
     updateProgramSuggestions(programs);
@@ -649,13 +728,16 @@
     programs.forEach((program) => {
       const li = document.createElement("li");
       li.className = "saved-item";
+      if (program.id === favoriteId) li.classList.add("is-favorite");
 
       const info = document.createElement("div");
       info.className = "saved-info";
       const parts = program.items
         .map((item) => `${escapeHtml(item.name)} (${item.type === "reps" ? "sets & keer" : "timer"})`)
         .join(" · ");
-      info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`} · ${parts}</span>`;
+      const favoriteBadge =
+        program.id === favoriteId ? `<span class="saved-favorite-badge">Favoriet</span>` : "";
+      info.innerHTML = `<strong>${escapeHtml(program.name)}</strong>${favoriteBadge}<span>${program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`} · ${parts}</span>`;
 
       const actions = document.createElement("div");
       actions.className = "saved-actions";
@@ -679,6 +761,15 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
+      const favoriteBtn = document.createElement("button");
+      favoriteBtn.type = "button";
+      favoriteBtn.className = "btn btn-ghost";
+      favoriteBtn.textContent = program.id === favoriteId ? "Favoriet" : "Maak favoriet";
+      favoriteBtn.disabled = program.id === favoriteId;
+      favoriteBtn.addEventListener("click", () => {
+        setFavorite(program.id);
+      });
+
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "btn btn-danger";
@@ -686,13 +777,75 @@
       remove.addEventListener("click", () => {
         const next = loadPrograms().filter((p) => p.id !== program.id);
         savePrograms(next);
-        renderSaved();
+        if (loadFavoriteId() === program.id) {
+          saveFavoriteId(next[0]?.id ?? null);
+        }
+        renderApp();
       });
 
-      actions.append(start, load, remove);
+      actions.append(start, load, favoriteBtn, remove);
       li.append(info, actions);
       savedList.append(li);
     });
+  }
+
+  function renderHome() {
+    const programs = loadPrograms();
+    const favorite = resolveFavorite(programs);
+
+    if (!favorite) {
+      homeEl.hidden = true;
+      homeName.textContent = "";
+      homeMeta.textContent = "";
+      if (taglineEl) taglineEl.textContent = TAGLINE_EMPTY;
+      return null;
+    }
+
+    homeEl.hidden = false;
+    homeName.textContent = favorite.name;
+    homeMeta.textContent = programSummary(favorite);
+    if (taglineEl) taglineEl.textContent = TAGLINE_READY;
+    return favorite;
+  }
+
+  /**
+   * Toont home als er een favoriet is en beheer niet open staat;
+   * beheer is altijd zichtbaar als er nog niets is.
+   */
+  function updateShell() {
+    const programs = loadPrograms();
+    const hasPrograms = programs.length > 0;
+    const showManage = !hasPrograms || managing;
+
+    if (!hasPrograms) managing = false;
+
+    document.body.classList.toggle("has-programs", hasPrograms);
+    document.body.classList.toggle("is-managing", showManage && hasPrograms);
+
+    manageEl.hidden = !showManage;
+    manageHeader.hidden = !hasPrograms;
+    homeEl.hidden = !hasPrograms || showManage;
+  }
+
+  function openManage() {
+    managing = true;
+    const favorite = resolveFavorite(loadPrograms());
+    if (favorite) fillForm(favorite);
+    renderApp();
+    programNameInput.focus();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function closeManage() {
+    managing = false;
+    renderApp();
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  function renderApp() {
+    renderHome();
+    renderSaved();
+    updateShell();
   }
 
   function escapeHtml(value) {
@@ -728,6 +881,8 @@
     };
 
     document.body.classList.add("is-running");
+    homeEl.hidden = true;
+    manageEl.hidden = true;
     setupEl.hidden = true;
     timerEl.hidden = false;
     pauseBtn.textContent = "Pauze";
@@ -824,6 +979,7 @@
     setupEl.hidden = false;
     timerEl.dataset.phase = "";
     timerEl.dataset.mode = "";
+    renderApp();
   }
 
   function updateTimerUI() {
@@ -1015,7 +1171,12 @@
       programs.unshift(program);
     }
     savePrograms(programs);
-    renderSaved();
+    if (!loadFavoriteId() || !programs.some((p) => p.id === loadFavoriteId())) {
+      saveFavoriteId(program.id);
+    }
+    // Na opslaan terug naar home: favoriet centraal, beheer op de achtergrond
+    managing = false;
+    renderApp();
   });
 
   doneSetBtn.addEventListener("click", () => {
@@ -1080,6 +1241,21 @@
     requestWakeLock();
   });
 
+  homeStartBtn.addEventListener("click", () => {
+    const favorite = resolveFavorite(loadPrograms());
+    if (!favorite) return;
+    fillForm(favorite);
+    startSession(favorite);
+  });
+
+  manageBtn.addEventListener("click", () => {
+    openManage();
+  });
+
+  manageDoneBtn.addEventListener("click", () => {
+    closeManage();
+  });
+
   exportBtn.addEventListener("click", () => {
     exportPrograms();
   });
@@ -1096,7 +1272,7 @@
   });
 
   resetDraft();
-  renderSaved();
+  renderApp();
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {

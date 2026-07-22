@@ -110,11 +110,63 @@ main {
 
 .setup,
 .timer,
-.saved {
+.saved,
+.home {
   background: var(--surface);
   backdrop-filter: blur(10px);
   padding: clamp(1.25rem, 3vw, 1.75rem);
   animation: rise 0.8s var(--ease) both;
+}
+
+.home {
+  animation-delay: 0.08s;
+}
+
+.home-label {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.home-name {
+  margin: 0.4rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.85rem, 6vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.home-meta {
+  margin: 0.65rem 0 0;
+  color: var(--ink-soft);
+  font-weight: 500;
+  max-width: 36rem;
+}
+
+.manage {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.25rem);
+}
+
+.manage-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.manage-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.35rem;
+  letter-spacing: -0.02em;
+  color: #f4ffe8;
 }
 
 .setup {
@@ -491,7 +543,19 @@ main {
   font-size: 1.05rem;
 }
 
+.saved-favorite-badge {
+  display: inline-block;
+  margin: 0.2rem 0 0.15rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #2f6b45;
+}
+
 .saved-info span {
+  display: block;
   color: var(--ink-soft);
   font-size: 0.92rem;
 }
@@ -513,8 +577,8 @@ main {
   font-size: 0.88rem;
 }
 
-body.is-running .setup,
-body.is-running .saved {
+body.is-running .home,
+body.is-running .manage {
   display: none;
 }
 
