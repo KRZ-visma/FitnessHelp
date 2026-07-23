@@ -255,7 +255,7 @@ export function fillForm(program) {
   programSwitchInput.value = String(program.switch ?? 15);
   draftItems = program.items
     .map((item) => {
-      if (!("exerciseId" in item)) return null;
+      if (typeof item.exerciseId !== "string" || !item.exerciseId) return null;
       const resolved = resolveExercise(item, program.rest);
       if (!resolved) return null;
       return {
