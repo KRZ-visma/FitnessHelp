@@ -37,3 +37,8 @@ export const exportBtn = document.getElementById("export-btn");
 export const importBtn = document.getElementById("import-btn");
 export const importFile = document.getElementById("import-file");
 export const transferStatus = document.getElementById("transfer-status");
+
+export const exercisesSection = document.getElementById("exercises-section");
+export const exercisesEmpty = document.getElementById("exercises-empty");
+export const exercisesList = document.getElementById("exercises-list");
+export const addExerciseBtn = document.getElementById("add-exercise-btn");

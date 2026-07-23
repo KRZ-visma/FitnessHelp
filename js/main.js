@@ -1,5 +1,6 @@
 import {
   addSegmentBtn,
+  addExerciseBtn,
   doneSetBtn,
   exportBtn,
   form,
@@ -16,7 +17,7 @@ import {
   stopBtn,
 } from "./dom.js";
 import { APP_VERSION } from "./constants.js";
-import { addDraftItem, bindDigits, fillForm, guardSafariAutofill, readForm, resetDraft } from "./form.js";
+import { addDraftItem, addExerciseToForm, bindDigits, fillForm, guardSafariAutofill, readForm, resetDraft } from "./form.js";
 import { hooks } from "./hooks.js";
 import { closeManage, nextOpenProgram, openManage, renderApp, setManaging } from "./shell.js";
 import {
@@ -34,10 +35,13 @@ import {
   togglePause,
 } from "./timer.js";
 import { exportPrograms, importProgramsFromFile } from "./transfer.js";
+import { renderExercises, showExerciseModal } from "./exercises-ui.js";
 
 hooks.renderApp = renderApp;
 hooks.fillForm = fillForm;
 hooks.startSession = startSession;
+hooks.renderExercises = renderExercises;
+hooks.addExerciseToForm = addExerciseToForm;
 
 addSegmentBtn.addEventListener("click", () => {
   addDraftItem("timer");
@@ -120,6 +124,10 @@ importFile.addEventListener("change", () => {
   const file = importFile.files && importFile.files[0];
   if (!file) return;
   importProgramsFromFile(file);
+});
+
+addExerciseBtn.addEventListener("click", () => {
+  showExerciseModal();
 });
 
 resetDraft();
