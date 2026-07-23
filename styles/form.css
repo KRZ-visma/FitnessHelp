@@ -1,0 +1,137 @@
+.workout-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.field-row {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 640px) {
+  .field-row {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .segment[data-type="reps"] .field-row {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+.segments-header {
+  display: grid;
+  gap: 0.15rem;
+}
+
+.segments-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.segments-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-weight: 500;
+}
+
+.segments {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.segment {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 0 0;
+  border-top: 1px solid var(--line);
+}
+
+.segment:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.segment-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+}
+
+.segment-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.segment-type {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%233d5648' d='M1.1 1.2 6 6.1l4.9-4.9 1.1 1.1L6 8.3.0 2.3z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+  color: var(--ink);
+  font: inherit;
+  font-size: 0.95rem;
+  font-weight: 600;
+  padding: 0.5rem 2rem 0.5rem 0.8rem;
+  outline: none;
+  cursor: pointer;
+}
+
+.segment-type:focus {
+  border-color: #2f6b45;
+  box-shadow: 0 0 0 3px rgba(47, 107, 69, 0.18);
+}
+
+.segment-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.segment-order {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.field {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.field span {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.field input {
+  width: 100%;
+  border: 1px solid var(--line);
+  background: #fff;
+  color: var(--ink);
+  font: inherit;
+  font-size: 1.05rem;
+  font-weight: 600;
+  padding: 0.8rem 0.9rem;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.field input:focus {
+  border-color: #2f6b45;
+  box-shadow: 0 0 0 3px rgba(47, 107, 69, 0.18);
+}
