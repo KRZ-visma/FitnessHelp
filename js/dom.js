@@ -1,6 +1,5 @@
 export const form = document.getElementById("workout-form");
 export const programNameInput = document.getElementById("program-name");
-export const programNameSuggestions = document.getElementById("program-name-suggestions");
 export const programRestInput = document.getElementById("program-rest");
 export const programSwitchInput = document.getElementById("program-switch");
 export const segmentsEl = document.getElementById("segments");

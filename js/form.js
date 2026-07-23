@@ -1,15 +1,36 @@
 import {
   programNameInput,
-  programNameSuggestions,
   programRestInput,
   programSwitchInput,
   segmentsEl,
 } from "./dom.js";
-import { loadPrograms } from "./storage.js";
 import { clampInt, uid } from "./util.js";
 
 /** @type {{ type: 'timer'|'reps', name: string, sets: string, duration: string, reps: string }[]} */
 let draftItems = [];
+
+/**
+ * Safari negeert autocomplete="off" en vult dan via heuristiek.
+ * Custom tokens + readonly-tot-focus blokkeren contact-/formulier-autofill.
+ * @param {HTMLInputElement} input
+ * @param {string} token
+ */
+export function guardSafariAutofill(input, token) {
+  input.autocomplete = token;
+  input.setAttribute("autocorrect", "off");
+  input.spellcheck = false;
+  input.readOnly = true;
+
+  const unlock = () => {
+    if (input.readOnly) input.readOnly = false;
+  };
+  const lock = () => {
+    input.readOnly = true;
+  };
+  input.addEventListener("focus", unlock);
+  input.addEventListener("touchstart", unlock, { passive: true });
+  input.addEventListener("blur", lock);
+}
 
 export function defaultDraftItem(type = "timer") {
   if (type === "reps") {
@@ -78,13 +99,11 @@ export function renderSegments() {
     nameInput.name = `fh-exercise-${index}`;
     nameInput.placeholder = "bijv. Push-ups";
     nameInput.maxLength = 60;
-    nameInput.autocomplete = "fh-exercise";
-    nameInput.spellcheck = false;
-    nameInput.setAttribute("autocorrect", "off");
     nameInput.setAttribute("autocapitalize", "words");
     nameInput.setAttribute("enterkeyhint", "done");
     nameInput.required = true;
     nameInput.value = item.name;
+    guardSafariAutofill(nameInput, "fh-exercise");
     nameInput.addEventListener("input", () => {
       draftItems[index].name = nameInput.value;
     });
@@ -176,7 +195,7 @@ function makeNumberField(labelText, className, value, onChange) {
   input.inputMode = "numeric";
   input.pattern = "[0-9]*";
   input.className = className;
-  input.autocomplete = "off";
+  input.autocomplete = `fh-${className}`;
   input.required = true;
   input.value = value;
   bindDigits(input);
@@ -283,20 +302,4 @@ export function fillForm(program) {
   });
   if (!draftItems.length) draftItems = [defaultDraftItem("timer")];
   renderSegments();
-}
-
-export function updateProgramSuggestions(programs = loadPrograms()) {
-  if (!(programNameSuggestions instanceof HTMLDataListElement)) return;
-  programNameSuggestions.innerHTML = "";
-  const seen = new Set();
-  programs.forEach((program) => {
-    const name = program.name.trim();
-    if (!name) return;
-    const key = name.toLowerCase();
-    if (seen.has(key)) return;
-    seen.add(key);
-    const option = document.createElement("option");
-    option.value = name;
-    programNameSuggestions.append(option);
-  });
 }

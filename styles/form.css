@@ -1,6 +1,29 @@
 .workout-form {
+  position: relative;
   display: grid;
   gap: 1rem;
+}
+
+/* Vangt Safari/iOS contact-autofill op, buiten beeld en niet focusbaar. */
+.autofill-trap {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.autofill-trap input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
 }
 
 .field-row {
@@ -156,6 +179,8 @@
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
   touch-action: manipulation;
+  /* Houd gefocust veld boven iOS toetsenbord + accessoiresbalk */
+  scroll-margin-bottom: 8rem;
 }
 
 .field input:focus {
