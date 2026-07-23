@@ -18,15 +18,15 @@ Raak bij een feature **alleen** de relevante module(s). Dat voorkomt merge-confl
 
 | Domein | JS | CSS | Tests |
 | --- | --- | --- | --- |
-| Opslag / favoriet / migratie | `js/storage.js` | — | `tests/home.spec.js`, `tests/form.spec.js` |
-| Formulier / onderdelen | `js/form.js` | `styles/form.css` | `tests/form.spec.js` |
-| Timer-sessie | `js/timer.js` | `styles/timer.css` | `tests/timer.spec.js` |
-| Home / beheer-shell | `js/shell.js` | `styles/layout.css` | `tests/home.spec.js` |
+| Opslag / favoriet / migratie | `js/storage.js` | — | `tests/home.spec.js`, `tests/transfer.spec.js` |
+| Formulier / onderdelen / rust+wissel | `js/form.js` | `styles/form.css` | `tests/form.spec.js` |
+| Timer-sessie (prep/rust/wissel) | `js/timer.js` | `styles/timer.css` | `tests/timer.spec.js` |
+| Home / beheer-shell / footer-versie | `js/shell.js`, `js/constants.js` (`APP_VERSION`) | `styles/layout.css` | `tests/home.spec.js`, `tests/form.spec.js` |
 | Import / export | `js/transfer.js` | `styles/saved.css` | `tests/transfer.spec.js` |
 | Geluid | `js/audio.js` | — | `tests/audio.spec.js` |
 | PWA | `sw.js`, `manifest.webmanifest` | — | `tests/pwa.spec.js` |
 | Wire-up / DOM-refs | `js/main.js`, `js/dom.js`, `js/hooks.js` | — | — |
-| Tokens / knoppen | `js/constants.js`, `js/util.js` | `styles/base.css` | — |
+| Tokens / knoppen | `js/util.js` | `styles/base.css` | — |
 
 Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modules.
 

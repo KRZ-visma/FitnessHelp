@@ -24,6 +24,12 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#add-segment-btn")).toBeVisible();
   });
 
+  test("toont app-versie klein in de footer", async ({ page }) => {
+    const version = page.locator("#app-version");
+    await expect(version).toBeVisible();
+    await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
+  });
+
   test("programma-naam toont autocomplete van opgeslagen namen", async ({ page }) => {
     await page.fill("#program-name", "Push dag");
     await page.fill(".segment-name", "Push-ups");

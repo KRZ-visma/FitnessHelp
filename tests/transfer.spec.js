@@ -114,4 +114,25 @@ test.describe("Import / export", () => {
     await expect(page.locator("#transfer-status")).toHaveText("Ongeldig JSON-bestand.");
     await expect(page.locator("#transfer-status")).toHaveAttribute("data-tone", "error");
   });
+
+  test("vult ontbrekende rust/wissel bij oude programma’s", async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.setItem(
+        "fitnesshelp-workouts-v1",
+        JSON.stringify([
+          {
+            id: "old_prog",
+            name: "Oud schema",
+            items: [{ type: "timer", name: "Plank", sets: 2, duration: 30, rest: 22 }],
+          },
+        ])
+      );
+    });
+    await page.reload();
+
+    await openManage(page);
+    await page.locator("#saved-list button", { hasText: "Laden" }).click();
+    await expect(page.locator("#program-rest")).toHaveValue("22");
+    await expect(page.locator("#program-switch")).toHaveValue("15");
+  });
 });

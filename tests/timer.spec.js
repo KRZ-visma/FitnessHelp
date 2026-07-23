@@ -193,4 +193,58 @@ test.describe("Timer", () => {
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 1");
   });
+
+  test("gebruikt algemene rust tussen sets bij sets & keer", async ({ page }) => {
+    await page.fill("#program-name", "Kracht");
+    await page.fill("#program-rest", "8");
+    await page.fill("#program-switch", "0");
+    await page.locator(".segment-type").selectOption("reps");
+    await page.fill(".segment-name", "Deadlift");
+    await page.fill(".segment-sets", "2");
+    await page.fill(".segment-reps", "5");
+    await page.click("#start-btn");
+    await page.click("#skip-btn");
+
+    await page.click("#done-set-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "rest");
+    await expect(page.locator("#timer-phase")).toHaveText("Rust · na set 1");
+    await expect(page.locator("#timer-clock")).toHaveText("0:08");
+    await expect(page.locator("#done-set-btn")).toBeHidden();
+    await expect(page.locator("#pause-btn")).toBeVisible();
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-phase")).toContainText("Set 2 van 2");
+    await expect(page.locator("#done-set-btn")).toBeVisible();
+  });
+
+  test("toont wisseltijd tussen oefeningen", async ({ page }) => {
+    await page.fill("#program-name", "Circuit");
+    await page.fill("#program-rest", "0");
+    await page.fill("#program-switch", "12");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "1");
+    await page.fill(".segment-duration", "5");
+    await page.click("#add-segment-btn");
+    const second = page.locator(".segment").nth(1);
+    await second.locator(".segment-type").selectOption("reps");
+    await second.locator(".segment-name").fill("Squats");
+    await second.locator(".segment-sets").fill("1");
+    await second.locator(".segment-reps").fill("10");
+
+    await page.click("#start-btn");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
+    await expect(page.locator("#timer-phase")).toHaveText("Wisselen");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-clock")).toHaveText("0:12");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-clock")).toHaveText("10×");
+  });
 });
