@@ -1,7 +1,6 @@
 import {
   exercisesEmpty,
   exercisesList,
-  segmentsEl,
 } from "./dom.js";
 import {
   addExercise,
@@ -10,7 +9,8 @@ import {
   updateExercise,
 } from "./exercises.js";
 import { hooks } from "./hooks.js";
-import { escapeHtml } from "./util.js";
+import { loadPrograms, savePrograms } from "./storage.js";
+import { clampInt, uid } from "./util.js";
 
 export function renderExercises() {
   const exercises = loadExercises();
@@ -41,14 +41,6 @@ export function renderExercises() {
     const actions = document.createElement("div");
     actions.className = "exercise-actions";
 
-    const use = document.createElement("button");
-    use.type = "button";
-    use.className = "btn btn-primary";
-    use.textContent = "Gebruik";
-    use.addEventListener("click", () => {
-      hooks.addExerciseToForm(exercise);
-    });
-
     const edit = document.createElement("button");
     edit.type = "button";
     edit.className = "btn btn-ghost";
@@ -62,14 +54,37 @@ export function renderExercises() {
     remove.className = "btn btn-danger";
     remove.textContent = "Verwijder";
     remove.addEventListener("click", () => {
+      const used = loadPrograms().some((program) =>
+        program.items.some(
+          (item) => "exerciseId" in item && item.exerciseId === exercise.id
+        )
+      );
+      if (used) {
+        const ok = window.confirm(
+          `"${exercise.name}" zit in een of meer programma’s. Verwijderen haalt de oefening daar ook weg. Doorgaan?`
+        );
+        if (!ok) return;
+      }
       removeExercise(exercise.id);
+      stripExerciseFromPrograms(exercise.id);
       hooks.renderApp();
     });
 
-    actions.append(use, edit, remove);
+    actions.append(edit, remove);
     li.append(info, actions);
     exercisesList.append(li);
   });
+}
+
+/** @param {string} exerciseId */
+function stripExerciseFromPrograms(exerciseId) {
+  const programs = loadPrograms().map((program) => ({
+    ...program,
+    items: program.items.filter(
+      (item) => !("exerciseId" in item) || item.exerciseId !== exerciseId
+    ),
+  }));
+  savePrograms(programs);
 }
 
 export function showExerciseModal(exercise = null) {
@@ -85,15 +100,11 @@ export function showExerciseModal(exercise = null) {
 
   const title = document.createElement("h2");
   title.id = "modal-title";
+  title.className = "modal-title";
   title.textContent = isEdit ? "Oefening bewerken" : "Nieuwe oefening";
-  title.style.margin = "0 0 1rem";
-  title.style.fontFamily = "var(--font-display)";
-  title.style.fontWeight = "800";
-  title.style.fontSize = "1.3rem";
 
   const form = document.createElement("form");
-  form.style.display = "grid";
-  form.style.gap = "1rem";
+  form.className = "exercise-form";
 
   const nameField = createField(
     "Naam oefening",
@@ -112,7 +123,6 @@ export function showExerciseModal(exercise = null) {
     <option value="timer"${!exercise || exercise.type === "timer" ? " selected" : ""}>Timer</option>
     <option value="reps"${exercise?.type === "reps" ? " selected" : ""}>Sets & keer</option>
   `;
-  typeSelect.style.width = "100%";
   typeField.append(typeSelect);
 
   const setsField = createField(
@@ -162,9 +172,7 @@ export function showExerciseModal(exercise = null) {
   updateFields();
 
   const actions = document.createElement("div");
-  actions.style.display = "flex";
-  actions.style.gap = "0.75rem";
-  actions.style.marginTop = "0.5rem";
+  actions.className = "modal-actions";
 
   const save = document.createElement("button");
   save.type = "submit";
@@ -186,23 +194,24 @@ export function showExerciseModal(exercise = null) {
     e.preventDefault();
     const name = nameInput.value.trim();
     const sets = Number(setsInput.value);
-    if (!name || !sets || sets < 1) return;
+    if (!name || !Number.isFinite(sets) || sets < 1) return;
 
+    /** @type {import('./exercises.js').Exercise} */
     const exerciseData = {
-      id: exercise?.id || "",
+      id: exercise?.id || uid(),
       name,
-      type: typeSelect.value,
-      sets,
+      type: /** @type {'timer'|'reps'} */ (typeSelect.value),
+      sets: clampInt(sets, 1, 99),
     };
 
     if (typeSelect.value === "timer") {
       const duration = Number(durationInput.value);
-      if (!duration || duration < 1) return;
-      exerciseData.duration = duration;
+      if (!Number.isFinite(duration) || duration < 1) return;
+      exerciseData.duration = clampInt(duration, 1, 3600);
     } else {
       const reps = Number(repsInput.value);
-      if (!reps || reps < 1) return;
-      exerciseData.reps = reps;
+      if (!Number.isFinite(reps) || reps < 1) return;
+      exerciseData.reps = clampInt(reps, 1, 999);
     }
 
     if (isEdit) {

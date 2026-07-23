@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, saveAndStart } = require("./helpers");
+const { clearAndReload, createProgram } = require("./helpers");
 
 test.describe("Audio", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,20 +7,16 @@ test.describe("Audio", () => {
   });
 
   test("speelt start- en stopgeluid bij onderdelen", async ({ page }) => {
-    await page.fill("#program-name", "Geluid");
-    await page.fill("#program-rest", "0");
-    await page.fill("#program-switch", "0");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "5");
-    await page.click("#add-segment-btn");
-    const second = page.locator(".segment").nth(1);
-    await second.locator(".segment-type").selectOption("reps");
-    await second.locator(".segment-name").fill("Squats");
-    await second.locator(".segment-sets").fill("1");
-    await second.locator(".segment-reps").fill("5");
-
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Geluid",
+      rest: 0,
+      switchSec: 0,
+      exercises: [
+        { name: "Plank", sets: 1, duration: 5 },
+        { name: "Squats", type: "reps", sets: 1, reps: 5 },
+      ],
+    });
+    await page.click("#home-start-btn");
     await page.evaluate(() => {
       window.__fitnessHelpBeeps.length = 0;
     });
@@ -64,12 +60,12 @@ test.describe("Audio", () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.fill("#program-name", "Stil");
-    await page.fill("#program-rest", "0");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "5");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Stil",
+      rest: 0,
+      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+    });
+    await page.click("#home-start-btn");
 
     await expect
       .poll(() => page.evaluate(() => window.__fitnessHelpAudioSessionType))

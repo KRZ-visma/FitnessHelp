@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, openManage } = require("./helpers");
+const { clearAndReload, createProgram, openManage } = require("./helpers");
 
 test.describe("Import / export", () => {
   test.beforeEach(async ({ page }) => {
@@ -13,13 +13,12 @@ test.describe("Import / export", () => {
     await expect(page.locator("#import-btn")).toHaveText("Importeren");
   });
 
-  test("exporteert opgeslagen programma’s als JSON", async ({ page }) => {
-    await page.fill("#program-name", "Export dag");
-    await page.fill("#program-rest", "10");
-    await page.fill(".segment-name", "Lunges");
-    await page.fill(".segment-sets", "3");
-    await page.fill(".segment-duration", "30");
-    await page.click("#save-btn");
+  test("exporteert programma’s, oefeningen en dagvolgorde als JSON", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Export dag",
+      rest: 10,
+      exercises: [{ name: "Lunges", sets: 3, duration: 30 }],
+    });
 
     await openManage(page);
     const downloadPromise = page.waitForEvent("download");
@@ -32,46 +31,69 @@ test.describe("Import / export", () => {
     const fs = require("fs");
     const payload = JSON.parse(fs.readFileSync(path, "utf8"));
     expect(payload).toMatchObject({
-      version: 1,
+      version: 2,
       app: "fitnesshelp",
     });
     expect(payload.programs).toHaveLength(1);
+    expect(payload.exercises).toHaveLength(1);
+    expect(payload.programIds).toEqual([payload.programs[0].id]);
     expect(payload.programs[0]).toMatchObject({
       name: "Export dag",
       rest: 10,
       switch: 15,
-      items: [{ type: "timer", name: "Lunges", sets: 3, duration: 30, rest: 10 }],
+    });
+    expect(payload.programs[0].items[0]).toHaveProperty("exerciseId");
+    expect(payload.exercises[0]).toMatchObject({
+      name: "Lunges",
+      type: "timer",
+      sets: 3,
+      duration: 30,
     });
     await expect(page.locator("#transfer-status")).toHaveText("1 programma geëxporteerd.");
   });
 
   test("importeert programma’s uit JSON en merged op naam", async ({ page }) => {
-    await page.fill("#program-name", "Bestaand");
-    await page.fill("#program-rest", "5");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "20");
-    await page.click("#save-btn");
+    await createProgram(page, {
+      programName: "Bestaand",
+      rest: 5,
+      exercises: [{ name: "Plank", sets: 2, duration: 20 }],
+    });
 
     await openManage(page);
 
     const payload = {
-      version: 1,
+      version: 2,
       app: "fitnesshelp",
+      exercises: [
+        {
+          id: "ex_curl",
+          name: "Curl",
+          type: "reps",
+          sets: 4,
+          reps: 12,
+        },
+        {
+          id: "ex_burpees",
+          name: "Burpees",
+          type: "timer",
+          sets: 5,
+          duration: 40,
+        },
+      ],
       programs: [
         {
           id: "import_new",
           name: "Import nieuw",
           rest: 12,
           switch: 8,
-          items: [{ type: "reps", name: "Curl", sets: 4, reps: 12 }],
+          items: [{ exerciseId: "ex_curl" }],
         },
         {
           id: "import_replace",
           name: "Bestaand",
           rest: 15,
           switch: 6,
-          items: [{ type: "timer", name: "Burpees", sets: 5, duration: 40, rest: 15 }],
+          items: [{ exerciseId: "ex_burpees" }],
         },
       ],
     };
@@ -90,19 +112,53 @@ test.describe("Import / export", () => {
     await expect(page.locator("#saved-list")).toContainText("Burpees");
     await expect(page.locator("#saved-list")).not.toContainText("Plank");
 
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
-    );
-    expect(stored).toHaveLength(2);
-    const replaced = stored.find((p) => p.name === "Bestaand");
-    expect(replaced.items[0]).toMatchObject({
-      type: "timer",
-      name: "Burpees",
-      sets: 5,
-      duration: 40,
-      rest: 15,
-    });
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+    }));
+    expect(stored.programs).toHaveLength(2);
+    const replaced = stored.programs.find((p) => p.name === "Bestaand");
+    expect(replaced.items[0]).toMatchObject({ exerciseId: "ex_burpees" });
     expect(replaced).toMatchObject({ rest: 15, switch: 6 });
+    expect(stored.exercises.some((ex) => ex.name === "Burpees")).toBe(true);
+  });
+
+  test("importeert legacy inline items naar bibliotheek-refs", async ({ page }) => {
+    await openManage(page);
+    const payload = {
+      version: 1,
+      app: "fitnesshelp",
+      programs: [
+        {
+          id: "legacy_import",
+          name: "Oud import",
+          rest: 10,
+          switch: 5,
+          items: [{ type: "timer", name: "Burpees", sets: 3, duration: 40, rest: 10 }],
+        },
+      ],
+    };
+
+    await page.setInputFiles("#import-file", {
+      name: "legacy.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(payload)),
+    });
+
+    await expect(page.locator("#transfer-status")).toHaveText("1 programma geïmporteerd.");
+    await expect(page.locator("#saved-list")).toContainText("Burpees");
+
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+    }));
+    expect(stored.programs[0].items[0]).toHaveProperty("exerciseId");
+    expect(stored.exercises[0]).toMatchObject({
+      name: "Burpees",
+      type: "timer",
+      sets: 3,
+      duration: 40,
+    });
   });
 
   test("toont fout bij ongeldige import", async ({ page }) => {
@@ -134,5 +190,6 @@ test.describe("Import / export", () => {
     await page.locator("#saved-list button", { hasText: "Laden" }).click();
     await expect(page.locator("#program-rest")).toHaveValue("22");
     await expect(page.locator("#program-switch")).toHaveValue("15");
+    await expect(page.locator(".segment-name")).toHaveText("Plank");
   });
 });

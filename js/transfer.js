@@ -1,13 +1,16 @@
 import { EXPORT_APP, EXPORT_VERSION } from "./constants.js";
 import { transferStatus } from "./dom.js";
+import { loadExercises, normalizeExercise, saveExercises } from "./exercises.js";
 import { hooks } from "./hooks.js";
+import { convertInlineItemsToRefs } from "./migration.js";
 import {
   defaultRestFromItems,
   legacyWorkoutToItem,
   loadPrograms,
   normalizeProgram,
-  resolveFavorite,
+  saveDayOrder,
   savePrograms,
+  syncDayOrder,
 } from "./storage.js";
 import { uid } from "./util.js";
 
@@ -30,6 +33,22 @@ export function extractImportEntries(data) {
     if (Array.isArray(obj.programs)) return obj.programs;
   }
   return null;
+}
+
+/** @param {unknown} data @returns {import('./exercises.js').Exercise[]} */
+export function extractImportExercises(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return [];
+  const obj = /** @type {Record<string, unknown>} */ (data);
+  if (!Array.isArray(obj.exercises)) return [];
+  return obj.exercises.map(normalizeExercise).filter(Boolean);
+}
+
+/** @param {unknown} data @returns {string[] | null} */
+export function extractImportDayOrder(data) {
+  if (!data || typeof data !== "object" || Array.isArray(data)) return null;
+  const obj = /** @type {Record<string, unknown>} */ (data);
+  if (!Array.isArray(obj.programIds)) return null;
+  return obj.programIds.filter((id) => typeof id === "string");
 }
 
 /** @param {unknown[]} entries @returns {import('./constants.js').Program[]} */
@@ -73,7 +92,7 @@ export function programsFromEntries(entries) {
       name: "Mijn training",
       rest: defaultRestFromItems(migratedItems),
       switch: 15,
-      items: migratedItems,
+      items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
     });
   }
   return programs;
@@ -106,23 +125,52 @@ export function mergePrograms(existing, incoming) {
       return;
     }
 
-    next.unshift({ ...program, items: [...program.items] });
+    next.push({ ...program, items: [...program.items] });
   });
 
   return next;
 }
 
+/**
+ * @param {import('./exercises.js').Exercise[]} existing
+ * @param {import('./exercises.js').Exercise[]} incoming
+ * @returns {import('./exercises.js').Exercise[]}
+ */
+export function mergeExercises(existing, incoming) {
+  const next = [...existing];
+  incoming.forEach((exercise) => {
+    const byId = next.findIndex((ex) => ex.id === exercise.id);
+    if (byId >= 0) {
+      next[byId] = exercise;
+      return;
+    }
+    const byName = next.findIndex(
+      (ex) => ex.name.toLowerCase() === exercise.name.toLowerCase()
+    );
+    if (byName >= 0) {
+      next[byName] = { ...exercise, id: next[byName].id };
+      return;
+    }
+    next.push(exercise);
+  });
+  return next;
+}
+
 export function exportPrograms() {
   const programs = loadPrograms();
-  if (!programs.length) {
+  const exercises = loadExercises();
+  if (!programs.length && !exercises.length) {
     setTransferStatus("Niets om te exporteren.", "error");
     return;
   }
 
+  const programIds = syncDayOrder(programs);
   const payload = {
     version: EXPORT_VERSION,
     app: EXPORT_APP,
     exportedAt: new Date().toISOString(),
+    programIds,
+    exercises,
     programs,
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], {
@@ -160,22 +208,42 @@ export function importProgramsFromFile(file) {
         return;
       }
 
-      const incoming = programsFromEntries(entries);
-      if (!incoming.length) {
+      const incomingExercises = extractImportExercises(data);
+      if (incomingExercises.length) {
+        saveExercises(mergeExercises(loadExercises(), incomingExercises));
+      }
+
+      let incoming = programsFromEntries(entries);
+      if (!incoming.length && !incomingExercises.length) {
         setTransferStatus("Geen geldige programma’s gevonden in het bestand.", "error");
         return;
       }
 
-      const merged = mergePrograms(loadPrograms(), incoming);
-      savePrograms(merged);
-      resolveFavorite(merged);
+      if (incoming.length) {
+        incoming = convertInlineItemsToRefs(incoming);
+        const merged = mergePrograms(loadPrograms(), incoming);
+        savePrograms(merged);
+
+        const importedOrder = extractImportDayOrder(data);
+        if (importedOrder) {
+          const idSet = new Set(merged.map((p) => p.id));
+          const order = importedOrder.filter((id) => idSet.has(id));
+          merged.forEach((p) => {
+            if (!order.includes(p.id)) order.push(p.id);
+          });
+          saveDayOrder(order);
+        }
+      }
+
       hooks.renderApp();
 
       const count = incoming.length;
       setTransferStatus(
-        count === 1
-          ? "1 programma geïmporteerd."
-          : `${count} programma’s geïmporteerd.`
+        count === 0
+          ? "Oefeningen geïmporteerd."
+          : count === 1
+            ? "1 programma geïmporteerd."
+            : `${count} programma’s geïmporteerd.`
       );
     } catch {
       setTransferStatus("Ongeldig JSON-bestand.", "error");

@@ -1,5 +1,12 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, openManage } = require("./helpers");
+const {
+  addExerciseToProgram,
+  clearAndReload,
+  createExercise,
+  createProgram,
+  openManage,
+  openProgramsTab,
+} = require("./helpers");
 
 test.describe("Home & dagprogramma", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,12 +14,11 @@ test.describe("Home & dagprogramma", () => {
   });
 
   test("slaat programma op en toont dagprogramma op home", async ({ page }) => {
-    await page.fill("#program-name", "Push");
-    await page.fill("#program-rest", "20");
-    await page.fill(".segment-name", "Push-ups");
-    await page.fill(".segment-sets", "4");
-    await page.fill(".segment-duration", "40");
-    await page.click("#save-btn");
+    await createProgram(page, {
+      programName: "Push",
+      rest: 20,
+      exercises: [{ name: "Push-ups", sets: 4, duration: 40 }],
+    });
 
     await expect(page.locator("#home")).toBeVisible();
     await expect(page.locator(".home-label")).toHaveText("Dagprogramma");
@@ -25,51 +31,45 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#manage")).toBeHidden();
     await expect(page.locator("#tagline")).toBeHidden();
 
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
-    );
-    expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+      dayOrder: JSON.parse(localStorage.getItem("fitnesshelp-day-order-v1") || "[]"),
+      favorite: localStorage.getItem("fitnesshelp-favorite-v1"),
+    }));
+    expect(stored.programs).toHaveLength(1);
+    expect(stored.programs[0]).toMatchObject({
       name: "Push",
       rest: 20,
       switch: 15,
-      items: [
-        {
-          type: "timer",
-          name: "Push-ups",
-          sets: 4,
-          duration: 40,
-          rest: 20,
-        },
-      ],
     });
-
-    const favoriteId = await page.evaluate(() =>
-      localStorage.getItem("fitnesshelp-favorite-v1")
-    );
-    expect(favoriteId).toBe(stored[0].id);
+    expect(stored.programs[0].items).toHaveLength(1);
+    expect(stored.programs[0].items[0]).toHaveProperty("exerciseId");
+    expect(stored.exercises[0]).toMatchObject({
+      name: "Push-ups",
+      type: "timer",
+      sets: 4,
+      duration: 40,
+    });
+    expect(stored.dayOrder).toEqual([stored.programs[0].id]);
+    expect(stored.favorite).toBeNull();
 
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Push");
-    await expect(page.locator("#saved-list")).toContainText("Favoriet");
+    await expect(page.locator("#saved-list")).not.toContainText("Favoriet");
     await expect(
       page.locator("#saved-list .saved-item").locator("button", { hasText: "Favoriet" })
     ).toHaveCount(0);
-    await expect(
-      page.locator("#saved-list .saved-item").locator("button", { hasText: "Start" })
-    ).toHaveCount(0);
-    await expect(page.locator(".segment-foot")).toHaveCount(0);
     await expect(page.locator("body")).toHaveClass(/is-managing/);
   });
 
   test("start programma vanaf home", async ({ page }) => {
-    await page.fill("#program-name", "Core");
-    await page.fill("#program-rest", "10");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "3");
-    await page.fill(".segment-duration", "30");
-    await page.click("#save-btn");
+    await createProgram(page, {
+      programName: "Core",
+      rest: 10,
+      exercises: [{ name: "Plank", sets: 3, duration: 30 }],
+    });
 
     await page.click("#home-start-btn");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
@@ -79,18 +79,23 @@ test.describe("Home & dagprogramma", () => {
   });
 
   test("toont meerdere programma’s en laat ze afvinken", async ({ page }) => {
+    await createExercise(page, { name: "Jumping jacks" });
+    await createExercise(page, { name: "Squats" });
+    await createExercise(page, { name: "Plank" });
+
+    await openProgramsTab(page);
     await page.fill("#program-name", "Warm-up");
-    await page.fill(".segment-name", "Jumping jacks");
+    await addExerciseToProgram(page, "Jumping jacks");
     await page.click("#save-btn");
 
     await openManage(page);
     await page.fill("#program-name", "Kracht");
-    await page.fill(".segment-name", "Squats");
+    await addExerciseToProgram(page, "Squats");
     await page.click("#save-btn");
 
     await openManage(page);
     await page.fill("#program-name", "Core");
-    await page.fill(".segment-name", "Plank");
+    await addExerciseToProgram(page, "Plank");
     await page.click("#save-btn");
 
     await expect(page.locator("#day-list .day-item")).toHaveCount(3);
@@ -107,14 +112,18 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
   });
 
-  test("kan favoriet wisselen tussen programma’s", async ({ page }) => {
+  test("kan volgorde van programma’s wijzigen", async ({ page }) => {
+    await createExercise(page, { name: "Push-ups" });
+    await createExercise(page, { name: "Rows" });
+
+    await openProgramsTab(page);
     await page.fill("#program-name", "Push");
-    await page.fill(".segment-name", "Push-ups");
+    await addExerciseToProgram(page, "Push-ups");
     await page.click("#save-btn");
 
     await openManage(page);
     await page.fill("#program-name", "Pull");
-    await page.fill(".segment-name", "Rows");
+    await addExerciseToProgram(page, "Rows");
     await page.click("#save-btn");
 
     await expect(page.locator("#day-list .day-item").first()).toContainText("Push");
@@ -123,7 +132,7 @@ test.describe("Home & dagprogramma", () => {
 
     await page
       .locator("#saved-list .saved-item", { hasText: "Pull" })
-      .locator("button", { hasText: "Maak favoriet" })
+      .locator("button", { hasText: "Omhoog" })
       .click();
 
     await page.click("#manage-done-btn");
@@ -131,7 +140,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#day-list")).toContainText("Rows");
   });
 
-  test("migreert legacy workouts naar één programma", async ({ page }) => {
+  test("migreert legacy workouts naar programma met bibliotheek-refs", async ({ page }) => {
     await page.evaluate(() => {
       localStorage.setItem(
         "fitnesshelp-workouts-v1",
@@ -161,20 +170,20 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#day-list")).toContainText("2 onderdelen");
     await expect(page.locator("#manage")).toBeHidden();
 
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
-    );
-    expect(stored).toHaveLength(1);
-    expect(stored[0]).toMatchObject({
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+    }));
+    expect(stored.programs).toHaveLength(1);
+    expect(stored.programs[0]).toMatchObject({
       id: "w_legacy_1",
       name: "Mijn training",
       rest: 5,
       switch: 15,
-      items: [
-        { type: "timer", name: "Burpees", sets: 2, duration: 15, rest: 5 },
-        { type: "timer", name: "Squats", sets: 3, duration: 40, rest: 20 },
-      ],
     });
+    expect(stored.programs[0].items).toHaveLength(2);
+    expect(stored.programs[0].items.every((item) => item.exerciseId)).toBe(true);
+    expect(stored.exercises.map((ex) => ex.name).sort()).toEqual(["Burpees", "Squats"]);
 
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
@@ -184,17 +193,16 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#program-rest")).toHaveValue("5");
     await expect(page.locator("#program-switch")).toHaveValue("15");
     await expect(page.locator(".segment")).toHaveCount(2);
-    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveValue("Burpees");
-    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveValue("Squats");
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText("Burpees");
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveText("Squats");
   });
 
   test("na stop terug naar home", async ({ page }) => {
-    await page.fill("#program-name", "Core");
-    await page.fill("#program-rest", "5");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "10");
-    await page.click("#save-btn");
+    await createProgram(page, {
+      programName: "Core",
+      rest: 5,
+      exercises: [{ name: "Plank", sets: 2, duration: 10 }],
+    });
     await page.click("#home-start-btn");
     await page.click("#stop-btn");
 
@@ -205,13 +213,12 @@ test.describe("Home & dagprogramma", () => {
   });
 
   test("vinkt programma automatisch af na afronden", async ({ page }) => {
-    await page.fill("#program-name", "Kort");
-    await page.fill("#program-rest", "0");
-    await page.fill("#program-switch", "0");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "5");
-    await page.click("#save-btn");
+    await createProgram(page, {
+      programName: "Kort",
+      rest: 0,
+      switchSec: 0,
+      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+    });
     await page.click("#home-start-btn");
     await page.click("#skip-btn");
     await page.click("#skip-btn");

@@ -5,23 +5,17 @@ import { uid } from "./util.js";
 const MIGRATION_FLAG = "fitnesshelp-migration-v2-done";
 
 /**
- * Migreert bestaande inline oefeningen naar de bibliotheek en
- * vervangt ze door referenties in programma's.
+ * Zet inline programma-items om naar bibliotheek-oefeningen + refs.
+ * @param {import('./constants.js').Program[]} programs
+ * @returns {import('./constants.js').Program[]}
  */
-export function migrateToExerciseLibrary() {
-  if (localStorage.getItem(MIGRATION_FLAG)) {
-    return;
-  }
-
-  const programs = loadPrograms();
+export function convertInlineItemsToRefs(programs) {
   const exercises = loadExercises();
-  
-  /** @type {Map<string, string>} hashcode -> exerciseId */
+
+  /** @type {Map<string, string>} hash -> exerciseId */
   const exerciseMap = new Map();
-  
   exercises.forEach((ex) => {
-    const hash = exerciseHash(ex);
-    exerciseMap.set(hash, ex.id);
+    exerciseMap.set(exerciseHash(ex), ex.id);
   });
 
   const newExercises = [...exercises];
@@ -36,6 +30,7 @@ export function migrateToExerciseLibrary() {
 
       if (!exerciseId) {
         exerciseId = uid();
+        /** @type {import('./exercises.js').Exercise} */
         const exercise = {
           id: exerciseId,
           name: item.name,
@@ -60,7 +55,21 @@ export function migrateToExerciseLibrary() {
   });
 
   saveExercises(newExercises);
-  savePrograms(updatedPrograms);
+  return updatedPrograms;
+}
+
+/**
+ * Migreert bestaande inline oefeningen naar de bibliotheek en
+ * vervangt ze door referenties in programma's.
+ */
+export function migrateToExerciseLibrary() {
+  if (localStorage.getItem(MIGRATION_FLAG)) {
+    return;
+  }
+
+  const programs = loadPrograms();
+  const updated = convertInlineItemsToRefs(programs);
+  savePrograms(updated);
   localStorage.setItem(MIGRATION_FLAG, "1");
 }
 

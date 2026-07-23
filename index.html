@@ -81,137 +81,175 @@
           </button>
         </div>
 
-        <section class="setup" id="setup" aria-labelledby="setup-title">
-          <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
+        <div class="manage-tabs" role="tablist" aria-label="Beheer">
+          <button
+            type="button"
+            class="manage-tab is-active"
+            role="tab"
+            id="manage-tab-programs"
+            aria-controls="manage-panel-programs"
+            aria-selected="true"
+          >
+            Programma’s
+          </button>
+          <button
+            type="button"
+            class="manage-tab"
+            role="tab"
+            id="manage-tab-exercises"
+            aria-controls="manage-panel-exercises"
+            aria-selected="false"
+          >
+            Oefeningen
+          </button>
+        </div>
 
-          <form id="workout-form" class="workout-form" autocomplete="off">
-            <!--
-              Safari negeert autocomplete="off" en vult dan via heuristiek (contact/adres).
-              Verborgen lokvelden vangen die Autofill af; echte velden gebruiken fh-* tokens.
-            -->
-            <div class="autofill-trap" aria-hidden="true">
-              <input
-                type="text"
-                name="name"
-                autocomplete="name"
-                tabindex="-1"
-              />
-              <input
-                type="email"
-                name="email"
-                autocomplete="email"
-                tabindex="-1"
-              />
-              <input
-                type="text"
-                name="address-line1"
-                autocomplete="street-address"
-                tabindex="-1"
-              />
-            </div>
+        <div
+          class="manage-panel"
+          id="manage-panel-programs"
+          role="tabpanel"
+          aria-labelledby="manage-tab-programs"
+        >
+          <section class="setup" id="setup" aria-labelledby="setup-title">
+            <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
 
-            <label class="field">
-              <span>Programma</span>
-              <input
-                type="text"
-                id="program-name"
-                name="fh-program"
-                placeholder="bijv. Full body"
-                maxlength="60"
-                autocomplete="fh-program"
-                autocorrect="off"
-                autocapitalize="words"
-                spellcheck="false"
-                enterkeyhint="done"
-                required
-              />
-            </label>
-
-            <div class="field-row program-timing">
-              <label class="field">
-                <span>Rust tussen sets (sec)</span>
+            <form id="workout-form" class="workout-form" autocomplete="off">
+              <!--
+                Safari negeert autocomplete="off" en vult dan via heuristiek (contact/adres).
+                Verborgen lokvelden vangen die Autofill af; echte velden gebruiken fh-* tokens.
+              -->
+              <div class="autofill-trap" aria-hidden="true">
                 <input
                   type="text"
-                  id="program-rest"
-                  name="fh-rest"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  autocomplete="fh-rest"
-                  required
-                  value="15"
+                  name="name"
+                  autocomplete="name"
+                  tabindex="-1"
                 />
-              </label>
-              <label class="field">
-                <span>Wisselen oefening (sec)</span>
+                <input
+                  type="email"
+                  name="email"
+                  autocomplete="email"
+                  tabindex="-1"
+                />
                 <input
                   type="text"
-                  id="program-switch"
-                  name="fh-switch"
-                  inputmode="numeric"
-                  pattern="[0-9]*"
-                  autocomplete="fh-switch"
+                  name="address-line1"
+                  autocomplete="street-address"
+                  tabindex="-1"
+                />
+              </div>
+
+              <label class="field">
+                <span>Programma</span>
+                <input
+                  type="text"
+                  id="program-name"
+                  name="fh-program"
+                  placeholder="bijv. Full body"
+                  maxlength="60"
+                  autocomplete="fh-program"
+                  autocorrect="off"
+                  autocapitalize="words"
+                  spellcheck="false"
+                  enterkeyhint="done"
                   required
-                  value="15"
                 />
               </label>
+
+              <div class="field-row program-timing">
+                <label class="field">
+                  <span>Rust tussen sets (sec)</span>
+                  <input
+                    type="text"
+                    id="program-rest"
+                    name="fh-rest"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    autocomplete="fh-rest"
+                    required
+                    value="15"
+                  />
+                </label>
+                <label class="field">
+                  <span>Wisselen oefening (sec)</span>
+                  <input
+                    type="text"
+                    id="program-switch"
+                    name="fh-switch"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    autocomplete="fh-switch"
+                    required
+                    value="15"
+                  />
+                </label>
+              </div>
+
+              <div class="segments-header">
+                <h2 class="segments-title">Oefeningen</h2>
+                <p class="segments-hint">Kies uit je oefeningenbibliotheek.</p>
+              </div>
+
+              <div id="segments" class="segments" aria-live="polite"></div>
+
+              <button type="button" class="btn btn-ghost" id="add-segment-btn">
+                + Oefening
+              </button>
+
+              <div class="actions">
+                <button type="submit" class="btn btn-primary" id="save-btn">
+                  Opslaan
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <section class="saved" id="saved" aria-labelledby="saved-title">
+            <div class="saved-header">
+              <h2 id="saved-title">Opgeslagen programma's</h2>
+              <div class="saved-transfer">
+                <button type="button" class="btn btn-ghost" id="export-btn">
+                  Exporteren
+                </button>
+                <button type="button" class="btn btn-ghost" id="import-btn">
+                  Importeren
+                </button>
+                <input
+                  type="file"
+                  id="import-file"
+                  accept="application/json,.json"
+                  hidden
+                />
+              </div>
             </div>
+            <p class="transfer-status" id="transfer-status" role="status" hidden></p>
+            <p class="saved-hint" id="saved-empty">
+              Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
+            </p>
+            <ul class="saved-list" id="saved-list"></ul>
+          </section>
+        </div>
 
-            <div class="segments-header">
-              <h2 class="segments-title">Onderdelen</h2>
-              <p class="segments-hint">Timer of alleen sets &amp; keer.</p>
-            </div>
-
-            <div id="segments" class="segments" aria-live="polite"></div>
-
-            <button type="button" class="btn btn-ghost" id="add-segment-btn">
-              + Onderdeel
-            </button>
-
-            <div class="actions">
-              <button type="submit" class="btn btn-primary" id="save-btn">
-                Opslaan
+        <div
+          class="manage-panel"
+          id="manage-panel-exercises"
+          role="tabpanel"
+          aria-labelledby="manage-tab-exercises"
+          hidden
+        >
+          <section class="exercises" id="exercises-section" aria-labelledby="exercises-title">
+            <div class="exercises-header">
+              <h2 id="exercises-title">Oefeningen</h2>
+              <button type="button" class="btn btn-ghost" id="add-exercise-btn">
+                + Oefening
               </button>
             </div>
-          </form>
-        </section>
-
-        <section class="exercises" id="exercises-section" aria-labelledby="exercises-title">
-          <div class="exercises-header">
-            <h2 id="exercises-title">Oefeningenbibliotheek</h2>
-            <button type="button" class="btn btn-ghost" id="add-exercise-btn">
-              + Oefening
-            </button>
-          </div>
-          <p class="exercises-hint" id="exercises-empty">
-            Nog geen oefeningen opgeslagen. Maak herbruikbare oefeningen aan.
-          </p>
-          <ul class="exercises-list" id="exercises-list"></ul>
-        </section>
-
-        <section class="saved" id="saved" aria-labelledby="saved-title">
-          <div class="saved-header">
-            <h2 id="saved-title">Opgeslagen programma's</h2>
-            <div class="saved-transfer">
-              <button type="button" class="btn btn-ghost" id="export-btn">
-                Exporteren
-              </button>
-              <button type="button" class="btn btn-ghost" id="import-btn">
-                Importeren
-              </button>
-              <input
-                type="file"
-                id="import-file"
-                accept="application/json,.json"
-                hidden
-              />
-            </div>
-          </div>
-          <p class="transfer-status" id="transfer-status" role="status" hidden></p>
-          <p class="saved-hint" id="saved-empty">
-            Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
-          </p>
-          <ul class="saved-list" id="saved-list"></ul>
-        </section>
+            <p class="exercises-hint" id="exercises-empty">
+              Nog geen oefeningen. Maak oefeningen aan om ze in programma’s te gebruiken.
+            </p>
+            <ul class="exercises-list" id="exercises-list"></ul>
+          </section>
+        </div>
       </div>
     </main>
 

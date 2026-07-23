@@ -1,5 +1,12 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, openManage, saveAndStart } = require("./helpers");
+const {
+  addExerciseToProgram,
+  clearAndReload,
+  createExercise,
+  createProgram,
+  openManage,
+  openProgramsTab,
+} = require("./helpers");
 
 test.describe("Timer", () => {
   test.beforeEach(async ({ page }) => {
@@ -7,12 +14,12 @@ test.describe("Timer", () => {
   });
 
   test("start met 5 seconden klaarmaken vóór de set", async ({ page }) => {
-    await page.fill("#program-name", "Been dag");
-    await page.fill("#program-rest", "2");
-    await page.fill(".segment-name", "Squats");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "5");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Been dag",
+      rest: 2,
+      exercises: [{ name: "Squats", sets: 2, duration: 5 }],
+    });
+    await page.click("#home-start-btn");
 
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
@@ -27,12 +34,12 @@ test.describe("Timer", () => {
   });
 
   test("start de timer met sets en duur", async ({ page }) => {
-    await page.fill("#program-name", "Been dag");
-    await page.fill("#program-rest", "2");
-    await page.fill(".segment-name", "Squats");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "5");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Been dag",
+      rest: 2,
+      exercises: [{ name: "Squats", sets: 2, duration: 5 }],
+    });
+    await page.click("#home-start-btn");
     await page.click("#skip-btn");
 
     await expect(page.locator("#timer")).toBeVisible();
@@ -42,13 +49,12 @@ test.describe("Timer", () => {
   });
 
   test("toont sets & keer zonder aftellen", async ({ page }) => {
-    await page.fill("#program-name", "Kracht");
-    await page.fill("#program-rest", "0");
-    await page.locator(".segment-type").selectOption("reps");
-    await page.fill(".segment-name", "Deadlift");
-    await page.fill(".segment-sets", "3");
-    await page.fill(".segment-reps", "8");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Kracht",
+      rest: 0,
+      exercises: [{ name: "Deadlift", type: "reps", sets: 3, reps: 8 }],
+    });
+    await page.click("#home-start-btn");
 
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await page.click("#skip-btn");
@@ -98,12 +104,12 @@ test.describe("Timer", () => {
     await page.evaluate(() => localStorage.clear());
     await page.reload();
 
-    await page.fill("#program-name", "HIIT");
-    await page.fill("#program-rest", "0");
-    await page.fill(".segment-name", "Burpees");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "8");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "HIIT",
+      rest: 0,
+      exercises: [{ name: "Burpees", sets: 1, duration: 8 }],
+    });
+    await page.click("#home-start-btn");
 
     await expect
       .poll(async () => page.evaluate(() => Boolean(window.__wakeLockRequested)))
@@ -111,12 +117,12 @@ test.describe("Timer", () => {
   });
 
   test("stopt de training en toont home weer", async ({ page }) => {
-    await page.fill("#program-name", "HIIT");
-    await page.fill("#program-rest", "0");
-    await page.fill(".segment-name", "Burpees");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "8");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "HIIT",
+      rest: 0,
+      exercises: [{ name: "Burpees", sets: 2, duration: 8 }],
+    });
+    await page.click("#home-start-btn");
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
 
@@ -128,34 +134,31 @@ test.describe("Timer", () => {
   });
 
   test("ondersteunt gemengd programma met timer en sets & keer", async ({ page }) => {
+    await createExercise(page, { name: "Plank", sets: 2, duration: 20 });
+    await createExercise(page, { name: "Squats", type: "reps", sets: 3, reps: 12 });
+
+    await openProgramsTab(page);
     await page.fill("#program-name", "Full body");
     await page.fill("#program-rest", "5");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-duration", "20");
-
-    await page.click("#add-segment-btn");
-    await expect(page.locator(".segment")).toHaveCount(2);
-
-    const second = page.locator(".segment").nth(1);
-    await second.locator(".segment-type").selectOption("reps");
-    await second.locator(".segment-name").fill("Squats");
-    await second.locator(".segment-sets").fill("3");
-    await second.locator(".segment-reps").fill("12");
-
+    await addExerciseToProgram(page, "Plank");
+    await addExerciseToProgram(page, "Squats");
     await page.click("#save-btn");
 
-    const stored = await page.evaluate(() =>
-      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+    }));
+    expect(stored.programs[0]).toMatchObject({ rest: 5, switch: 15 });
+    expect(stored.programs[0].items).toHaveLength(2);
+    expect(stored.programs[0].items.every((item) => item.exerciseId)).toBe(true);
+    const names = stored.programs[0].items.map(
+      (item) => stored.exercises.find((ex) => ex.id === item.exerciseId).name
     );
-    expect(stored[0]).toMatchObject({ rest: 5, switch: 15 });
-    expect(stored[0].items).toEqual([
-      { type: "timer", name: "Plank", sets: 2, duration: 20, rest: 5 },
-      { type: "reps", name: "Squats", sets: 3, reps: 12 },
-    ]);
+    expect(names).toEqual(["Plank", "Squats"]);
 
     await openManage(page);
-    await saveAndStart(page);
+    await page.click("#manage-done-btn");
+    await page.click("#home-start-btn");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-mode", "timer");
@@ -164,20 +167,16 @@ test.describe("Timer", () => {
   });
 
   test("wisselt tussen onderdelen met programma-switch", async ({ page }) => {
-    await page.fill("#program-name", "Circuit");
-    await page.fill("#program-rest", "0");
-    await page.fill("#program-switch", "4");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "20");
-
-    await page.click("#add-segment-btn");
-    const second = page.locator(".segment").nth(1);
-    await second.locator(".segment-name").fill("Squats");
-    await second.locator(".segment-sets").fill("1");
-    await second.locator(".segment-duration").fill("10");
-
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Circuit",
+      rest: 0,
+      switchSec: 4,
+      exercises: [
+        { name: "Plank", sets: 1, duration: 20 },
+        { name: "Squats", sets: 1, duration: 10 },
+      ],
+    });
+    await page.click("#home-start-btn");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
@@ -196,14 +195,13 @@ test.describe("Timer", () => {
   });
 
   test("gebruikt algemene rust tussen sets bij sets & keer", async ({ page }) => {
-    await page.fill("#program-name", "Kracht");
-    await page.fill("#program-rest", "8");
-    await page.fill("#program-switch", "0");
-    await page.locator(".segment-type").selectOption("reps");
-    await page.fill(".segment-name", "Deadlift");
-    await page.fill(".segment-sets", "2");
-    await page.fill(".segment-reps", "5");
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Kracht",
+      rest: 8,
+      switchSec: 0,
+      exercises: [{ name: "Deadlift", type: "reps", sets: 2, reps: 5 }],
+    });
+    await page.click("#home-start-btn");
     await page.click("#skip-btn");
 
     await page.click("#done-set-btn");
@@ -220,20 +218,16 @@ test.describe("Timer", () => {
   });
 
   test("toont wisseltijd tussen oefeningen", async ({ page }) => {
-    await page.fill("#program-name", "Circuit");
-    await page.fill("#program-rest", "0");
-    await page.fill("#program-switch", "12");
-    await page.fill(".segment-name", "Plank");
-    await page.fill(".segment-sets", "1");
-    await page.fill(".segment-duration", "5");
-    await page.click("#add-segment-btn");
-    const second = page.locator(".segment").nth(1);
-    await second.locator(".segment-type").selectOption("reps");
-    await second.locator(".segment-name").fill("Squats");
-    await second.locator(".segment-sets").fill("1");
-    await second.locator(".segment-reps").fill("10");
-
-    await saveAndStart(page);
+    await createProgram(page, {
+      programName: "Circuit",
+      rest: 0,
+      switchSec: 12,
+      exercises: [
+        { name: "Plank", sets: 1, duration: 5 },
+        { name: "Squats", type: "reps", sets: 1, reps: 10 },
+      ],
+    });
+    await page.click("#home-start-btn");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
 

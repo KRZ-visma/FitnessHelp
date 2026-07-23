@@ -16,6 +16,10 @@ export const manageBtn = document.getElementById("manage-btn");
 export const manageEl = document.getElementById("manage");
 export const manageHeader = document.getElementById("manage-header");
 export const manageDoneBtn = document.getElementById("manage-done-btn");
+export const manageTabPrograms = document.getElementById("manage-tab-programs");
+export const manageTabExercises = document.getElementById("manage-tab-exercises");
+export const managePanelPrograms = document.getElementById("manage-panel-programs");
+export const managePanelExercises = document.getElementById("manage-panel-exercises");
 
 export const setupEl = document.getElementById("setup");
 export const timerEl = document.getElementById("timer");

@@ -1,4 +1,4 @@
-import { DAY_PROGRESS_KEY, FAVORITE_KEY, STORAGE_KEY } from "./constants.js";
+import { DAY_ORDER_KEY, DAY_PROGRESS_KEY, FAVORITE_KEY, STORAGE_KEY } from "./constants.js";
 import { hooks } from "./hooks.js";
 import { clampInt, uid } from "./util.js";
 import { resolveExercise } from "./migration.js";
@@ -128,6 +128,20 @@ export function normalizeItem(raw) {
   };
 }
 
+/**
+ * Accepteert bibliotheek-refs en legacy inline items (voor migratie/import).
+ * @param {unknown} raw
+ * @returns {import('./constants.js').ProgramExerciseRef | import('./constants.js').ProgramItem | null}
+ */
+export function normalizeProgramItem(raw) {
+  if (!raw || typeof raw !== "object") return null;
+  const obj = /** @type {Record<string, unknown>} */ (raw);
+  if (typeof obj.exerciseId === "string" && obj.exerciseId.trim()) {
+    return { exerciseId: obj.exerciseId.trim() };
+  }
+  return normalizeItem(raw);
+}
+
 /** @param {import('./constants.js').ProgramItem[]} items @returns {number} */
 export function defaultRestFromItems(items) {
   const timer = items.find((item) => item.type === "timer");
@@ -145,12 +159,14 @@ export function normalizeProgram(raw) {
   const name = typeof obj.name === "string" ? obj.name.trim() : "";
   if (!name || !Array.isArray(obj.items)) return null;
 
-  const items = obj.items.map(normalizeItem).filter(Boolean);
-  if (!items.length) return null;
+  const items = obj.items.map(normalizeProgramItem).filter(Boolean);
 
   let rest = Number(obj.rest);
   if (!Number.isFinite(rest) || rest < 0) {
-    rest = defaultRestFromItems(/** @type {import('./constants.js').ProgramItem[]} */ (items));
+    const inline = /** @type {import('./constants.js').ProgramItem[]} */ (
+      items.filter((item) => "type" in item)
+    );
+    rest = inline.length ? defaultRestFromItems(inline) : 15;
   }
 
   let switchSec = Number(obj.switch);
@@ -163,7 +179,7 @@ export function normalizeProgram(raw) {
     name,
     rest: clampInt(rest, 0, 600),
     switch: clampInt(switchSec, 0, 600),
-    items: /** @type {import('./constants.js').ProgramItem[]} */ (items),
+    items: /** @type {import('./constants.js').Program['items']} */ (items),
   };
 }
 
@@ -213,7 +229,7 @@ export function loadPrograms() {
         name: "Mijn training",
         rest: defaultRestFromItems(migratedItems),
         switch: 15,
-        items: migratedItems,
+        items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
       });
     }
 
@@ -227,10 +243,11 @@ export function loadPrograms() {
 /** @param {import('./constants.js').Program[]} programs */
 export function savePrograms(programs) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(programs));
+  syncDayOrder(programs);
 }
 
 /** @returns {string | null} */
-export function loadFavoriteId() {
+function loadFavoriteId() {
   try {
     const id = localStorage.getItem(FAVORITE_KEY);
     return id && typeof id === "string" ? id : null;
@@ -239,54 +256,93 @@ export function loadFavoriteId() {
   }
 }
 
-/** @param {string | null} id */
-export function saveFavoriteId(id) {
+function clearFavorite() {
   try {
-    if (!id) {
-      localStorage.removeItem(FAVORITE_KEY);
-      return;
-    }
-    localStorage.setItem(FAVORITE_KEY, id);
+    localStorage.removeItem(FAVORITE_KEY);
+  } catch {
+    // ignore
+  }
+}
+
+/** @returns {string[] | null} */
+function loadDayOrderRaw() {
+  try {
+    const raw = localStorage.getItem(DAY_ORDER_KEY);
+    if (!raw) return null;
+    const data = JSON.parse(raw);
+    if (!Array.isArray(data)) return null;
+    return data.filter((id) => typeof id === "string");
+  } catch {
+    return null;
+  }
+}
+
+/** @param {string[]} ids */
+export function saveDayOrder(ids) {
+  try {
+    localStorage.setItem(DAY_ORDER_KEY, JSON.stringify(ids));
   } catch {
     // ignore
   }
 }
 
 /**
+ * Houdt dagvolgorde synchroon met opgeslagen programma’s.
+ * Migreert eenmalig favoriet → vooraan in de lijst.
  * @param {import('./constants.js').Program[]} programs
- * @returns {import('./constants.js').Program | null}
+ * @returns {string[]}
  */
-export function resolveFavorite(programs) {
-  if (!programs.length) {
-    saveFavoriteId(null);
-    return null;
-  }
-  const favoriteId = loadFavoriteId();
-  const match = favoriteId ? programs.find((p) => p.id === favoriteId) : null;
-  if (match) return match;
-  saveFavoriteId(programs[0].id);
-  return programs[0];
-}
+export function syncDayOrder(programs) {
+  const ids = programs.map((p) => p.id);
+  const idSet = new Set(ids);
+  let order = loadDayOrderRaw();
 
-/** @param {string} id */
-export function setFavorite(id) {
-  const programs = loadPrograms();
-  if (!programs.some((p) => p.id === id)) return;
-  saveFavoriteId(id);
-  hooks.renderApp();
+  if (!order) {
+    const favoriteId = loadFavoriteId();
+    order = [...ids];
+    if (favoriteId && idSet.has(favoriteId)) {
+      order = [favoriteId, ...order.filter((id) => id !== favoriteId)];
+    }
+    clearFavorite();
+  } else {
+    order = order.filter((id) => idSet.has(id));
+    ids.forEach((id) => {
+      if (!order.includes(id)) order.push(id);
+    });
+  }
+
+  saveDayOrder(order);
+  return order;
 }
 
 /**
- * Programma’s voor vandaag: favoriet eerst, daarna de rest.
+ * Programma’s in oefendag-volgorde.
  * @param {import('./constants.js').Program[]} programs
  * @returns {import('./constants.js').Program[]}
  */
 export function dayPrograms(programs) {
   if (!programs.length) return [];
-  const favorite = resolveFavorite(programs);
-  if (!favorite) return [...programs];
-  const rest = programs.filter((p) => p.id !== favorite.id);
-  return [favorite, ...rest];
+  const order = syncDayOrder(programs);
+  const byId = new Map(programs.map((p) => [p.id, p]));
+  return order.map((id) => byId.get(id)).filter(Boolean);
+}
+
+/**
+ * @param {string} programId
+ * @param {-1|1} delta
+ */
+export function moveProgramInDay(programId, delta) {
+  const programs = loadPrograms();
+  const order = syncDayOrder(programs);
+  const index = order.indexOf(programId);
+  if (index < 0) return;
+  const target = index + delta;
+  if (target < 0 || target >= order.length) return;
+  const next = [...order];
+  const [id] = next.splice(index, 1);
+  next.splice(target, 0, id);
+  saveDayOrder(next);
+  hooks.renderApp();
 }
 
 /**
@@ -303,5 +359,6 @@ export function programSummary(program) {
     .filter(Boolean);
   const count =
     program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`;
+  if (!parts.length) return count;
   return `${count} · ${parts.join(" · ")}`;
 }
