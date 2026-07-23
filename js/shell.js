@@ -183,13 +183,14 @@ export function renderHome() {
       start.type = "button";
       start.className = "btn btn-primary day-start";
       start.textContent = "Start";
-      start.disabled = done;
+      start.hidden = done;
       start.addEventListener("click", () => {
         hooks.fillForm(program);
         hooks.startSession(program);
       });
 
-      li.append(check, body, start);
+      li.append(check, body);
+      if (!done) li.append(start);
       dayList.append(li);
     });
   }
