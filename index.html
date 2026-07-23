@@ -103,9 +103,41 @@
               <datalist id="program-name-suggestions"></datalist>
             </label>
 
+            <div class="field-row program-timing">
+              <label class="field">
+                <span>Rust tussen sets (sec)</span>
+                <input
+                  type="text"
+                  id="program-rest"
+                  name="fh-rest"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="off"
+                  required
+                  value="15"
+                />
+              </label>
+              <label class="field">
+                <span>Wisselen oefening (sec)</span>
+                <input
+                  type="text"
+                  id="program-switch"
+                  name="fh-switch"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  autocomplete="off"
+                  required
+                  value="15"
+                />
+              </label>
+            </div>
+
             <div class="segments-header">
               <h2 class="segments-title">Onderdelen</h2>
-              <p class="segments-hint">Timer telt af; sets &amp; keer toont alleen wat je moet doen.</p>
+              <p class="segments-hint">
+                Algemene rust tussen sets en wisseltijd tussen oefeningen. Timer telt af; sets &amp;
+                keer toont wat je moet doen.
+              </p>
             </div>
 
             <div id="segments" class="segments" aria-live="polite"></div>

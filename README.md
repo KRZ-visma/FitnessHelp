@@ -5,7 +5,9 @@ Simpele browser-tool om een trainingsprogramma samen te stellen: onderdelen met 
 ## Functies
 
 - Programma met meerdere onderdelen
-- Onderdeeltype **Timer**: sets, duur per set, rust tussen sets
+- **Algemene rust** tussen sets (voor timer én sets & keer)
+- **Wisseltijd** tussen oefeningen
+- Onderdeeltype **Timer**: sets en duur per set
 - Onderdeeltype **Sets & keer**: alleen weergave van sets en herhalingen (geen aftellen)
 - Training met pauze/overslaan (timer) of “Set klaar” (sets & keer)
 - Opgeslagen programma’s in **localStorage** (blijft in jouw browser)
