@@ -22,11 +22,13 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#manage")).toBeVisible();
     await expect(page.locator("#manage-header")).toBeHidden();
     await expect(page.locator("#program-name")).toBeVisible();
+    await expect(page.locator("#program-rest")).toBeVisible();
+    await expect(page.locator("#program-switch")).toBeVisible();
     await expect(page.locator(".segment")).toHaveCount(1);
     await expect(page.locator(".segment-name")).toBeVisible();
     await expect(page.locator(".segment-sets")).toBeVisible();
     await expect(page.locator(".segment-duration")).toBeVisible();
-    await expect(page.locator(".segment-rest")).toBeVisible();
+    await expect(page.locator(".segment-rest")).toHaveCount(0);
     await expect(page.locator("#start-btn")).toBeVisible();
     await expect(page.locator("#add-segment-btn")).toBeVisible();
   });
@@ -39,10 +41,11 @@ test.describe("FitnessHelp", () => {
 
   test("start met 5 seconden klaarmaken vóór de set", async ({ page }) => {
     await page.fill("#program-name", "Been dag");
+    await page.fill("#program-rest", "2");
+    await page.fill("#program-switch", "0");
     await page.fill(".segment-name", "Squats");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "5");
-    await page.fill(".segment-rest", "2");
     await page.click("#start-btn");
 
     await expect(page.locator("#timer")).toBeVisible();
@@ -59,10 +62,10 @@ test.describe("FitnessHelp", () => {
 
   test("start de timer met sets en duur", async ({ page }) => {
     await page.fill("#program-name", "Been dag");
+    await page.fill("#program-rest", "2");
     await page.fill(".segment-name", "Squats");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "5");
-    await page.fill(".segment-rest", "2");
     await page.click("#start-btn");
     await page.click("#skip-btn");
 
@@ -74,10 +77,11 @@ test.describe("FitnessHelp", () => {
 
   test("slaat programma op als favoriet en toont home", async ({ page }) => {
     await page.fill("#program-name", "Push dag");
+    await page.fill("#program-rest", "20");
+    await page.fill("#program-switch", "30");
     await page.fill(".segment-name", "Push-ups");
     await page.fill(".segment-sets", "4");
     await page.fill(".segment-duration", "40");
-    await page.fill(".segment-rest", "20");
     await page.click("#save-btn");
 
     await expect(page.locator("#home")).toBeVisible();
@@ -92,6 +96,8 @@ test.describe("FitnessHelp", () => {
     expect(stored).toHaveLength(1);
     expect(stored[0]).toMatchObject({
       name: "Push dag",
+      rest: 20,
+      switch: 30,
       items: [
         {
           type: "timer",
@@ -112,6 +118,8 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Push dag");
     await expect(page.locator("#saved-list")).toContainText("Favoriet");
+    await expect(page.locator("#program-rest")).toHaveValue("20");
+    await expect(page.locator("#program-switch")).toHaveValue("30");
     await expect(
       page.locator("#saved-list .saved-item").locator("button", { hasText: "Favoriet" })
     ).toHaveCount(0);
@@ -121,10 +129,11 @@ test.describe("FitnessHelp", () => {
 
   test("ondersteunt gemengd programma met timer en sets & keer", async ({ page }) => {
     await page.fill("#program-name", "Full body");
+    await page.fill("#program-rest", "5");
+    await page.fill("#program-switch", "10");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "20");
-    await page.fill(".segment-rest", "5");
 
     await page.click("#add-segment-btn");
     await expect(page.locator(".segment")).toHaveCount(2);
@@ -140,10 +149,14 @@ test.describe("FitnessHelp", () => {
     const stored = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
     );
-    expect(stored[0].items).toEqual([
-      { type: "timer", name: "Plank", sets: 2, duration: 20, rest: 5 },
-      { type: "reps", name: "Squats", sets: 3, reps: 12 },
-    ]);
+    expect(stored[0]).toMatchObject({
+      rest: 5,
+      switch: 10,
+      items: [
+        { type: "timer", name: "Plank", sets: 2, duration: 20, rest: 5 },
+        { type: "reps", name: "Squats", sets: 3, reps: 12 },
+      ],
+    });
 
     await openManage(page);
     await page.click("#start-btn");
@@ -156,6 +169,8 @@ test.describe("FitnessHelp", () => {
 
   test("toont sets & keer zonder aftellen", async ({ page }) => {
     await page.fill("#program-name", "Kracht");
+    await page.fill("#program-rest", "0");
+    await page.fill("#program-switch", "0");
     await page.locator(".segment-type").selectOption("reps");
     await page.fill(".segment-name", "Deadlift");
     await page.fill(".segment-sets", "3");
@@ -183,12 +198,66 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#timer-phase")).toHaveText("Klaar");
   });
 
+  test("gebruikt algemene rust tussen sets bij sets & keer", async ({ page }) => {
+    await page.fill("#program-name", "Kracht");
+    await page.fill("#program-rest", "8");
+    await page.fill("#program-switch", "0");
+    await page.locator(".segment-type").selectOption("reps");
+    await page.fill(".segment-name", "Deadlift");
+    await page.fill(".segment-sets", "2");
+    await page.fill(".segment-reps", "5");
+    await page.click("#start-btn");
+    await page.click("#skip-btn");
+
+    await page.click("#done-set-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "rest");
+    await expect(page.locator("#timer-phase")).toHaveText("Rust · na set 1");
+    await expect(page.locator("#timer-clock")).toHaveText("0:08");
+    await expect(page.locator("#done-set-btn")).toBeHidden();
+    await expect(page.locator("#pause-btn")).toBeVisible();
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-phase")).toContainText("Set 2 van 2");
+    await expect(page.locator("#done-set-btn")).toBeVisible();
+  });
+
+  test("toont wisseltijd tussen oefeningen", async ({ page }) => {
+    await page.fill("#program-name", "Circuit");
+    await page.fill("#program-rest", "0");
+    await page.fill("#program-switch", "12");
+    await page.fill(".segment-name", "Plank");
+    await page.fill(".segment-sets", "1");
+    await page.fill(".segment-duration", "5");
+    await page.click("#add-segment-btn");
+    const second = page.locator(".segment").nth(1);
+    await second.locator(".segment-type").selectOption("reps");
+    await second.locator(".segment-name").fill("Squats");
+    await second.locator(".segment-sets").fill("1");
+    await second.locator(".segment-reps").fill("10");
+
+    await page.click("#start-btn");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
+    await expect(page.locator("#timer-phase")).toHaveText("Wisselen");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-clock")).toHaveText("0:12");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-clock")).toHaveText("10×");
+  });
+
   test("start favoriet vanaf home", async ({ page }) => {
     await page.fill("#program-name", "Core");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "3");
     await page.fill(".segment-duration", "30");
-    await page.fill(".segment-rest", "10");
+    await page.fill("#program-rest", "10");
     await page.click("#save-btn");
 
     await page.click("#home-start-btn");
@@ -265,10 +334,11 @@ test.describe("FitnessHelp", () => {
     await page.reload();
 
     await page.fill("#program-name", "HIIT");
+    await page.fill("#program-rest", "0");
+    await page.fill("#program-switch", "0");
     await page.fill(".segment-name", "Burpees");
     await page.fill(".segment-sets", "1");
     await page.fill(".segment-duration", "8");
-    await page.fill(".segment-rest", "0");
     await page.click("#start-btn");
 
     await expect
@@ -312,6 +382,8 @@ test.describe("FitnessHelp", () => {
     expect(stored[0]).toMatchObject({
       id: "w_legacy_1",
       name: "Mijn training",
+      rest: 5,
+      switch: 15,
       items: [
         { type: "timer", name: "Burpees", sets: 2, duration: 15, rest: 5 },
         { type: "timer", name: "Squats", sets: 3, duration: 40, rest: 20 },
@@ -323,6 +395,8 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#saved-list")).toContainText("Mijn training");
     await page.locator("#saved-list button", { hasText: "Laden" }).click();
     await expect(page.locator("#program-name")).toHaveValue("Mijn training");
+    await expect(page.locator("#program-rest")).toHaveValue("5");
+    await expect(page.locator("#program-switch")).toHaveValue("15");
     await expect(page.locator(".segment")).toHaveCount(2);
     await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveValue("Burpees");
     await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveValue("Squats");
@@ -330,10 +404,10 @@ test.describe("FitnessHelp", () => {
 
   test("stopt de training en toont setup weer", async ({ page }) => {
     await page.fill("#program-name", "HIIT");
+    await page.fill("#program-rest", "0");
     await page.fill(".segment-name", "Burpees");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "8");
-    await page.fill(".segment-rest", "0");
     await page.click("#start-btn");
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
@@ -346,10 +420,10 @@ test.describe("FitnessHelp", () => {
 
   test("na stop met favoriet terug naar home", async ({ page }) => {
     await page.fill("#program-name", "Core");
+    await page.fill("#program-rest", "5");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "10");
-    await page.fill(".segment-rest", "5");
     await page.click("#save-btn");
     await page.click("#home-start-btn");
     await page.click("#stop-btn");
@@ -362,10 +436,11 @@ test.describe("FitnessHelp", () => {
 
   test("speelt start- en stopgeluid bij onderdelen", async ({ page }) => {
     await page.fill("#program-name", "Geluid");
+    await page.fill("#program-rest", "0");
+    await page.fill("#program-switch", "10");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "1");
     await page.fill(".segment-duration", "5");
-    await page.fill(".segment-rest", "0");
     await page.click("#add-segment-btn");
     const second = page.locator(".segment").nth(1);
     await second.locator(".segment-type").selectOption("reps");
@@ -387,7 +462,7 @@ test.describe("FitnessHelp", () => {
       "start",
       "stop",
     ]);
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
 
     await page.click("#skip-btn");
@@ -396,6 +471,7 @@ test.describe("FitnessHelp", () => {
       "stop",
       "start",
     ]);
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
 
     await page.click("#stop-btn");
     await expect.poll(() => page.evaluate(() => window.__fitnessHelpBeeps)).toEqual([
@@ -418,10 +494,10 @@ test.describe("FitnessHelp", () => {
     await page.reload();
 
     await page.fill("#program-name", "Stil");
+    await page.fill("#program-rest", "0");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "1");
     await page.fill(".segment-duration", "5");
-    await page.fill(".segment-rest", "0");
     await page.click("#start-btn");
 
     await expect
@@ -435,7 +511,12 @@ test.describe("FitnessHelp", () => {
   });
 
   test("nummervelden gebruiken iOS cijferpad-attributen", async ({ page }) => {
-    for (const selector of [".segment-sets", ".segment-duration", ".segment-rest"]) {
+    for (const selector of [
+      "#program-rest",
+      "#program-switch",
+      ".segment-sets",
+      ".segment-duration",
+    ]) {
       const input = page.locator(selector);
       await expect(input).toHaveAttribute("type", "text");
       await expect(input).toHaveAttribute("inputmode", "numeric");
@@ -510,8 +591,11 @@ test.describe("FitnessHelp", () => {
     await page.fill(".segment-duration", "45x");
     await expect(page.locator(".segment-duration")).toHaveValue("45");
 
-    await page.fill(".segment-rest", "1o0");
-    await expect(page.locator(".segment-rest")).toHaveValue("10");
+    await page.fill("#program-rest", "1o0");
+    await expect(page.locator("#program-rest")).toHaveValue("10");
+
+    await page.fill("#program-switch", "2a5");
+    await expect(page.locator("#program-switch")).toHaveValue("25");
   });
 
   test("heeft PWA-manifest met standalone display", async ({ page }) => {
@@ -574,10 +658,11 @@ test.describe("FitnessHelp", () => {
 
   test("exporteert opgeslagen programma’s als JSON", async ({ page }) => {
     await page.fill("#program-name", "Export dag");
+    await page.fill("#program-rest", "10");
+    await page.fill("#program-switch", "20");
     await page.fill(".segment-name", "Lunges");
     await page.fill(".segment-sets", "3");
     await page.fill(".segment-duration", "30");
-    await page.fill(".segment-rest", "10");
     await page.click("#save-btn");
 
     await openManage(page);
@@ -597,6 +682,8 @@ test.describe("FitnessHelp", () => {
     expect(payload.programs).toHaveLength(1);
     expect(payload.programs[0]).toMatchObject({
       name: "Export dag",
+      rest: 10,
+      switch: 20,
       items: [{ type: "timer", name: "Lunges", sets: 3, duration: 30, rest: 10 }],
     });
     await expect(page.locator("#transfer-status")).toHaveText("1 programma geëxporteerd.");
@@ -604,10 +691,10 @@ test.describe("FitnessHelp", () => {
 
   test("importeert programma’s uit JSON en merged op naam", async ({ page }) => {
     await page.fill("#program-name", "Bestaand");
+    await page.fill("#program-rest", "5");
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "20");
-    await page.fill(".segment-rest", "5");
     await page.click("#save-btn");
 
     await openManage(page);
@@ -619,11 +706,15 @@ test.describe("FitnessHelp", () => {
         {
           id: "import_new",
           name: "Import nieuw",
+          rest: 12,
+          switch: 18,
           items: [{ type: "reps", name: "Curl", sets: 4, reps: 12 }],
         },
         {
           id: "import_replace",
           name: "Bestaand",
+          rest: 15,
+          switch: 25,
           items: [{ type: "timer", name: "Burpees", sets: 5, duration: 40, rest: 15 }],
         },
       ],
@@ -648,13 +739,32 @@ test.describe("FitnessHelp", () => {
     );
     expect(stored).toHaveLength(2);
     const replaced = stored.find((p) => p.name === "Bestaand");
-    expect(replaced.items[0]).toMatchObject({
-      type: "timer",
-      name: "Burpees",
-      sets: 5,
-      duration: 40,
+    expect(replaced).toMatchObject({
       rest: 15,
+      switch: 25,
+      items: [{ type: "timer", name: "Burpees", sets: 5, duration: 40, rest: 15 }],
     });
+  });
+
+  test("vult ontbrekende rust/wissel bij oude programma’s", async ({ page }) => {
+    await page.evaluate(() => {
+      localStorage.setItem(
+        "fitnesshelp-workouts-v1",
+        JSON.stringify([
+          {
+            id: "old_prog",
+            name: "Oud schema",
+            items: [{ type: "timer", name: "Plank", sets: 2, duration: 30, rest: 22 }],
+          },
+        ])
+      );
+    });
+    await page.reload();
+
+    await openManage(page);
+    await page.locator("#saved-list button", { hasText: "Laden" }).click();
+    await expect(page.locator("#program-rest")).toHaveValue("22");
+    await expect(page.locator("#program-switch")).toHaveValue("15");
   });
 
   test("toont fout bij ongeldige import", async ({ page }) => {

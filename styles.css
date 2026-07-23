@@ -241,10 +241,10 @@ main {
 
 @media (min-width: 640px) {
   .field-row {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(2, 1fr);
   }
 
-  .segment[data-type="reps"] .field-row {
+  .program-timing {
     grid-template-columns: repeat(2, 1fr);
   }
 }
@@ -466,11 +466,13 @@ main {
   color: #2f6b45;
 }
 
-.timer[data-phase="prep"] .timer-clock {
+.timer[data-phase="prep"] .timer-clock,
+.timer[data-phase="switch"] .timer-clock {
   color: #1a5c38;
 }
 
-.timer[data-phase="prep"] .timer-progress-bar {
+.timer[data-phase="prep"] .timer-progress-bar,
+.timer[data-phase="switch"] .timer-progress-bar {
   background: #1a5c38;
 }
 
