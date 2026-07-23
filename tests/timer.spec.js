@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, openManage } = require("./helpers");
+const { clearAndReload, openManage, saveAndStart } = require("./helpers");
 
 test.describe("Timer", () => {
   test.beforeEach(async ({ page }) => {
@@ -12,7 +12,7 @@ test.describe("Timer", () => {
     await page.fill(".segment-name", "Squats");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "5");
-    await page.click("#start-btn");
+    await saveAndStart(page);
 
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
@@ -32,7 +32,7 @@ test.describe("Timer", () => {
     await page.fill(".segment-name", "Squats");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "5");
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.click("#skip-btn");
 
     await expect(page.locator("#timer")).toBeVisible();
@@ -48,7 +48,7 @@ test.describe("Timer", () => {
     await page.fill(".segment-name", "Deadlift");
     await page.fill(".segment-sets", "3");
     await page.fill(".segment-reps", "8");
-    await page.click("#start-btn");
+    await saveAndStart(page);
 
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await page.click("#skip-btn");
@@ -103,26 +103,27 @@ test.describe("Timer", () => {
     await page.fill(".segment-name", "Burpees");
     await page.fill(".segment-sets", "1");
     await page.fill(".segment-duration", "8");
-    await page.click("#start-btn");
+    await saveAndStart(page);
 
     await expect
       .poll(async () => page.evaluate(() => Boolean(window.__wakeLockRequested)))
       .toBe(true);
   });
 
-  test("stopt de training en toont setup weer", async ({ page }) => {
+  test("stopt de training en toont home weer", async ({ page }) => {
     await page.fill("#program-name", "HIIT");
     await page.fill("#program-rest", "0");
     await page.fill(".segment-name", "Burpees");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-duration", "8");
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
 
     await page.click("#stop-btn");
     await expect(page.locator("#timer")).toBeHidden();
-    await expect(page.locator("#setup")).toBeVisible();
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#manage")).toBeHidden();
     await expect(page.locator("body")).not.toHaveClass(/is-running/);
   });
 
@@ -154,7 +155,7 @@ test.describe("Timer", () => {
     ]);
 
     await openManage(page);
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-mode", "timer");
@@ -176,7 +177,7 @@ test.describe("Timer", () => {
     await second.locator(".segment-sets").fill("1");
     await second.locator(".segment-duration").fill("10");
 
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
@@ -202,7 +203,7 @@ test.describe("Timer", () => {
     await page.fill(".segment-name", "Deadlift");
     await page.fill(".segment-sets", "2");
     await page.fill(".segment-reps", "5");
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.click("#skip-btn");
 
     await page.click("#done-set-btn");
@@ -232,7 +233,7 @@ test.describe("Timer", () => {
     await second.locator(".segment-sets").fill("1");
     await second.locator(".segment-reps").fill("10");
 
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
 

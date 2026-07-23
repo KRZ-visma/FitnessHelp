@@ -11,18 +11,16 @@ import {
   pauseBtn,
   programRestInput,
   programSwitchInput,
-  saveBtn,
   skipBtn,
   stopBtn,
 } from "./dom.js";
 import { APP_VERSION } from "./constants.js";
 import { addDraftItem, bindDigits, fillForm, readForm, resetDraft } from "./form.js";
 import { hooks } from "./hooks.js";
-import { closeManage, openManage, renderApp, setManaging } from "./shell.js";
+import { closeManage, nextOpenProgram, openManage, renderApp, setManaging } from "./shell.js";
 import {
   loadFavoriteId,
   loadPrograms,
-  resolveFavorite,
   saveFavoriteId,
   savePrograms,
 } from "./storage.js";
@@ -44,16 +42,9 @@ addSegmentBtn.addEventListener("click", () => {
   addDraftItem("timer");
 });
 
-form.addEventListener("submit", (event) => {
-  event.preventDefault();
+function saveCurrentProgram() {
   const program = readForm();
-  if (!program) return;
-  startSession(program);
-});
-
-saveBtn.addEventListener("click", () => {
-  const program = readForm();
-  if (!program) return;
+  if (!program) return null;
   const programs = loadPrograms();
   const existingIndex = programs.findIndex(
     (p) => p.name.toLowerCase() === program.name.toLowerCase()
@@ -68,9 +59,15 @@ saveBtn.addEventListener("click", () => {
   if (!loadFavoriteId() || !programs.some((p) => p.id === loadFavoriteId())) {
     saveFavoriteId(program.id);
   }
-  // Na opslaan terug naar home: favoriet centraal, beheer op de achtergrond
+  // Na opslaan terug naar home: dagprogramma centraal, beheer op de achtergrond
   setManaging(false);
   renderApp();
+  return program;
+}
+
+form.addEventListener("submit", (event) => {
+  event.preventDefault();
+  saveCurrentProgram();
 });
 
 doneSetBtn.addEventListener("click", () => {
@@ -95,10 +92,10 @@ document.addEventListener("visibilitychange", () => {
 });
 
 homeStartBtn.addEventListener("click", () => {
-  const favorite = resolveFavorite(loadPrograms());
-  if (!favorite) return;
-  fillForm(favorite);
-  startSession(favorite);
+  const next = nextOpenProgram();
+  if (!next) return;
+  fillForm(next);
+  startSession(next);
 });
 
 manageBtn.addEventListener("click", () => {

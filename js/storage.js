@@ -1,6 +1,71 @@
-import { FAVORITE_KEY, STORAGE_KEY } from "./constants.js";
+import { DAY_PROGRESS_KEY, FAVORITE_KEY, STORAGE_KEY } from "./constants.js";
 import { hooks } from "./hooks.js";
 import { clampInt, uid } from "./util.js";
+
+/** @returns {string} */
+export function todayKey() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, "0");
+  const d = String(now.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * @returns {{ date: string, done: string[] }}
+ */
+export function loadDayProgress() {
+  try {
+    const raw = localStorage.getItem(DAY_PROGRESS_KEY);
+    if (!raw) return { date: todayKey(), done: [] };
+    const data = JSON.parse(raw);
+    if (!data || typeof data !== "object") return { date: todayKey(), done: [] };
+    const date = typeof data.date === "string" ? data.date : todayKey();
+    const done = Array.isArray(data.done)
+      ? data.done.filter((id) => typeof id === "string")
+      : [];
+    if (date !== todayKey()) {
+      const fresh = { date: todayKey(), done: [] };
+      saveDayProgress(fresh);
+      return fresh;
+    }
+    return { date, done };
+  } catch {
+    return { date: todayKey(), done: [] };
+  }
+}
+
+/** @param {{ date: string, done: string[] }} progress */
+export function saveDayProgress(progress) {
+  try {
+    localStorage.setItem(DAY_PROGRESS_KEY, JSON.stringify(progress));
+  } catch {
+    // ignore
+  }
+}
+
+/** @param {string} programId @returns {boolean} */
+export function isProgramDoneToday(programId) {
+  return loadDayProgress().done.includes(programId);
+}
+
+/** @param {string} programId @param {boolean} done */
+export function setProgramDoneToday(programId, done) {
+  const progress = loadDayProgress();
+  const set = new Set(progress.done);
+  if (done) set.add(programId);
+  else set.delete(programId);
+  saveDayProgress({ date: todayKey(), done: [...set] });
+  hooks.renderApp();
+}
+
+/** @param {string} programId */
+export function markProgramDoneToday(programId) {
+  if (!programId) return;
+  const progress = loadDayProgress();
+  if (progress.done.includes(programId)) return;
+  saveDayProgress({ date: todayKey(), done: [...progress.done, programId] });
+}
 
 /**
  * @param {unknown} raw
@@ -208,6 +273,19 @@ export function setFavorite(id) {
   if (!programs.some((p) => p.id === id)) return;
   saveFavoriteId(id);
   hooks.renderApp();
+}
+
+/**
+ * Programma’s voor vandaag: favoriet eerst, daarna de rest.
+ * @param {import('./constants.js').Program[]} programs
+ * @returns {import('./constants.js').Program[]}
+ */
+export function dayPrograms(programs) {
+  if (!programs.length) return [];
+  const favorite = resolveFavorite(programs);
+  if (!favorite) return [...programs];
+  const rest = programs.filter((p) => p.id !== favorite.id);
+  return [favorite, ...rest];
 }
 
 /**
