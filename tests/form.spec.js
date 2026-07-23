@@ -20,7 +20,8 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator(".segment-sets")).toBeVisible();
     await expect(page.locator(".segment-duration")).toBeVisible();
     await expect(page.locator(".segment-rest")).toHaveCount(0);
-    await expect(page.locator("#start-btn")).toBeVisible();
+    await expect(page.locator("#save-btn")).toBeVisible();
+    await expect(page.locator("#start-btn")).toHaveCount(0);
     await expect(page.locator("#add-segment-btn")).toBeVisible();
   });
 

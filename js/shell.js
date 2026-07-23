@@ -1,8 +1,10 @@
 import { TAGLINE_EMPTY } from "./constants.js";
 import {
+  dayList,
   homeEl,
   homeMeta,
   homeName,
+  homeStartBtn,
   manageEl,
   manageHeader,
   programNameInput,
@@ -13,6 +15,8 @@ import {
 import { fillForm } from "./form.js";
 import { hooks } from "./hooks.js";
 import {
+  dayPrograms,
+  isProgramDoneToday,
   loadFavoriteId,
   loadPrograms,
   programSummary,
@@ -20,6 +24,7 @@ import {
   saveFavoriteId,
   savePrograms,
   setFavorite,
+  setProgramDoneToday,
 } from "./storage.js";
 import { escapeHtml } from "./util.js";
 
@@ -58,15 +63,6 @@ export function renderSaved() {
     const actions = document.createElement("div");
     actions.className = "saved-actions";
 
-    const start = document.createElement("button");
-    start.type = "button";
-    start.className = "btn btn-primary";
-    start.textContent = "Start";
-    start.addEventListener("click", () => {
-      hooks.fillForm(program);
-      hooks.startSession(program);
-    });
-
     const load = document.createElement("button");
     load.type = "button";
     load.className = "btn btn-ghost";
@@ -90,7 +86,7 @@ export function renderSaved() {
       hooks.renderApp();
     });
 
-    actions.append(start, load);
+    actions.append(load);
 
     if (program.id !== favoriteId) {
       const favoriteBtn = document.createElement("button");
@@ -109,14 +105,24 @@ export function renderSaved() {
   });
 }
 
-export function renderHome() {
-  const programs = loadPrograms();
-  const favorite = resolveFavorite(programs);
+/**
+ * Eerste programma van vandaag dat nog niet is afgevinkt.
+ * @returns {import('./constants.js').Program | null}
+ */
+export function nextOpenProgram() {
+  const programs = dayPrograms(loadPrograms());
+  return programs.find((p) => !isProgramDoneToday(p.id)) ?? null;
+}
 
-  if (!favorite) {
+export function renderHome() {
+  const programs = dayPrograms(loadPrograms());
+
+  if (!programs.length) {
     homeEl.hidden = true;
-    homeName.textContent = "";
+    homeName.textContent = "Vandaag";
     homeMeta.textContent = "";
+    if (dayList) dayList.innerHTML = "";
+    if (homeStartBtn) homeStartBtn.hidden = true;
     if (taglineEl) {
       taglineEl.hidden = false;
       taglineEl.textContent = TAGLINE_EMPTY;
@@ -125,14 +131,80 @@ export function renderHome() {
   }
 
   homeEl.hidden = false;
-  homeName.textContent = favorite.name;
-  homeMeta.textContent = programSummary(favorite);
+  homeName.textContent = "Vandaag";
+
+  const doneCount = programs.filter((p) => isProgramDoneToday(p.id)).length;
+  const total = programs.length;
+  homeMeta.textContent =
+    doneCount === 0
+      ? total === 1
+        ? "1 programma"
+        : `${total} programma’s`
+      : doneCount === total
+        ? "Alles afgevinkt"
+        : `${doneCount} van ${total} klaar`;
+
   if (taglineEl) taglineEl.hidden = true;
-  return favorite;
+
+  if (dayList) {
+    dayList.innerHTML = "";
+    programs.forEach((program) => {
+      const done = isProgramDoneToday(program.id);
+      const li = document.createElement("li");
+      li.className = "day-item";
+      if (done) li.classList.add("is-done");
+
+      const check = document.createElement("input");
+      check.type = "checkbox";
+      check.className = "day-check";
+      check.checked = done;
+      check.id = `day-check-${program.id}`;
+      check.setAttribute("aria-label", `${program.name} afvinken`);
+      check.addEventListener("change", () => {
+        setProgramDoneToday(program.id, check.checked);
+      });
+
+      const body = document.createElement("div");
+      body.className = "day-body";
+
+      const label = document.createElement("label");
+      label.className = "day-name";
+      label.htmlFor = check.id;
+      label.textContent = program.name;
+
+      const meta = document.createElement("p");
+      meta.className = "day-meta";
+      meta.textContent = programSummary(program);
+
+      body.append(label, meta);
+
+      const start = document.createElement("button");
+      start.type = "button";
+      start.className = "btn btn-primary day-start";
+      start.textContent = "Start";
+      start.hidden = done;
+      start.addEventListener("click", () => {
+        hooks.fillForm(program);
+        hooks.startSession(program);
+      });
+
+      li.append(check, body);
+      if (!done) li.append(start);
+      dayList.append(li);
+    });
+  }
+
+  const next = nextOpenProgram();
+  if (homeStartBtn) {
+    homeStartBtn.hidden = !next;
+    homeStartBtn.textContent = doneCount === 0 ? "Start dag" : "Volgende";
+  }
+
+  return next;
 }
 
 /**
- * Toont home als er een favoriet is en beheer niet open staat;
+ * Toont home als er programma’s zijn en beheer niet open staat;
  * beheer is altijd zichtbaar als er nog niets is.
  */
 export function updateShell() {

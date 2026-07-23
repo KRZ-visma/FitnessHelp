@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload } = require("./helpers");
+const { clearAndReload, saveAndStart } = require("./helpers");
 
 test.describe("Audio", () => {
   test.beforeEach(async ({ page }) => {
@@ -20,7 +20,7 @@ test.describe("Audio", () => {
     await second.locator(".segment-sets").fill("1");
     await second.locator(".segment-reps").fill("5");
 
-    await page.click("#start-btn");
+    await saveAndStart(page);
     await page.evaluate(() => {
       window.__fitnessHelpBeeps.length = 0;
     });
@@ -69,7 +69,7 @@ test.describe("Audio", () => {
     await page.fill(".segment-name", "Plank");
     await page.fill(".segment-sets", "1");
     await page.fill(".segment-duration", "5");
-    await page.click("#start-btn");
+    await saveAndStart(page);
 
     await expect
       .poll(() => page.evaluate(() => window.__fitnessHelpAudioSessionType))

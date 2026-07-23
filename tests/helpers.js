@@ -14,4 +14,11 @@ async function clearAndReload(page) {
   await page.reload();
 }
 
-module.exports = { openManage, clearAndReload };
+/** Slaat het formulier op en start het volgende open programma vanaf home. */
+async function saveAndStart(page) {
+  await page.click("#save-btn");
+  await expect(page.locator("#home")).toBeVisible();
+  await page.click("#home-start-btn");
+}
+
+module.exports = { openManage, clearAndReload, saveAndStart };

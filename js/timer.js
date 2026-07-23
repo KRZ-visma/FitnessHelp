@@ -17,6 +17,7 @@ import {
   timerProgress,
 } from "./dom.js";
 import { hooks } from "./hooks.js";
+import { markProgramDoneToday } from "./storage.js";
 import { formatTime } from "./util.js";
 
 /**
@@ -160,6 +161,7 @@ export function startWorkAfterPrep() {
 export function endSession(finished) {
   stopTick();
   if (finished && session) {
+    markProgramDoneToday(session.program.id);
     session.isRest = false;
     session.isPrep = false;
     session.isSwitch = false;
