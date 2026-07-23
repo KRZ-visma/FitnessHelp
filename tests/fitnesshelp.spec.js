@@ -20,6 +20,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator(".brand")).toHaveText("FitnessHelp");
     await expect(page.locator("#home")).toBeHidden();
     await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#manage-header")).toBeHidden();
     await expect(page.locator("#program-name")).toBeVisible();
     await expect(page.locator(".segment")).toHaveCount(1);
     await expect(page.locator(".segment-name")).toBeVisible();
@@ -83,7 +84,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#home-title")).toHaveText("Push dag");
     await expect(page.locator("#home-meta")).toContainText("Push-ups");
     await expect(page.locator("#manage")).toBeHidden();
-    await expect(page.locator("#tagline")).toContainText("favoriet");
+    await expect(page.locator("#tagline")).toBeHidden();
 
     const stored = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
@@ -111,6 +112,11 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Push dag");
     await expect(page.locator("#saved-list")).toContainText("Favoriet");
+    await expect(
+      page.locator("#saved-list .saved-item").locator("button", { hasText: "Favoriet" })
+    ).toHaveCount(0);
+    await expect(page.locator(".segment-foot")).toHaveCount(0);
+    await expect(page.locator("body")).toHaveClass(/is-managing/);
   });
 
   test("ondersteunt gemengd programma met timer en sets & keer", async ({ page }) => {
