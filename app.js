@@ -47,7 +47,6 @@
   const EXPORT_APP = "fitnesshelp";
   const EXPORT_VERSION = 1;
   const TAGLINE_EMPTY = "Programma bouwen. Timer of sets & keer. Lokaal bewaard.";
-  const TAGLINE_READY = "Één favoriet. Start en train. Lokaal bewaard.";
 
   /**
    * @typedef {{ type: 'timer', name: string, sets: number, duration: number, rest: number }} TimerItem
@@ -588,7 +587,11 @@
       });
       foot.append(order, removeBtn);
 
-      article.append(head, nameField, row, foot);
+      if (draftItems.length > 1) {
+        article.append(head, nameField, row, foot);
+      } else {
+        article.append(head, nameField, row);
+      }
       segmentsEl.append(article);
     });
   }
@@ -910,15 +913,6 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      const favoriteBtn = document.createElement("button");
-      favoriteBtn.type = "button";
-      favoriteBtn.className = "btn btn-ghost";
-      favoriteBtn.textContent = program.id === favoriteId ? "Favoriet" : "Maak favoriet";
-      favoriteBtn.disabled = program.id === favoriteId;
-      favoriteBtn.addEventListener("click", () => {
-        setFavorite(program.id);
-      });
-
       const remove = document.createElement("button");
       remove.type = "button";
       remove.className = "btn btn-danger";
@@ -932,7 +926,20 @@
         renderApp();
       });
 
-      actions.append(start, load, favoriteBtn, remove);
+      actions.append(start, load);
+
+      if (program.id !== favoriteId) {
+        const favoriteBtn = document.createElement("button");
+        favoriteBtn.type = "button";
+        favoriteBtn.className = "btn btn-ghost";
+        favoriteBtn.textContent = "Maak favoriet";
+        favoriteBtn.addEventListener("click", () => {
+          setFavorite(program.id);
+        });
+        actions.append(favoriteBtn);
+      }
+
+      actions.append(remove);
       li.append(info, actions);
       savedList.append(li);
     });
@@ -946,14 +953,17 @@
       homeEl.hidden = true;
       homeName.textContent = "";
       homeMeta.textContent = "";
-      if (taglineEl) taglineEl.textContent = TAGLINE_EMPTY;
+      if (taglineEl) {
+        taglineEl.hidden = false;
+        taglineEl.textContent = TAGLINE_EMPTY;
+      }
       return null;
     }
 
     homeEl.hidden = false;
     homeName.textContent = favorite.name;
     homeMeta.textContent = programSummary(favorite);
-    if (taglineEl) taglineEl.textContent = TAGLINE_READY;
+    if (taglineEl) taglineEl.hidden = true;
     return favorite;
   }
 
