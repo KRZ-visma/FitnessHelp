@@ -31,6 +31,12 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#add-segment-btn")).toBeVisible();
   });
 
+  test("toont app-versie klein in de footer", async ({ page }) => {
+    const version = page.locator("#app-version");
+    await expect(version).toBeVisible();
+    await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
+  });
+
   test("start met 5 seconden klaarmaken vóór de set", async ({ page }) => {
     await page.fill("#program-name", "Been dag");
     await page.fill(".segment-name", "Squats");
