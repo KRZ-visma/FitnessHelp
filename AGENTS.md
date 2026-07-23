@@ -45,9 +45,10 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 4. UI-, formulier-, timer- of PWA-wijzigingen: verifieer op **iPhone 16 Pro**-formaat (viewport ≈ 393×852, DPR 3) — layout, touch, Safari-toetsenbord/autofill, safe areas; gebruik waar mogelijk browser-/device-emulatie of handmatige check, en leg in de PR kort vast dat dit is nagelopen
 5. Geen secrets, analytics of externe APIs toevoegen zonder vraag
 6. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
-7. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
-8. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
-9. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review
+7. Bij user-facing wijzigingen (UI, timer, formulier, opslag-gedrag, PWA): bump `APP_VERSION` in `js/constants.js` (semver: patch = fix, minor = feature). Niet bumpen bij docs-/test-/AGENTS-only. Raak `EXPORT_VERSION` / `STORAGE_KEY` niet aan tenzij het schema echt wijzigt
+8. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
+9. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
+10. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review
 
 ## Niet doen
 
