@@ -78,7 +78,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#home-title")).toHaveText("Push dag");
     await expect(page.locator("#home-meta")).toContainText("Push-ups");
     await expect(page.locator("#manage")).toBeHidden();
-    await expect(page.locator("#tagline")).toContainText("favoriet");
+    await expect(page.locator("#tagline")).toBeHidden();
 
     const stored = await page.evaluate(() =>
       JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")

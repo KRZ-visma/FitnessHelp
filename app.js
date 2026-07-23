@@ -45,7 +45,6 @@
   const EXPORT_APP = "fitnesshelp";
   const EXPORT_VERSION = 1;
   const TAGLINE_EMPTY = "Programma bouwen. Timer of sets & keer. Lokaal bewaard.";
-  const TAGLINE_READY = "Één favoriet. Start en train. Lokaal bewaard.";
 
   /**
    * @typedef {{ type: 'timer', name: string, sets: number, duration: number, rest: number }} TimerItem
@@ -532,7 +531,7 @@
 
       const upBtn = document.createElement("button");
       upBtn.type = "button";
-      upBtn.className = "btn btn-ghost btn-sm segment-move-up";
+      upBtn.className = "btn btn-ghost segment-move-up";
       upBtn.textContent = "Omhoog";
       upBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omhoog`);
       upBtn.disabled = index === 0;
@@ -540,7 +539,7 @@
 
       const downBtn = document.createElement("button");
       downBtn.type = "button";
-      downBtn.className = "btn btn-ghost btn-sm segment-move-down";
+      downBtn.className = "btn btn-ghost segment-move-down";
       downBtn.textContent = "Omlaag";
       downBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omlaag`);
       downBtn.disabled = index >= draftItems.length - 1;
@@ -550,7 +549,7 @@
 
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
-      removeBtn.className = "btn btn-danger btn-sm";
+      removeBtn.className = "btn btn-danger";
       removeBtn.textContent = "Verwijder";
       removeBtn.disabled = draftItems.length <= 1;
       removeBtn.addEventListener("click", () => {
@@ -861,7 +860,7 @@
 
       const start = document.createElement("button");
       start.type = "button";
-      start.className = "btn btn-primary btn-sm";
+      start.className = "btn btn-primary";
       start.textContent = "Start";
       start.addEventListener("click", () => {
         fillForm(program);
@@ -870,7 +869,7 @@
 
       const load = document.createElement("button");
       load.type = "button";
-      load.className = "btn btn-ghost btn-sm";
+      load.className = "btn btn-ghost";
       load.textContent = "Laden";
       load.addEventListener("click", () => {
         fillForm(program);
@@ -880,7 +879,7 @@
 
       const remove = document.createElement("button");
       remove.type = "button";
-      remove.className = "btn btn-danger btn-sm";
+      remove.className = "btn btn-danger";
       remove.textContent = "Verwijder";
       remove.addEventListener("click", () => {
         const next = loadPrograms().filter((p) => p.id !== program.id);
@@ -896,7 +895,7 @@
       if (program.id !== favoriteId) {
         const favoriteBtn = document.createElement("button");
         favoriteBtn.type = "button";
-        favoriteBtn.className = "btn btn-ghost btn-sm";
+        favoriteBtn.className = "btn btn-ghost";
         favoriteBtn.textContent = "Maak favoriet";
         favoriteBtn.addEventListener("click", () => {
           setFavorite(program.id);
@@ -918,14 +917,17 @@
       homeEl.hidden = true;
       homeName.textContent = "";
       homeMeta.textContent = "";
-      if (taglineEl) taglineEl.textContent = TAGLINE_EMPTY;
+      if (taglineEl) {
+        taglineEl.hidden = false;
+        taglineEl.textContent = TAGLINE_EMPTY;
+      }
       return null;
     }
 
     homeEl.hidden = false;
     homeName.textContent = favorite.name;
     homeMeta.textContent = programSummary(favorite);
-    if (taglineEl) taglineEl.textContent = TAGLINE_READY;
+    if (taglineEl) taglineEl.hidden = true;
     return favorite;
   }
 
