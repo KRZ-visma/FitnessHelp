@@ -9,4 +9,8 @@ export const hooks = {
   fillForm: (_program) => {},
   /** @param {import('./constants.js').Program} program */
   startSession: (_program) => {},
+  /** @type {() => void} */
+  renderExercises: () => {},
+  /** @param {import('./exercises.js').Exercise} exercise */
+  addExerciseToForm: (_exercise) => {},
 };

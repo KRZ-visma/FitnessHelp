@@ -43,6 +43,22 @@ export function addDraftItem(type = "timer") {
   if (last instanceof HTMLInputElement) last.focus();
 }
 
+/**
+ * @param {import('./exercises.js').Exercise} exercise
+ */
+export function addExerciseToForm(exercise) {
+  const item = {
+    type: exercise.type,
+    name: exercise.name,
+    sets: String(exercise.sets),
+    duration: String(exercise.duration || 45),
+    reps: String(exercise.reps || 10),
+  };
+  draftItems.push(item);
+  renderSegments();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+
 export function bindDigits(input) {
   input.addEventListener("input", () => {
     const digits = input.value.replace(/\D/g, "");

@@ -239,6 +239,7 @@ export function closeManage() {
 
 export function renderApp() {
   renderHome();
+  hooks.renderExercises?.();
   renderSaved();
   updateShell();
 }
