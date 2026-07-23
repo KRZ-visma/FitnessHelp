@@ -20,6 +20,7 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator(".brand")).toHaveText("FitnessHelp");
     await expect(page.locator("#home")).toBeHidden();
     await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#manage-header")).toBeHidden();
     await expect(page.locator("#program-name")).toBeVisible();
     await expect(page.locator(".segment")).toHaveCount(1);
     await expect(page.locator(".segment-name")).toBeVisible();

@@ -200,6 +200,10 @@ main {
   padding-bottom: 0.15rem;
 }
 
+.manage-header[hidden] {
+  display: none !important;
+}
+
 .manage-title {
   margin: 0;
   font-family: var(--font-display);
