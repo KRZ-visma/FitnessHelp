@@ -30,19 +30,11 @@ test.describe("Formulier & beheer", () => {
     await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
   });
 
-  test("programma-naam toont autocomplete van opgeslagen namen", async ({ page }) => {
-    await page.fill("#program-name", "Push dag");
-    await page.fill(".segment-name", "Push-ups");
-    await page.click("#save-btn");
-
-    await openManage(page);
+  test("programma-naam heeft autocomplete uit", async ({ page }) => {
     const program = page.locator("#program-name");
-    await expect(program).toHaveAttribute("list", "program-name-suggestions");
-    await expect(page.locator("#program-name-suggestions option")).toHaveCount(1);
-    await expect(page.locator("#program-name-suggestions option")).toHaveAttribute(
-      "value",
-      "Push dag"
-    );
+    await expect(program).toHaveAttribute("autocomplete", "off");
+    await expect(program).not.toHaveAttribute("list");
+    await expect(page.locator("#program-name-suggestions")).toHaveCount(0);
   });
 
   test("nummervelden gebruiken iOS cijferpad-attributen", async ({ page }) => {
@@ -58,10 +50,9 @@ test.describe("Formulier & beheer", () => {
   test("programma- en oefeningvelden zijn geen contact-autofill", async ({ page }) => {
     const program = page.locator("#program-name");
     await expect(program).toHaveAttribute("name", "fh-program");
-    await expect(program).toHaveAttribute("autocomplete", "fh-program");
+    await expect(program).toHaveAttribute("autocomplete", "off");
     await expect(program).toHaveAttribute("autocorrect", "off");
     await expect(program).toHaveAttribute("spellcheck", "false");
-    await expect(program).toHaveAttribute("list", "program-name-suggestions");
 
     const exercise = page.locator(".segment-name");
     await expect(exercise).toHaveAttribute("autocomplete", "fh-exercise");
