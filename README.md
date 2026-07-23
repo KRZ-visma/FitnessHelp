@@ -40,10 +40,12 @@ Live: https://krz-visma.github.io/FitnessHelp/
 
 ## Tests
 
-Playwright-tests draaien lokaal en via GitHub Actions op elke push/PR:
+Playwright-tests draaien lokaal en via GitHub Actions op elke push/PR. De check **Playwright** moet groen zijn vóór merge.
 
 ```bash
 npm install
 npx playwright install chromium
 npm test
 ```
+
+Optioneel (repo-beheerder): maak **Playwright** een required status check op `main` via branch protection / rulesets, zodat merges zonder groene check geblokkeerd worden.
