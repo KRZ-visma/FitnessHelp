@@ -44,6 +44,8 @@
 
   const EXPORT_APP = "fitnesshelp";
   const EXPORT_VERSION = 1;
+  /** Zichtbare app-versie (footer). Bump bij release / PWA-cache-wijziging. */
+  const APP_VERSION = "1.2.0";
   const TAGLINE_EMPTY = "Programma bouwen. Timer of sets & keer. Lokaal bewaard.";
   const TAGLINE_READY = "Één favoriet. Start en train. Lokaal bewaard.";
 
@@ -1388,6 +1390,11 @@
 
   resetDraft();
   renderApp();
+
+  const appVersionEl = document.getElementById("app-version");
+  if (appVersionEl) {
+    appVersionEl.textContent = `v${APP_VERSION}`;
+  }
 
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
