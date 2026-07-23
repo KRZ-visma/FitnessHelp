@@ -53,24 +53,16 @@ test.describe("Formulier & beheer", () => {
     await expect(program).toHaveAttribute("autocomplete", "fh-program");
     await expect(program).toHaveAttribute("autocorrect", "off");
     await expect(program).toHaveAttribute("spellcheck", "false");
-    await expect(program).toHaveAttribute("readonly");
-
-    await program.focus();
-    await expect(program).not.toHaveAttribute("readonly");
-    await program.blur();
-    await expect(program).toHaveAttribute("readonly");
 
     const exercise = page.locator(".segment-name");
     await expect(exercise).toHaveAttribute("autocomplete", "fh-exercise");
     await expect(exercise).toHaveAttribute("name", "fh-exercise-0");
     await expect(exercise).toHaveAttribute("autocorrect", "off");
     await expect(exercise).toHaveAttribute("spellcheck", "false");
-    await expect(exercise).toHaveAttribute("readonly");
 
-    await exercise.focus();
-    await expect(exercise).not.toHaveAttribute("readonly");
-    await exercise.blur();
-    await expect(exercise).toHaveAttribute("readonly");
+    // Na de korte load-lock zijn velden gewoon bewerkbaar (fill/typpen).
+    await expect.poll(async () => program.evaluate((el) => el.readOnly)).toBe(false);
+    await expect.poll(async () => exercise.evaluate((el) => el.readOnly)).toBe(false);
 
     // Lokvelden vangen contact-autofill; echte velden blijven fh-*
     await expect(page.locator(".autofill-trap")).toHaveCount(1);

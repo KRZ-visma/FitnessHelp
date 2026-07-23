@@ -11,7 +11,7 @@ let draftItems = [];
 
 /**
  * Safari negeert autocomplete="off" en vult dan via heuristiek.
- * Custom tokens + readonly-tot-focus blokkeren contact-/formulier-autofill.
+ * Custom tokens + korte readonly bij load blokkeren contact-/formulier-autofill.
  * @param {HTMLInputElement} input
  * @param {string} token
  */
@@ -19,17 +19,15 @@ export function guardSafariAutofill(input, token) {
   input.autocomplete = token;
   input.setAttribute("autocorrect", "off");
   input.spellcheck = false;
-  input.readOnly = true;
 
+  // Safari probeert direct na load in te vullen; blokkeer die pass kort.
+  input.readOnly = true;
   const unlock = () => {
     if (input.readOnly) input.readOnly = false;
   };
-  const lock = () => {
-    input.readOnly = true;
-  };
   input.addEventListener("focus", unlock);
   input.addEventListener("touchstart", unlock, { passive: true });
-  input.addEventListener("blur", lock);
+  window.setTimeout(unlock, 400);
 }
 
 export function defaultDraftItem(type = "timer") {
