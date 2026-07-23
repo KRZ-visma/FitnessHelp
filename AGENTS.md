@@ -35,18 +35,19 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 - Behoud bestaand visueel systeem (Archivo + Figtree, sfeer via `.atmosphere`, merk eerst)
 - Geen generieke AI-look (paarse gradients, cream+terracotta, broadsheet)
 - Timer-flow en setup-flow gescheiden houden; geen dashboard-achtige clutter
-- Mobiel eerst: grote touch targets, bruikbaar op iPhone (toetsenbord/autofill/input modes)
+- **Primair doelapparaat: iPhone 16 Pro (Safari)** — mobiel eerst; grote touch targets; toetsenbord/autofill/input modes; safe areas (Dynamic Island, home indicator); geluid ook met stille schakelaar
 
 ## Werkwijze
 
 1. Kleine, gerichte diffs — alleen wat de taak vraagt; **één feature = bij voorkeur één domein-module**
 2. Wijzigingen aan timer/formulier/localStorage → Playwright-tests in `tests/` updaten of uitbreiden (juiste `*.spec.js`)
 3. Voor PR: `npm ci && npx playwright install chromium && npm test`
-4. Geen secrets, analytics of externe APIs toevoegen zonder vraag
-5. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
-6. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
-7. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
-8. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review
+4. UI-, formulier-, timer- of PWA-wijzigingen: verifieer op **iPhone 16 Pro**-formaat (viewport ≈ 393×852, DPR 3) — layout, touch, Safari-toetsenbord/autofill, safe areas; gebruik waar mogelijk browser-/device-emulatie of handmatige check, en leg in de PR kort vast dat dit is nagelopen
+5. Geen secrets, analytics of externe APIs toevoegen zonder vraag
+6. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
+7. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
+8. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
+9. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review
 
 ## Niet doen
 
