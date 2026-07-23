@@ -46,6 +46,7 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 5. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
 6. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
 7. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
+8. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review
 
 ## Niet doen
 
