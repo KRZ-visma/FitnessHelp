@@ -10,7 +10,7 @@ import {
   savedList,
   taglineEl,
 } from "./dom.js";
-import { fillForm, updateProgramSuggestions } from "./form.js";
+import { fillForm } from "./form.js";
 import { hooks } from "./hooks.js";
 import {
   loadFavoriteId,
@@ -40,7 +40,6 @@ export function renderSaved() {
   const favoriteId = favorite?.id ?? null;
   savedList.innerHTML = "";
   savedEmpty.hidden = programs.length > 0;
-  updateProgramSuggestions(programs);
 
   programs.forEach((program) => {
     const li = document.createElement("li");

@@ -84,6 +84,31 @@
           <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
 
           <form id="workout-form" class="workout-form" autocomplete="off">
+            <!--
+              Safari negeert autocomplete="off" en vult dan via heuristiek (contact/adres).
+              Verborgen lokvelden vangen die Autofill af; echte velden gebruiken fh-* tokens.
+            -->
+            <div class="autofill-trap" aria-hidden="true">
+              <input
+                type="text"
+                name="name"
+                autocomplete="name"
+                tabindex="-1"
+              />
+              <input
+                type="email"
+                name="email"
+                autocomplete="email"
+                tabindex="-1"
+              />
+              <input
+                type="text"
+                name="address-line1"
+                autocomplete="street-address"
+                tabindex="-1"
+              />
+            </div>
+
             <label class="field">
               <span>Programma</span>
               <input
@@ -92,7 +117,7 @@
                 name="fh-program"
                 placeholder="bijv. Full body"
                 maxlength="60"
-                autocomplete="off"
+                autocomplete="fh-program"
                 autocorrect="off"
                 autocapitalize="words"
                 spellcheck="false"
@@ -110,7 +135,7 @@
                   name="fh-rest"
                   inputmode="numeric"
                   pattern="[0-9]*"
-                  autocomplete="off"
+                  autocomplete="fh-rest"
                   required
                   value="15"
                 />
@@ -123,7 +148,7 @@
                   name="fh-switch"
                   inputmode="numeric"
                   pattern="[0-9]*"
-                  autocomplete="off"
+                  autocomplete="fh-switch"
                   required
                   value="15"
                 />

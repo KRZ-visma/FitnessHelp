@@ -9,6 +9,7 @@ import {
   manageBtn,
   manageDoneBtn,
   pauseBtn,
+  programNameInput,
   programRestInput,
   programSwitchInput,
   saveBtn,
@@ -16,7 +17,7 @@ import {
   stopBtn,
 } from "./dom.js";
 import { APP_VERSION } from "./constants.js";
-import { addDraftItem, bindDigits, fillForm, readForm, resetDraft } from "./form.js";
+import { addDraftItem, bindDigits, fillForm, guardSafariAutofill, readForm, resetDraft } from "./form.js";
 import { hooks } from "./hooks.js";
 import { closeManage, openManage, renderApp, setManaging } from "./shell.js";
 import {
@@ -127,6 +128,9 @@ importFile.addEventListener("change", () => {
 resetDraft();
 bindDigits(programRestInput);
 bindDigits(programSwitchInput);
+if (programNameInput instanceof HTMLInputElement) {
+  guardSafariAutofill(programNameInput, "fh-program");
+}
 renderApp();
 
 const appVersionEl = document.getElementById("app-version");
