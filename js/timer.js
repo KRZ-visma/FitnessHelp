@@ -18,6 +18,7 @@ import {
 } from "./dom.js";
 import { hooks } from "./hooks.js";
 import { markProgramDoneToday } from "./storage.js";
+import { resolveExercise } from "./migration.js";
 import { formatTime } from "./util.js";
 
 /**
@@ -71,13 +72,18 @@ function currentItem() {
 export function startSession(program) {
   enableWorkoutAudio();
   stopTick();
+  
+  const resolvedItems = program.items
+    .map((item) => resolveExercise(item, program.rest))
+    .filter(Boolean);
+  
   session = {
     program: {
       id: program.id,
       name: program.name,
       rest: program.rest,
       switch: program.switch,
-      items: program.items.map((item) => ({ ...item })),
+      items: resolvedItems,
     },
     itemIndex: 0,
     setIndex: 1,

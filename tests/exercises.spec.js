@@ -99,9 +99,13 @@ test.describe("Oefeningenbibliotheek", () => {
 
     await expect(page.locator(".segment")).toHaveCount(2);
     const lastSegment = page.locator(".segment").last();
+    await expect(lastSegment).toHaveClass(/segment-ref/);
     await expect(lastSegment.locator(".segment-name")).toHaveValue("Burpees");
+    await expect(lastSegment.locator(".segment-name")).toHaveAttribute("readonly", "");
     await expect(lastSegment.locator(".segment-sets")).toHaveValue("3");
+    await expect(lastSegment.locator(".segment-sets")).toHaveAttribute("readonly", "");
     await expect(lastSegment.locator(".segment-duration")).toHaveValue("30");
+    await expect(lastSegment.locator(".segment-duration")).toHaveAttribute("readonly", "");
   });
 
   test("modal kan worden gesloten met annuleren knop", async ({ page }) => {

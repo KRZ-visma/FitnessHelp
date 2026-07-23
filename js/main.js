@@ -36,6 +36,9 @@ import {
 } from "./timer.js";
 import { exportPrograms, importProgramsFromFile } from "./transfer.js";
 import { renderExercises, showExerciseModal } from "./exercises-ui.js";
+import { migrateToExerciseLibrary } from "./migration.js";
+
+migrateToExerciseLibrary();
 
 hooks.renderApp = renderApp;
 hooks.fillForm = fillForm;

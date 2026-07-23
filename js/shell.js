@@ -26,6 +26,7 @@ import {
   setFavorite,
   setProgramDoneToday,
 } from "./storage.js";
+import { resolveExercise } from "./migration.js";
 import { escapeHtml } from "./util.js";
 
 /** Beheer blijft open tot de gebruiker klaar is of opnieuw start vanuit home. */
@@ -54,7 +55,12 @@ export function renderSaved() {
     const info = document.createElement("div");
     info.className = "saved-info";
     const parts = program.items
-      .map((item) => `${escapeHtml(item.name)} (${item.type === "reps" ? "sets & keer" : "timer"})`)
+      .map((item) => {
+        const resolved = resolveExercise(item, program.rest);
+        if (!resolved) return null;
+        return `${escapeHtml(resolved.name)} (${resolved.type === "reps" ? "sets & keer" : "timer"})`;
+      })
+      .filter(Boolean)
       .join(" · ");
     const favoriteBadge =
       program.id === favoriteId ? `<span class="saved-favorite-badge">Favoriet</span>` : "";

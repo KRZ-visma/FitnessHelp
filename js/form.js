@@ -4,9 +4,10 @@ import {
   programSwitchInput,
   segmentsEl,
 } from "./dom.js";
+import { resolveExercise } from "./migration.js";
 import { clampInt, uid } from "./util.js";
 
-/** @type {{ type: 'timer'|'reps', name: string, sets: string, duration: string, reps: string }[]} */
+/** @type {{ type: 'timer'|'reps'|'ref', exerciseType?: 'timer'|'reps', exerciseId?: string, name: string, sets: string, duration: string, reps: string }[]} */
 let draftItems = [];
 
 /**
@@ -48,11 +49,13 @@ export function addDraftItem(type = "timer") {
  */
 export function addExerciseToForm(exercise) {
   const item = {
-    type: exercise.type,
+    type: "ref",
+    exerciseType: exercise.type,
+    exerciseId: exercise.id,
     name: exercise.name,
     sets: String(exercise.sets),
-    duration: String(exercise.duration || 45),
-    reps: String(exercise.reps || 10),
+    duration: exercise.type === "timer" ? String(exercise.duration) : "45",
+    reps: exercise.type === "reps" ? String(exercise.reps) : "10",
   };
   draftItems.push(item);
   renderSegments();
@@ -73,25 +76,35 @@ export function renderSegments() {
     article.className = "segment";
     article.dataset.index = String(index);
     article.dataset.type = item.type;
+    
+    const isRef = item.type === "ref";
+    if (isRef) article.classList.add("segment-ref");
 
     const head = document.createElement("div");
     head.className = "segment-head";
 
     const label = document.createElement("p");
     label.className = "segment-label";
-    label.textContent = `Onderdeel ${index + 1}`;
+    label.textContent = isRef 
+      ? `Onderdeel ${index + 1} (uit bibliotheek)` 
+      : `Onderdeel ${index + 1}`;
 
     const typeSelect = document.createElement("select");
     typeSelect.className = "segment-type";
     typeSelect.setAttribute("aria-label", `Type onderdeel ${index + 1}`);
+    typeSelect.disabled = isRef;
+    
+    const actualType = isRef ? item.exerciseType : item.type;
     typeSelect.innerHTML = `
-        <option value="timer"${item.type === "timer" ? " selected" : ""}>Timer</option>
-        <option value="reps"${item.type === "reps" ? " selected" : ""}>Sets &amp; keer</option>
+        <option value="timer"${actualType === "timer" ? " selected" : ""}>Timer</option>
+        <option value="reps"${actualType === "reps" ? " selected" : ""}>Sets &amp; keer</option>
       `;
-    typeSelect.addEventListener("change", () => {
-      draftItems[index].type = /** @type {'timer'|'reps'} */ (typeSelect.value);
-      renderSegments();
-    });
+    if (!isRef) {
+      typeSelect.addEventListener("change", () => {
+        draftItems[index].type = /** @type {'timer'|'reps'} */ (typeSelect.value);
+        renderSegments();
+      });
+    }
 
     head.append(label, typeSelect);
 
@@ -108,31 +121,36 @@ export function renderSegments() {
     nameInput.setAttribute("enterkeyhint", "done");
     nameInput.required = true;
     nameInput.value = item.name;
-    guardSafariAutofill(nameInput, "fh-exercise");
-    nameInput.addEventListener("input", () => {
-      draftItems[index].name = nameInput.value;
-    });
+    nameInput.readOnly = isRef;
+    if (!isRef) {
+      guardSafariAutofill(nameInput, "fh-exercise");
+      nameInput.addEventListener("input", () => {
+        draftItems[index].name = nameInput.value;
+      });
+    }
     nameField.append(nameInput);
 
     const row = document.createElement("div");
     row.className = "field-row";
 
-    const setsField = makeNumberField("Aantal sets", "segment-sets", item.sets, (value) => {
+    const setsField = makeNumberField("Aantal sets", "segment-sets", item.sets, isRef ? null : (value) => {
       draftItems[index].sets = value;
-    });
+    }, isRef);
     row.append(setsField);
 
-    if (item.type === "timer") {
+    const displayType = isRef ? item.exerciseType : item.type;
+    
+    if (displayType === "timer") {
       row.append(
-        makeNumberField("Duur per set (sec)", "segment-duration", item.duration, (value) => {
+        makeNumberField("Duur per set (sec)", "segment-duration", item.duration, isRef ? null : (value) => {
           draftItems[index].duration = value;
-        })
+        }, isRef)
       );
     } else {
       row.append(
-        makeNumberField("Keer per set", "segment-reps", item.reps, (value) => {
+        makeNumberField("Keer per set", "segment-reps", item.reps, isRef ? null : (value) => {
           draftItems[index].reps = value;
-        })
+        }, isRef)
       );
     }
 
@@ -190,7 +208,7 @@ function moveSegment(index, delta) {
   renderSegments();
 }
 
-function makeNumberField(labelText, className, value, onChange) {
+function makeNumberField(labelText, className, value, onChange, readOnly = false) {
   const field = document.createElement("label");
   field.className = "field";
   const span = document.createElement("span");
@@ -203,8 +221,11 @@ function makeNumberField(labelText, className, value, onChange) {
   input.autocomplete = `fh-${className}`;
   input.required = true;
   input.value = value;
-  bindDigits(input);
-  input.addEventListener("input", () => onChange(input.value));
+  input.readOnly = readOnly;
+  if (!readOnly) {
+    bindDigits(input);
+    if (onChange) input.addEventListener("input", () => onChange(input.value));
+  }
   field.append(span, input);
   return field;
 }
@@ -230,10 +251,16 @@ export function readForm() {
   const programRest = clampInt(rest, 0, 600);
   const programSwitch = clampInt(switchSec, 0, 600);
 
-  /** @type {import('./constants.js').ProgramItem[]} */
+  /** @type {(import('./constants.js').ProgramItem | import('./constants.js').ProgramExerciseRef)[]} */
   const items = [];
   for (let i = 0; i < draftItems.length; i += 1) {
     const draft = draftItems[i];
+    
+    if (draft.type === "ref" && draft.exerciseId) {
+      items.push({ exerciseId: draft.exerciseId });
+      continue;
+    }
+    
     const itemName = draft.name.trim();
     const sets = Number(draft.sets);
     if (!itemName) {
@@ -272,7 +299,6 @@ export function readForm() {
         name: itemName,
         sets: clampInt(sets, 1, 99),
         duration: clampInt(duration, 1, 3600),
-        // Bewaar rest per timer-item voor oudere exports / compatibiliteit.
         rest: programRest,
       });
     }
@@ -288,6 +314,19 @@ export function fillForm(program) {
   programRestInput.value = String(program.rest ?? 15);
   programSwitchInput.value = String(program.switch ?? 15);
   draftItems = program.items.map((item) => {
+    if ("exerciseId" in item) {
+      const resolved = resolveExercise(item, program.rest);
+      if (!resolved) return null;
+      return {
+        type: "ref",
+        exerciseType: resolved.type,
+        exerciseId: item.exerciseId,
+        name: resolved.name,
+        sets: String(resolved.sets),
+        duration: resolved.type === "timer" ? String(resolved.duration) : "45",
+        reps: resolved.type === "reps" ? String(resolved.reps) : "10",
+      };
+    }
     if (item.type === "reps") {
       return {
         type: "reps",
@@ -304,7 +343,7 @@ export function fillForm(program) {
       duration: String(item.duration),
       reps: "10",
     };
-  });
+  }).filter(Boolean);
   if (!draftItems.length) draftItems = [defaultDraftItem("timer")];
   renderSegments();
 }
