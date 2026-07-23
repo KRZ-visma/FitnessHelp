@@ -32,7 +32,6 @@ python3 -m http.server 8080
 ```
 
 Ga naar `http://localhost:8080`.
-
 ## GitHub Pages
 
 In de repo: **Settings → Pages → Source: Deploy from a branch**, kies `main` en `/ (root)`.
