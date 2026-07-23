@@ -6,7 +6,7 @@ export const PREP_SECONDS = 5;
 export const EXPORT_APP = "fitnesshelp";
 export const EXPORT_VERSION = 1;
 /** Zichtbare app-versie (footer). Bump bij release / PWA-cache-wijziging. */
-export const APP_VERSION = "1.3.0";
+export const APP_VERSION = "1.3.1";
 export const TAGLINE_EMPTY = "Programma bouwen. Timer of sets & keer. Lokaal bewaard.";
 
 /**
