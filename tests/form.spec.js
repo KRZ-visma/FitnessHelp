@@ -31,9 +31,9 @@ test.describe("Formulier & beheer", () => {
     await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
   });
 
-  test("programma-naam heeft autocomplete uit", async ({ page }) => {
+  test("programma-naam heeft geen suggestielijst", async ({ page }) => {
     const program = page.locator("#program-name");
-    await expect(program).toHaveAttribute("autocomplete", "off");
+    await expect(program).toHaveAttribute("autocomplete", "fh-program");
     await expect(program).not.toHaveAttribute("list");
     await expect(page.locator("#program-name-suggestions")).toHaveCount(0);
   });
@@ -44,25 +44,33 @@ test.describe("Formulier & beheer", () => {
       await expect(input).toHaveAttribute("type", "text");
       await expect(input).toHaveAttribute("inputmode", "numeric");
       await expect(input).toHaveAttribute("pattern", "[0-9]*");
-      await expect(input).toHaveAttribute("autocomplete", "off");
+      await expect(input).toHaveAttribute("autocomplete", /^(fh-rest|fh-switch|fh-segment-sets|fh-segment-duration)$/);
     }
   });
 
-  test("programma- en oefeningvelden zijn geen contact-autofill", async ({ page }) => {
+  test("programma- en oefeningvelden blokkeren Safari-autofill", async ({ page }) => {
     const program = page.locator("#program-name");
     await expect(program).toHaveAttribute("name", "fh-program");
-    await expect(program).toHaveAttribute("autocomplete", "off");
+    await expect(program).toHaveAttribute("autocomplete", "fh-program");
     await expect(program).toHaveAttribute("autocorrect", "off");
     await expect(program).toHaveAttribute("spellcheck", "false");
+    await expect(program).not.toHaveAttribute("readonly");
 
     const exercise = page.locator(".segment-name");
     await expect(exercise).toHaveAttribute("autocomplete", "fh-exercise");
     await expect(exercise).toHaveAttribute("name", "fh-exercise-0");
     await expect(exercise).toHaveAttribute("autocorrect", "off");
     await expect(exercise).toHaveAttribute("spellcheck", "false");
-    await expect(page.locator("#name")).toHaveCount(0);
-    await expect(page.locator('[name="name"]')).toHaveCount(0);
-    await expect(page.locator('[name="program"]')).toHaveCount(0);
+    await expect(exercise).not.toHaveAttribute("readonly");
+
+    // Lokvelden vangen contact-autofill; echte velden blijven fh-*
+    await expect(page.locator(".autofill-trap")).toHaveCount(1);
+    await expect(page.locator(".autofill-trap [name='name']")).toHaveCount(1);
+    await expect(page.locator("#workout-form > .field #program-name")).toHaveAttribute(
+      "name",
+      "fh-program"
+    );
+    await expect(page.locator('.segment-name[name="name"]')).toHaveCount(0);
   });
 
   test("Klaar-knop in beheer is een primaire knop", async ({ page }) => {
