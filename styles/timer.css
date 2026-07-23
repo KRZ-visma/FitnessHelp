@@ -1,0 +1,126 @@
+.timer {
+  animation-delay: 0s;
+  text-align: center;
+}
+
+.timer-program {
+  margin: 0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.timer-exercise {
+  margin: 0.3rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  letter-spacing: -0.03em;
+}
+
+.timer-clock.is-reps {
+  animation: none;
+  font-size: clamp(3.5rem, 16vw, 6.25rem);
+}
+
+.timer[data-mode="reps"] .timer-progress {
+  display: none;
+}
+
+.timer[data-mode="reps-prep"] .timer-progress {
+  display: block;
+}
+
+.timer-phase {
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.timer-clock {
+  margin: 0.55rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(4rem, 18vw, 7rem);
+  letter-spacing: -0.05em;
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  animation: pulse-soft 1s ease-in-out infinite;
+}
+
+.timer[data-phase="rest"] .timer-clock {
+  color: #2f6b45;
+}
+
+.timer[data-phase="prep"] .timer-clock,
+.timer[data-phase="switch"] .timer-clock {
+  color: #1a5c38;
+}
+
+.timer[data-phase="prep"] .timer-progress-bar,
+.timer[data-phase="switch"] .timer-progress-bar {
+  background: #1a5c38;
+}
+
+.timer[data-phase="done"] .timer-clock {
+  animation: none;
+  color: #2f6b45;
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.015);
+  }
+}
+
+.timer-progress {
+  margin: 1rem auto 0;
+  max-width: 18rem;
+  height: 0.35rem;
+  background: rgba(18, 32, 24, 0.1);
+  overflow: hidden;
+}
+
+.timer-progress-bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  background: var(--accent-ink);
+  transform: scaleX(1);
+  transition: transform 0.2s linear;
+}
+
+.timer[data-phase="rest"] .timer-progress-bar {
+  background: #2f6b45;
+}
+
+.timer-meta {
+  margin: 0.75rem 0 0;
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.timer .actions {
+  margin-top: 1.15rem;
+  justify-content: center;
+}
+
+.timer .actions .btn-primary {
+  min-width: 7.5rem;
+}
+
+body.is-running .timer {
+  min-height: min(78vh, 34rem);
+  display: grid;
+  align-content: center;
+  justify-items: center;
+}

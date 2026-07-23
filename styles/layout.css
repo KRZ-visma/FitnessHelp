@@ -1,0 +1,157 @@
+.site-header {
+  padding: clamp(2rem, 6vw, 3.5rem) clamp(1.25rem, 4vw, 2.5rem) 0.5rem;
+  animation: rise 0.7s var(--ease) both;
+}
+
+.brand {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.75rem, 10vw, 5.5rem);
+  letter-spacing: -0.04em;
+  line-height: 0.92;
+  color: #f4ffe8;
+  text-wrap: balance;
+}
+
+.tagline {
+  margin: 0.85rem 0 0;
+  max-width: 22rem;
+  font-size: clamp(1rem, 2.4vw, 1.15rem);
+  color: rgba(244, 255, 232, 0.78);
+  font-weight: 500;
+}
+
+/* Compact brand during beheer / timer — content first */
+body.is-managing .site-header,
+body.is-running .site-header {
+  padding-top: clamp(1.1rem, 3.5vw, 1.75rem);
+  padding-bottom: 0;
+}
+
+body.is-managing .brand {
+  font-size: clamp(1.65rem, 5.5vw, 2.35rem);
+  line-height: 1;
+}
+
+body.is-managing .tagline,
+body.is-running .site-header {
+  display: none;
+}
+
+main {
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2.25rem);
+  max-width: 40rem;
+}
+
+.timer,
+.home {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  animation: rise 0.8s var(--ease) both;
+}
+
+.home {
+  animation-delay: 0.08s;
+}
+
+.home-label {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+
+.home-name {
+  margin: 0.35rem 0 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.85rem, 6vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.home-meta {
+  margin: 0.55rem 0 0;
+  color: var(--ink-soft);
+  font-weight: 500;
+  max-width: 36rem;
+}
+
+/* Eén vlak voor beheer: setup + opgeslagen zonder dubbele kaarten */
+.manage {
+  display: grid;
+  gap: clamp(1.35rem, 3.5vw, 1.85rem);
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  animation: rise 0.8s var(--ease) both;
+  animation-delay: 0.08s;
+}
+
+.manage[hidden] {
+  display: none;
+}
+
+.manage .setup,
+.manage .saved {
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+  animation: none;
+}
+
+.manage .saved {
+  padding-top: clamp(1.15rem, 3vw, 1.5rem);
+  border-top: 1px solid var(--line);
+}
+
+.manage-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding-bottom: 0.15rem;
+}
+
+.manage-header[hidden] {
+  display: none !important;
+}
+
+.manage-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.25rem;
+  letter-spacing: -0.02em;
+  color: var(--ink);
+}
+
+.site-footer {
+  padding: 0 clamp(1.25rem, 4vw, 2.5rem) 2.25rem;
+  max-width: 40rem;
+}
+
+.site-footer .app-version {
+  margin: 0;
+  color: rgba(244, 255, 232, 0.38);
+  font-size: 0.72rem;
+  letter-spacing: 0.02em;
+}
+
+body.is-running .home,
+body.is-running .manage {
+  display: none;
+}
+
+body.is-running main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-top: clamp(1.5rem, 5vw, 2.5rem);
+}

@@ -1,10 +1,25 @@
-const CACHE_NAME = "fitnesshelp-static-v2";
+const CACHE_NAME = "fitnesshelp-static-v3";
 
 const PRECACHE_URLS = [
   "./",
   "./index.html",
-  "./app.js",
   "./styles.css",
+  "./styles/base.css",
+  "./styles/layout.css",
+  "./styles/form.css",
+  "./styles/timer.css",
+  "./styles/saved.css",
+  "./js/main.js",
+  "./js/constants.js",
+  "./js/util.js",
+  "./js/hooks.js",
+  "./js/dom.js",
+  "./js/storage.js",
+  "./js/audio.js",
+  "./js/transfer.js",
+  "./js/form.js",
+  "./js/timer.js",
+  "./js/shell.js",
   "./manifest.webmanifest",
   "./icons/icon-192.png",
   "./icons/icon-512.png",

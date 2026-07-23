@@ -15,16 +15,23 @@ Simpele browser-tool om een trainingsprogramma samen te stellen: onderdelen met 
 - **Exporteren / importeren** van programma’s als JSON-bestand
 - Installeerbaar als **PWA** (manifest + service worker; offline basisassets)
 
+## Structuur
+
+Code is opgesplitst per domein (ES-modules, geen bundler), zodat parallelle PRs minder conflicten geven:
+
+- `js/` — storage, form, timer, shell, audio, transfer, …
+- `styles/` — base, layout, form, timer, saved
+- `tests/` — Playwright-specs per feature
+
 ## Lokaal openen
 
-Open `index.html` in je browser, of start een simpele server:
+ES-modules vereisen een HTTP-server (niet `file://`):
 
 ```bash
 python3 -m http.server 8080
 ```
 
 Ga naar `http://localhost:8080`.
-
 ## GitHub Pages
 
 In de repo: **Settings → Pages → Source: Deploy from a branch**, kies `main` en `/ (root)`.

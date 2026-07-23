@@ -8,9 +8,27 @@ Live via GitHub Pages vanaf `main` (root). Geen backend, geen build-step.
 ## Stack (houd zo)
 
 - Vanilla HTML / CSS / JS — géén framework, bundler of TypeScript tenzij expliciet gevraagd
-- Bestanden: `index.html`, `app.js`, `styles.css`
+- Native ES-modules (`type="module"`) — géén bundler
 - Storage-key: `fitnesshelp-workouts-v1` (niet breken zonder migratie; legacy single-timer workouts samenvoegen tot één programma `{ name: "Mijn training", items[] }`)
 - UI-taal: Nederlands
+
+## Bestanden (per domein)
+
+Raak bij een feature **alleen** de relevante module(s). Dat voorkomt merge-conflicten op één groot `app.js`.
+
+| Domein | JS | CSS | Tests |
+| --- | --- | --- | --- |
+| Opslag / favoriet / migratie | `js/storage.js` | — | `tests/home.spec.js`, `tests/transfer.spec.js` |
+| Formulier / onderdelen / rust+wissel | `js/form.js` | `styles/form.css` | `tests/form.spec.js` |
+| Timer-sessie (prep/rust/wissel) | `js/timer.js` | `styles/timer.css` | `tests/timer.spec.js` |
+| Home / beheer-shell / footer-versie | `js/shell.js`, `js/constants.js` (`APP_VERSION`) | `styles/layout.css` | `tests/home.spec.js`, `tests/form.spec.js` |
+| Import / export | `js/transfer.js` | `styles/saved.css` | `tests/transfer.spec.js` |
+| Geluid | `js/audio.js` | — | `tests/audio.spec.js` |
+| PWA | `sw.js`, `manifest.webmanifest` | — | `tests/pwa.spec.js` |
+| Wire-up / DOM-refs | `js/main.js`, `js/dom.js`, `js/hooks.js` | — | — |
+| Tokens / knoppen | `js/util.js` | `styles/base.css` | — |
+
+Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modules.
 
 ## Design
 
@@ -21,14 +39,17 @@ Live via GitHub Pages vanaf `main` (root). Geen backend, geen build-step.
 
 ## Werkwijze
 
-1. Kleine, gerichte diffs — alleen wat de taak vraagt
-2. Wijzigingen aan timer/formulier/localStorage → Playwright-tests in `tests/` updaten of uitbreiden
+1. Kleine, gerichte diffs — alleen wat de taak vraagt; **één feature = bij voorkeur één domein-module**
+2. Wijzigingen aan timer/formulier/localStorage → Playwright-tests in `tests/` updaten of uitbreiden (juiste `*.spec.js`)
 3. Voor PR: `npm ci && npx playwright install chromium && npm test`
 4. Geen secrets, analytics of externe APIs toevoegen zonder vraag
 5. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
+6. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
+7. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
 
 ## Niet doen
 
-- Dependencies toevoegen “voor later”
+- Dependencies of een bundler toevoegen “voor later”
+- Alles weer terugzetten in één `app.js`
 - localStorage-schema stilzwijgend wijzigen
 - Hero/layout omgooien bij een bugfix of kleine feature
