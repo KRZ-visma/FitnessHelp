@@ -66,7 +66,7 @@
 
 .segment-label {
   margin: 0;
-  font-size: 0.75rem;
+  font-size: 0.78rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -81,9 +81,11 @@
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.5rem 2rem 0.5rem 0.8rem;
+  padding: 0.7rem 2rem 0.7rem 0.9rem;
+  min-height: 44px;
   outline: none;
   cursor: pointer;
+  touch-action: manipulation;
 }
 
 .segment-type:focus {
@@ -96,13 +98,36 @@
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: 0.75rem;
 }
 
 .segment-order {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.4rem;
+  gap: 0.65rem;
+}
+
+.segment-order .btn {
+  min-width: 90px;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+@media (max-width: 400px) {
+  .segment-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .segment-order {
+    width: 100%;
+    gap: 0.55rem;
+  }
+  
+  .segment-order .btn {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 .field {
@@ -111,7 +136,7 @@
 }
 
 .field span {
-  font-size: 0.75rem;
+  font-size: 0.8rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -126,9 +151,11 @@
   font: inherit;
   font-size: 1.05rem;
   font-weight: 600;
-  padding: 0.8rem 0.9rem;
+  padding: 0.9rem 1rem;
+  min-height: 44px;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  touch-action: manipulation;
 }
 
 .field input:focus {
