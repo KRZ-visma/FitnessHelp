@@ -105,6 +105,11 @@ test.describe("FitnessHelp", () => {
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Push dag");
     await expect(page.locator("#saved-list")).toContainText("Favoriet");
+    await expect(
+      page.locator("#saved-list .saved-item").locator("button", { hasText: "Favoriet" })
+    ).toHaveCount(0);
+    await expect(page.locator(".segment-foot")).toHaveCount(0);
+    await expect(page.locator("body")).toHaveClass(/is-managing/);
   });
 
   test("ondersteunt gemengd programma met timer en sets & keer", async ({ page }) => {

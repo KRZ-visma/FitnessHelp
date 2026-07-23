@@ -532,7 +532,7 @@
 
       const upBtn = document.createElement("button");
       upBtn.type = "button";
-      upBtn.className = "btn btn-ghost segment-move-up";
+      upBtn.className = "btn btn-ghost btn-sm segment-move-up";
       upBtn.textContent = "Omhoog";
       upBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omhoog`);
       upBtn.disabled = index === 0;
@@ -540,7 +540,7 @@
 
       const downBtn = document.createElement("button");
       downBtn.type = "button";
-      downBtn.className = "btn btn-ghost segment-move-down";
+      downBtn.className = "btn btn-ghost btn-sm segment-move-down";
       downBtn.textContent = "Omlaag";
       downBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omlaag`);
       downBtn.disabled = index >= draftItems.length - 1;
@@ -550,7 +550,7 @@
 
       const removeBtn = document.createElement("button");
       removeBtn.type = "button";
-      removeBtn.className = "btn btn-danger";
+      removeBtn.className = "btn btn-danger btn-sm";
       removeBtn.textContent = "Verwijder";
       removeBtn.disabled = draftItems.length <= 1;
       removeBtn.addEventListener("click", () => {
@@ -560,7 +560,11 @@
       });
       foot.append(order, removeBtn);
 
-      article.append(head, nameField, row, foot);
+      if (draftItems.length > 1) {
+        article.append(head, nameField, row, foot);
+      } else {
+        article.append(head, nameField, row);
+      }
       segmentsEl.append(article);
     });
   }
@@ -857,7 +861,7 @@
 
       const start = document.createElement("button");
       start.type = "button";
-      start.className = "btn btn-primary";
+      start.className = "btn btn-primary btn-sm";
       start.textContent = "Start";
       start.addEventListener("click", () => {
         fillForm(program);
@@ -866,7 +870,7 @@
 
       const load = document.createElement("button");
       load.type = "button";
-      load.className = "btn btn-ghost";
+      load.className = "btn btn-ghost btn-sm";
       load.textContent = "Laden";
       load.addEventListener("click", () => {
         fillForm(program);
@@ -874,18 +878,9 @@
         window.scrollTo({ top: 0, behavior: "smooth" });
       });
 
-      const favoriteBtn = document.createElement("button");
-      favoriteBtn.type = "button";
-      favoriteBtn.className = "btn btn-ghost";
-      favoriteBtn.textContent = program.id === favoriteId ? "Favoriet" : "Maak favoriet";
-      favoriteBtn.disabled = program.id === favoriteId;
-      favoriteBtn.addEventListener("click", () => {
-        setFavorite(program.id);
-      });
-
       const remove = document.createElement("button");
       remove.type = "button";
-      remove.className = "btn btn-danger";
+      remove.className = "btn btn-danger btn-sm";
       remove.textContent = "Verwijder";
       remove.addEventListener("click", () => {
         const next = loadPrograms().filter((p) => p.id !== program.id);
@@ -896,7 +891,20 @@
         renderApp();
       });
 
-      actions.append(start, load, favoriteBtn, remove);
+      actions.append(start, load);
+
+      if (program.id !== favoriteId) {
+        const favoriteBtn = document.createElement("button");
+        favoriteBtn.type = "button";
+        favoriteBtn.className = "btn btn-ghost btn-sm";
+        favoriteBtn.textContent = "Maak favoriet";
+        favoriteBtn.addEventListener("click", () => {
+          setFavorite(program.id);
+        });
+        actions.append(favoriteBtn);
+      }
+
+      actions.append(remove);
       li.append(info, actions);
       savedList.append(li);
     });

@@ -101,16 +101,32 @@ body {
   font-weight: 500;
 }
 
+/* Compact brand during beheer / timer — content first */
+body.is-managing .site-header,
+body.is-running .site-header {
+  padding-top: clamp(1.1rem, 3.5vw, 1.75rem);
+  padding-bottom: 0;
+}
+
+body.is-managing .brand {
+  font-size: clamp(1.65rem, 5.5vw, 2.35rem);
+  line-height: 1;
+}
+
+body.is-managing .tagline,
+body.is-running .site-header,
+body.is-running .site-footer {
+  display: none;
+}
+
 main {
   padding: clamp(1.25rem, 4vw, 2.5rem);
   display: grid;
   gap: clamp(1.5rem, 4vw, 2.25rem);
-  max-width: 52rem;
+  max-width: 40rem;
 }
 
-.setup,
 .timer,
-.saved,
 .home {
   background: var(--surface);
   backdrop-filter: blur(10px);
@@ -124,7 +140,7 @@ main {
 
 .home-label {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -132,7 +148,7 @@ main {
 }
 
 .home-name {
-  margin: 0.4rem 0 0;
+  margin: 0.35rem 0 0;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.85rem, 6vw, 2.75rem);
@@ -141,19 +157,38 @@ main {
 }
 
 .home-meta {
-  margin: 0.65rem 0 0;
+  margin: 0.55rem 0 0;
   color: var(--ink-soft);
   font-weight: 500;
   max-width: 36rem;
 }
 
+/* Eén vlak voor beheer: setup + opgeslagen zonder dubbele kaarten */
 .manage {
   display: grid;
-  gap: clamp(1.5rem, 4vw, 2.25rem);
+  gap: clamp(1.35rem, 3.5vw, 1.85rem);
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  animation: rise 0.8s var(--ease) both;
+  animation-delay: 0.08s;
 }
 
 .manage[hidden] {
   display: none;
+}
+
+.manage .setup,
+.manage .saved {
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0;
+  animation: none;
+}
+
+.manage .saved {
+  padding-top: clamp(1.15rem, 3vw, 1.5rem);
+  border-top: 1px solid var(--line);
 }
 
 .manage-header {
@@ -161,34 +196,22 @@ main {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.75rem;
-}
-
-.manage-header .btn-primary {
-  min-width: 5.5rem;
-  box-shadow: 0 0 0 1px rgba(212, 255, 58, 0.35);
+  gap: 0.65rem;
+  padding-bottom: 0.15rem;
 }
 
 .manage-title {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   letter-spacing: -0.02em;
-  color: #f4ffe8;
-}
-
-.setup {
-  animation-delay: 0.08s;
+  color: var(--ink);
 }
 
 .timer {
   animation-delay: 0s;
   text-align: center;
-}
-
-.saved {
-  animation-delay: 0.16s;
 }
 
 @keyframes rise {
@@ -204,12 +227,12 @@ main {
 
 .workout-form {
   display: grid;
-  gap: 1.1rem;
+  gap: 1rem;
 }
 
 .field-row {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.75rem;
   grid-template-columns: 1fr;
 }
 
@@ -225,33 +248,33 @@ main {
 
 .segments-header {
   display: grid;
-  gap: 0.25rem;
+  gap: 0.15rem;
 }
 
 .segments-title {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.15rem;
+  font-size: 1.1rem;
   letter-spacing: -0.02em;
 }
 
 .segments-hint {
   margin: 0;
   color: var(--ink-soft);
-  font-size: 0.92rem;
+  font-size: 0.88rem;
   font-weight: 500;
 }
 
 .segments {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.75rem;
 }
 
 .segment {
   display: grid;
-  gap: 0.85rem;
-  padding: 1rem 0 0;
+  gap: 0.75rem;
+  padding: 0.9rem 0 0;
   border-top: 1px solid var(--line);
 }
 
@@ -265,12 +288,12 @@ main {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .segment-label {
   margin: 0;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -285,7 +308,7 @@ main {
   font: inherit;
   font-size: 0.95rem;
   font-weight: 600;
-  padding: 0.55rem 2rem 0.55rem 0.85rem;
+  padding: 0.5rem 2rem 0.5rem 0.8rem;
   outline: none;
   cursor: pointer;
 }
@@ -300,22 +323,22 @@ main {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.65rem;
+  gap: 0.5rem;
 }
 
 .segment-order {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
+  gap: 0.4rem;
 }
 
 .field {
   display: grid;
-  gap: 0.4rem;
+  gap: 0.35rem;
 }
 
 .field span {
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
@@ -330,7 +353,7 @@ main {
   font: inherit;
   font-size: 1.05rem;
   font-weight: 600;
-  padding: 0.85rem 0.95rem;
+  padding: 0.8rem 0.9rem;
   outline: none;
   transition: border-color 0.2s ease, box-shadow 0.2s ease;
 }
@@ -343,8 +366,8 @@ main {
 .actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.65rem;
-  margin-top: 0.25rem;
+  gap: 0.55rem;
+  margin-top: 0.15rem;
 }
 
 .btn {
@@ -359,6 +382,11 @@ main {
 
 .btn:active {
   transform: scale(0.98);
+}
+
+.btn-sm {
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92rem;
 }
 
 .btn-primary {
@@ -380,6 +408,23 @@ main {
   background: rgba(18, 32, 24, 0.05);
 }
 
+.btn-text {
+  background: transparent;
+  color: var(--ink-soft);
+  border: 0;
+  padding: 0.35rem 0.45rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+  text-decoration-color: rgba(61, 86, 72, 0.35);
+}
+
+.btn-text:hover {
+  color: var(--ink);
+  text-decoration-color: rgba(18, 32, 24, 0.45);
+}
+
 .btn-danger {
   background: transparent;
   color: var(--danger);
@@ -388,7 +433,7 @@ main {
 
 .timer-program {
   margin: 0;
-  font-size: 0.85rem;
+  font-size: 0.8rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;
@@ -396,7 +441,7 @@ main {
 }
 
 .timer-exercise {
-  margin: 0.35rem 0 0;
+  margin: 0.3rem 0 0;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(1.5rem, 4vw, 2rem);
@@ -417,8 +462,8 @@ main {
 }
 
 .timer-phase {
-  margin: 0.35rem 0 0;
-  font-size: 0.9rem;
+  margin: 0.3rem 0 0;
+  font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -426,7 +471,7 @@ main {
 }
 
 .timer-clock {
-  margin: 0.6rem 0 0;
+  margin: 0.55rem 0 0;
   font-family: var(--font-display);
   font-weight: 800;
   font-size: clamp(4rem, 18vw, 7rem);
@@ -464,7 +509,7 @@ main {
 }
 
 .timer-progress {
-  margin: 1.1rem auto 0;
+  margin: 1rem auto 0;
   max-width: 18rem;
   height: 0.35rem;
   background: rgba(18, 32, 24, 0.1);
@@ -485,38 +530,47 @@ main {
 }
 
 .timer-meta {
-  margin: 0.85rem 0 0;
+  margin: 0.75rem 0 0;
   color: var(--ink-soft);
   font-weight: 500;
+}
+
+.timer .actions {
+  margin-top: 1.15rem;
+  justify-content: center;
+}
+
+.timer .actions .btn-primary {
+  min-width: 7.5rem;
 }
 
 .saved-header {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: baseline;
   justify-content: space-between;
-  gap: 0.75rem;
-  margin-bottom: 0.75rem;
+  gap: 0.5rem 0.75rem;
+  margin-bottom: 0.65rem;
 }
 
 .saved h2 {
   margin: 0;
   font-family: var(--font-display);
   font-weight: 800;
-  font-size: 1.35rem;
+  font-size: 1.2rem;
   letter-spacing: -0.02em;
 }
 
 .saved-transfer {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.15rem;
 }
 
 .transfer-status {
-  margin: 0 0 0.75rem;
+  margin: 0 0 0.65rem;
   color: var(--ink-soft);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 
@@ -534,13 +588,13 @@ main {
   margin: 0;
   padding: 0;
   display: grid;
-  gap: 0.65rem;
+  gap: 0.55rem;
 }
 
 .saved-item {
   display: grid;
-  gap: 0.65rem;
-  padding: 0.85rem 0;
+  gap: 0.55rem;
+  padding: 0.75rem 0;
   border-top: 1px solid var(--line);
   align-items: center;
 }
@@ -563,8 +617,8 @@ main {
 
 .saved-favorite-badge {
   display: inline-block;
-  margin: 0.2rem 0 0.15rem;
-  font-size: 0.72rem;
+  margin: 0.15rem 0 0.1rem;
+  font-size: 0.7rem;
   font-weight: 700;
   font-style: normal;
   letter-spacing: 0.06em;
@@ -575,18 +629,18 @@ main {
 .saved-info span {
   display: block;
   color: var(--ink-soft);
-  font-size: 0.92rem;
+  font-size: 0.9rem;
 }
 
 .saved-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.4rem;
 }
 
 .site-footer {
   padding: 0 clamp(1.25rem, 4vw, 2.5rem) 2.5rem;
-  max-width: 52rem;
+  max-width: 40rem;
 }
 
 .site-footer p {
@@ -601,8 +655,14 @@ body.is-running .manage {
 }
 
 body.is-running .timer {
-  min-height: min(70vh, 32rem);
+  min-height: min(78vh, 34rem);
   display: grid;
   align-content: center;
   justify-items: center;
+}
+
+body.is-running main {
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-top: clamp(1.5rem, 5vw, 2.5rem);
 }
