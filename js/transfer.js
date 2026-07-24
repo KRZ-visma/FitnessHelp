@@ -93,6 +93,7 @@ export function programsFromEntries(entries) {
       rest: defaultRestFromItems(migratedItems),
       switch: 15,
       times: 1,
+      setOrder: "consecutive",
       items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
     });
   }

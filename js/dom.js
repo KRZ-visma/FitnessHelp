@@ -3,6 +3,7 @@ export const programNameInput = document.getElementById("program-name");
 export const programRestInput = document.getElementById("program-rest");
 export const programSwitchInput = document.getElementById("program-switch");
 export const programTimesInput = document.getElementById("program-times");
+export const programSetOrderSelect = document.getElementById("program-set-order");
 export const segmentsEl = document.getElementById("segments");
 export const addSegmentBtn = document.getElementById("add-segment-btn");
 export const saveBtn = document.getElementById("save-btn");

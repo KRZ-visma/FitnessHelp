@@ -186,7 +186,7 @@ test.describe("Timer", () => {
     await expect(page.locator("#timer-phase")).toHaveText("Wisselen");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await expect(page.locator("#timer-clock")).toHaveText("0:04");
-    await expect(page.locator("#timer-meta")).toHaveText("Volgende oefening · daarna starten");
+    await expect(page.locator("#timer-meta")).toHaveText("Volgende: Squats · set 1");
 
     await page.click("#skip-btn");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
@@ -294,5 +294,109 @@ test.describe("Timer", () => {
     await page.click("#skip-btn");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
+  });
+
+  test("voert sets in rondes uit over meerdere oefeningen", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Circuit",
+      rest: 0,
+      switchSec: 0,
+      setOrder: "rounds",
+      exercises: [
+        { name: "Squats", type: "reps", sets: 2, reps: 8 },
+        { name: "Push-ups", type: "reps", sets: 2, reps: 10 },
+      ],
+    });
+    await startFromHome(page);
+    await page.click("#skip-btn");
+
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
+    await page.click("#done-set-btn");
+
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-name")).toHaveText("Push-ups");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Push-ups");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
+    await page.click("#done-set-btn");
+
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 2");
+    await page.click("#done-set-btn");
+
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-name")).toHaveText("Push-ups");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 2");
+    await page.click("#done-set-btn");
+
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar");
+  });
+
+  test("rondes met wissel tussen oefeningen", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Ronde wissel",
+      rest: 0,
+      switchSec: 3,
+      setOrder: "rounds",
+      exercises: [
+        { name: "Plank", sets: 2, duration: 5 },
+        { name: "Burpees", sets: 2, duration: 5 },
+      ],
+    });
+    await startFromHome(page);
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
+    await expect(page.locator("#timer-name")).toHaveText("Burpees");
+    await expect(page.locator("#timer-meta")).toHaveText("Volgende: Burpees · set 1");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-name")).toHaveText("Burpees");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+    await expect(page.locator("#timer-meta")).toHaveText("Volgende: Plank · set 2");
+  });
+
+  test("rondes slaat oefeningen over die geen sets meer hebben", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Ongelijk",
+      rest: 0,
+      switchSec: 0,
+      setOrder: "rounds",
+      exercises: [
+        { name: "Squats", type: "reps", sets: 3, reps: 5 },
+        { name: "Push-ups", type: "reps", sets: 1, reps: 8 },
+      ],
+    });
+    await startFromHome(page);
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await page.click("#done-set-btn");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Push-ups");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 1");
+    await page.click("#done-set-btn");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 3");
+    await page.click("#done-set-btn");
+
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-phase")).toHaveText("Set 3 van 3");
+    await page.click("#done-set-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar");
   });
 });

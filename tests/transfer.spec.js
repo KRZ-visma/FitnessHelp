@@ -42,6 +42,7 @@ test.describe("Import / export", () => {
       rest: 10,
       switch: 15,
       times: 1,
+      setOrder: "consecutive",
     });
     expect(payload.programs[0].items[0]).toHaveProperty("exerciseId");
     expect(payload.exercises[0]).toMatchObject({
@@ -120,7 +121,7 @@ test.describe("Import / export", () => {
     expect(stored.programs).toHaveLength(2);
     const replaced = stored.programs.find((p) => p.name === "Bestaand");
     expect(replaced.items[0]).toMatchObject({ exerciseId: "ex_burpees" });
-    expect(replaced).toMatchObject({ rest: 15, switch: 6, times: 1 });
+    expect(replaced).toMatchObject({ rest: 15, switch: 6, times: 1, setOrder: "consecutive" });
     expect(stored.exercises.some((ex) => ex.name === "Burpees")).toBe(true);
   });
 

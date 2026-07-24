@@ -22,8 +22,14 @@ import { resolveExercise } from "./migration.js";
 import { formatTime } from "./util.js";
 
 /**
+ * @typedef {{ itemIndex: number, setIndex: number }} ScheduleEntry
+ */
+
+/**
  * @type {{
  *   program: import('./constants.js').Program & { items: import('./constants.js').ProgramItem[] },
+ *   schedule: ScheduleEntry[],
+ *   scheduleIndex: number,
  *   itemIndex: number,
  *   setIndex: number,
  *   roundIndex: number,
@@ -43,6 +49,37 @@ let session = null;
 
 /** @type {WakeLockSentinel | null} */
 let wakeLock = null;
+
+/**
+ * Bouwt de volgorde van sets voor één programma-keer.
+ * @param {import('./constants.js').ProgramItem[]} items
+ * @param {import('./constants.js').SetOrder} setOrder
+ * @returns {ScheduleEntry[]}
+ */
+export function buildSetSchedule(items, setOrder) {
+  /** @type {ScheduleEntry[]} */
+  const schedule = [];
+  if (!items.length) return schedule;
+
+  if (setOrder === "rounds") {
+    const maxSets = Math.max(...items.map((item) => item.sets));
+    for (let setIndex = 1; setIndex <= maxSets; setIndex += 1) {
+      items.forEach((item, itemIndex) => {
+        if (setIndex <= item.sets) {
+          schedule.push({ itemIndex, setIndex });
+        }
+      });
+    }
+    return schedule;
+  }
+
+  items.forEach((item, itemIndex) => {
+    for (let setIndex = 1; setIndex <= item.sets; setIndex += 1) {
+      schedule.push({ itemIndex, setIndex });
+    }
+  });
+  return schedule;
+}
 
 async function requestWakeLock() {
   if (!("wakeLock" in navigator) || !navigator.wakeLock) return;
@@ -71,6 +108,30 @@ function currentItem() {
   return session?.program.items[session.itemIndex] ?? null;
 }
 
+/** @returns {ScheduleEntry | null} */
+function currentScheduleEntry() {
+  if (!session) return null;
+  return session.schedule[session.scheduleIndex] ?? null;
+}
+
+/** @returns {ScheduleEntry | null} */
+function nextScheduleEntry() {
+  if (!session) return null;
+  return session.schedule[session.scheduleIndex + 1] ?? null;
+}
+
+/**
+ * @param {number} index
+ */
+function goToScheduleIndex(index) {
+  if (!session) return;
+  const entry = session.schedule[index];
+  if (!entry) return;
+  session.scheduleIndex = index;
+  session.itemIndex = entry.itemIndex;
+  session.setIndex = entry.setIndex;
+}
+
 /** @param {import('./constants.js').Program} program */
 function programTitle(program, itemIndex, roundIndex, times) {
   const parts = [program.name];
@@ -95,6 +156,12 @@ export function startSession(program) {
   if (!resolvedItems.length) return;
 
   const times = Math.max(1, Number(program.times) || 1);
+  /** @type {import('./constants.js').SetOrder} */
+  const setOrder = program.setOrder === "rounds" ? "rounds" : "consecutive";
+  const schedule = buildSetSchedule(resolvedItems, setOrder);
+  if (!schedule.length) return;
+
+  const first = schedule[0];
 
   session = {
     program: {
@@ -103,10 +170,13 @@ export function startSession(program) {
       rest: program.rest,
       switch: program.switch,
       times,
+      setOrder,
       items: resolvedItems,
     },
-    itemIndex: 0,
-    setIndex: 1,
+    schedule,
+    scheduleIndex: 0,
+    itemIndex: first.itemIndex,
+    setIndex: first.setIndex,
     roundIndex: 1,
     times,
     isRest: false,
@@ -128,10 +198,10 @@ export function startSession(program) {
   pauseBtn.textContent = "Pauze";
   skipBtn.hidden = false;
   requestWakeLock();
-  beginCurrentItem();
+  beginPrep();
 }
 
-function beginCurrentItem() {
+function beginPrep() {
   if (!session) return;
   const item = currentItem();
   if (!item) {
@@ -139,7 +209,6 @@ function beginCurrentItem() {
     return;
   }
 
-  session.setIndex = 1;
   session.isRest = false;
   session.isPrep = true;
   session.isSwitch = false;
@@ -246,10 +315,18 @@ function updateTimerUI() {
   } = session;
 
   if (isSwitch) {
-    const next = isRoundSwitch ? program.items[0] : program.items[itemIndex + 1];
+    const nextEntry = isRoundSwitch
+      ? session.schedule[0]
+      : nextScheduleEntry();
+    if (!nextEntry) return;
+    const next = program.items[nextEntry.itemIndex];
     if (!next) return;
-    const nextItemIndex = isRoundSwitch ? 0 : itemIndex + 1;
-    timerProgram.textContent = programTitle(program, nextItemIndex, roundIndex, times);
+    timerProgram.textContent = programTitle(
+      program,
+      nextEntry.itemIndex,
+      roundIndex,
+      times
+    );
     timerName.textContent = next.name;
     timerEl.dataset.mode = "timer";
     timerEl.dataset.phase = "switch";
@@ -260,7 +337,7 @@ function updateTimerUI() {
     timerBar.style.transform = `scaleX(${ratio})`;
     timerMeta.textContent = isRoundSwitch
       ? `Keer ${roundIndex} van ${times} · daarna starten`
-      : "Volgende oefening · daarna starten";
+      : `Volgende: ${next.name} · set ${nextEntry.setIndex}`;
     return;
   }
 
@@ -280,12 +357,13 @@ function updateTimerUI() {
     timerBar.style.transform = `scaleX(${ratio})`;
     timerMeta.textContent =
       item.type === "reps"
-        ? `Daarna: set 1 · ${item.reps}×`
-        : `Daarna: set 1 · ${item.duration}s`;
+        ? `Daarna: set ${setIndex} · ${item.reps}×`
+        : `Daarna: set ${setIndex} · ${item.duration}s`;
     return;
   }
 
   if (isRest) {
+    const next = nextScheduleEntry();
     timerEl.dataset.mode = item.type === "reps" ? "reps" : "timer";
     timerEl.dataset.phase = "rest";
     timerClock.classList.remove("is-reps");
@@ -293,7 +371,9 @@ function updateTimerUI() {
     timerClock.textContent = formatTime(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
-    timerMeta.textContent = `Volgende: set ${setIndex + 1}`;
+    timerMeta.textContent = next
+      ? `Volgende: set ${next.setIndex}`
+      : `Volgende: set ${setIndex + 1}`;
     return;
   }
 
@@ -330,12 +410,16 @@ function finishSwitch() {
   session.isSwitch = false;
   session.isRoundSwitch = false;
   if (roundSwitch) {
-    session.itemIndex = 0;
-    beginCurrentItem();
+    goToScheduleIndex(0);
+    beginPrep();
     return;
   }
-  session.itemIndex += 1;
-  session.setIndex = 1;
+  const next = nextScheduleEntry();
+  if (!next) {
+    endSession(true);
+    return;
+  }
+  goToScheduleIndex(session.scheduleIndex + 1);
   session.isRest = false;
   session.isPrep = false;
   startWorkAfterPrep();
@@ -362,20 +446,12 @@ function startNextRound() {
     startTick();
     return;
   }
-  session.itemIndex = 0;
-  beginCurrentItem();
+  goToScheduleIndex(0);
+  beginPrep();
 }
 
-function advanceToNextItem() {
+function enterExerciseSwitch() {
   if (!session) return;
-  if (session.itemIndex >= session.program.items.length - 1) {
-    if (session.roundIndex < session.times) {
-      startNextRound();
-      return;
-    }
-    endSession(true);
-    return;
-  }
   beep("stop");
   const switchSec = session.program.switch;
   if (switchSec > 0) {
@@ -394,8 +470,8 @@ function advanceToNextItem() {
     startTick();
     return;
   }
-  session.itemIndex += 1;
-  beginCurrentItem();
+  goToScheduleIndex(session.scheduleIndex + 1);
+  beginPrep();
 }
 
 function enterRestPhase() {
@@ -418,11 +494,11 @@ function enterRestPhase() {
 
 function leaveRestPhase() {
   if (!session) return;
+  goToScheduleIndex(session.scheduleIndex + 1);
   const item = currentItem();
   if (!item) return;
 
   session.isRest = false;
-  session.setIndex += 1;
   beep("tick");
 
   if (item.type === "timer") {
@@ -432,6 +508,34 @@ function leaveRestPhase() {
     pauseBtn.hidden = false;
     timerProgress.hidden = false;
     updateTimerUI();
+    return;
+  }
+
+  stopTick();
+  session.remaining = 0;
+  session.total = 1;
+  doneSetBtn.hidden = false;
+  pauseBtn.hidden = true;
+  timerProgress.hidden = true;
+  updateTimerUI();
+}
+
+function startNextWorkWithoutGap() {
+  if (!session) return;
+  goToScheduleIndex(session.scheduleIndex + 1);
+  const item = currentItem();
+  if (!item) return;
+
+  beep("tick");
+
+  if (item.type === "timer") {
+    session.remaining = item.duration;
+    session.total = item.duration;
+    doneSetBtn.hidden = true;
+    pauseBtn.hidden = false;
+    timerProgress.hidden = false;
+    updateTimerUI();
+    startTick();
     return;
   }
 
@@ -454,34 +558,29 @@ export function advancePhase() {
     return;
   }
 
-  if (item.type === "reps") {
-    if (session.setIndex >= item.sets) {
-      advanceToNextItem();
+  const next = nextScheduleEntry();
+  if (!next) {
+    if (session.roundIndex < session.times) {
+      startNextRound();
       return;
     }
+    endSession(true);
+    return;
+  }
+
+  const current = currentScheduleEntry();
+  if (!current) return;
+
+  if (next.itemIndex === current.itemIndex) {
     if (session.program.rest > 0) {
       enterRestPhase();
       return;
     }
-    session.setIndex += 1;
-    beep("tick");
-    updateTimerUI();
+    startNextWorkWithoutGap();
     return;
   }
 
-  if (session.setIndex >= item.sets) {
-    advanceToNextItem();
-    return;
-  }
-  if (session.program.rest > 0) {
-    enterRestPhase();
-    return;
-  }
-  session.setIndex += 1;
-  session.remaining = item.duration;
-  session.total = item.duration;
-  beep("tick");
-  updateTimerUI();
+  enterExerciseSwitch();
 }
 
 export function sessionNeedsTick() {
