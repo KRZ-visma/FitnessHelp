@@ -155,7 +155,7 @@ main {
   align-self: center;
 }
 
-@media (max-width: 400px) {
+@media (max-width: 360px) {
   .day-item {
     grid-template-columns: auto 1fr;
     gap: 0.55rem 0.75rem;
