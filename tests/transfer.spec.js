@@ -187,7 +187,7 @@ test.describe("Import / export", () => {
     await page.reload();
 
     await openManage(page);
-    await page.locator("#saved-list button", { hasText: "Laden" }).click();
+    await page.locator("#saved-list .saved-open").first().click();
     await expect(page.locator("#program-rest")).toHaveValue("22");
     await expect(page.locator("#program-switch")).toHaveValue("15");
     await expect(page.locator(".segment-name")).toHaveText("Plank");

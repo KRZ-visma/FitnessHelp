@@ -79,8 +79,6 @@ export function renderSaved() {
     const li = document.createElement("li");
     li.className = "saved-item";
 
-    const info = document.createElement("div");
-    info.className = "saved-info";
     const parts = program.items
       .map((item) => {
         const resolved = resolveExercise(item, program.rest);
@@ -93,34 +91,34 @@ export function renderSaved() {
       program.items.length === 1
         ? "1 onderdeel"
         : `${program.items.length} onderdelen`;
-    info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${countLabel}${parts ? ` · ${parts}` : ""}</span>`;
 
-    const actions = document.createElement("div");
-    actions.className = "saved-actions";
-
-    const load = document.createElement("button");
-    load.type = "button";
-    load.className = "btn btn-ghost";
-    load.textContent = "Laden";
-    load.addEventListener("click", () => {
+    const openBtn = document.createElement("button");
+    openBtn.type = "button";
+    openBtn.className = "saved-open";
+    openBtn.setAttribute("aria-label", `${program.name} openen`);
+    openBtn.innerHTML = `<strong class="saved-name">${escapeHtml(program.name)}</strong><span class="saved-meta">${countLabel}${parts ? ` · ${parts}` : ""}</span>`;
+    openBtn.addEventListener("click", () => {
       setManageTab("programs");
       hooks.fillForm(program);
       programNameInput.focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
 
+    const actions = document.createElement("div");
+    actions.className = "saved-actions";
+
     const upBtn = document.createElement("button");
     upBtn.type = "button";
-    upBtn.className = "btn btn-ghost saved-move-up";
-    upBtn.textContent = "Omhoog";
+    upBtn.className = "btn btn-ghost btn-icon saved-move-up";
+    upBtn.textContent = "↑";
     upBtn.setAttribute("aria-label", `${program.name} omhoog`);
     upBtn.disabled = index === 0;
     upBtn.addEventListener("click", () => moveProgramInDay(program.id, -1));
 
     const downBtn = document.createElement("button");
     downBtn.type = "button";
-    downBtn.className = "btn btn-ghost saved-move-down";
-    downBtn.textContent = "Omlaag";
+    downBtn.className = "btn btn-ghost btn-icon saved-move-down";
+    downBtn.textContent = "↓";
     downBtn.setAttribute("aria-label", `${program.name} omlaag`);
     downBtn.disabled = index >= ordered.length - 1;
     downBtn.addEventListener("click", () => moveProgramInDay(program.id, 1));
@@ -135,8 +133,8 @@ export function renderSaved() {
       hooks.renderApp();
     });
 
-    actions.append(load, upBtn, downBtn, remove);
-    li.append(info, actions);
+    actions.append(upBtn, downBtn, remove);
+    li.append(openBtn, actions);
     savedList.append(li);
   });
 }

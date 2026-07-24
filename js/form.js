@@ -105,16 +105,16 @@ export function renderSegments() {
 
     const upBtn = document.createElement("button");
     upBtn.type = "button";
-    upBtn.className = "btn btn-ghost segment-move-up";
-    upBtn.textContent = "Omhoog";
+    upBtn.className = "btn btn-ghost btn-icon segment-move-up";
+    upBtn.textContent = "↑";
     upBtn.setAttribute("aria-label", `Oefening ${index + 1} omhoog`);
     upBtn.disabled = index === 0;
     upBtn.addEventListener("click", () => moveSegment(index, -1));
 
     const downBtn = document.createElement("button");
     downBtn.type = "button";
-    downBtn.className = "btn btn-ghost segment-move-down";
-    downBtn.textContent = "Omlaag";
+    downBtn.className = "btn btn-ghost btn-icon segment-move-down";
+    downBtn.textContent = "↓";
     downBtn.setAttribute("aria-label", `Oefening ${index + 1} omlaag`);
     downBtn.disabled = index >= draftItems.length - 1;
     downBtn.addEventListener("click", () => moveSegment(index, 1));
