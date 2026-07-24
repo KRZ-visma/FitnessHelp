@@ -234,12 +234,16 @@ export function normalizeProgram(raw) {
     times = 1;
   }
 
+  /** @type {import('./constants.js').SetOrder} */
+  const setOrder = obj.setOrder === "rounds" ? "rounds" : "consecutive";
+
   return {
     id,
     name,
     rest: clampInt(rest, 0, 600),
     switch: clampInt(switchSec, 0, 600),
     times: clampInt(times, 1, 99),
+    setOrder,
     items: /** @type {import('./constants.js').Program['items']} */ (items),
   };
 }
@@ -291,6 +295,7 @@ export function loadPrograms() {
         rest: defaultRestFromItems(migratedItems),
         switch: 15,
         times: 1,
+        setOrder: "consecutive",
         items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
       });
     }

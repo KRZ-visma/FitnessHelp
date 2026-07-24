@@ -33,6 +33,8 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#program-times")).toBeVisible();
     await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator("#program-times-hint")).toContainText("apart starten");
+    await expect(page.locator("#program-set-order")).toBeVisible();
+    await expect(page.locator("#program-set-order")).toHaveValue("consecutive");
     await expect(page.locator("#segments-empty")).toHaveCount(0);
     await expect(page.locator(".segments-hint")).toHaveCount(0);
     await expect(page.locator(".segments-title")).toHaveText("Oefeningen");
@@ -135,6 +137,27 @@ test.describe("Formulier & beheer", () => {
       return ex.name;
     });
     expect(names).toEqual(["Push-ups", "Rows", "Squats"]);
+  });
+
+  test("slaat volgorde sets op en vult die bij bewerken", async ({ page }) => {
+    await createExercise(page, { name: "Squats", type: "reps", sets: 2, reps: 8 });
+    await createExercise(page, { name: "Push-ups", type: "reps", sets: 2, reps: 10 });
+
+    await openProgramForm(page);
+    await page.fill("#program-name", "Circuit dag");
+    await page.selectOption("#program-set-order", "rounds");
+    await addExerciseToProgram(page, "Squats");
+    await addExerciseToProgram(page, "Push-ups");
+    await page.click("#save-btn");
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
+    );
+    expect(stored[0]).toMatchObject({ name: "Circuit dag", setOrder: "rounds" });
+
+    await page.locator("#saved-list .saved-open", { hasText: "Circuit dag" }).click();
+    await expect(page.locator("#setup")).toBeVisible();
+    await expect(page.locator("#program-set-order")).toHaveValue("rounds");
   });
 
   test("Enter slaat op en blijft in de programmalijst", async ({ page }) => {

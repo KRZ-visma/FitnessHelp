@@ -1,6 +1,7 @@
 import {
   programNameInput,
   programRestInput,
+  programSetOrderSelect,
   programSwitchInput,
   programTimesInput,
   segmentsEl,
@@ -30,6 +31,7 @@ export function resetDraft() {
   programRestInput.value = "15";
   programSwitchInput.value = "15";
   programTimesInput.value = "1";
+  programSetOrderSelect.value = "consecutive";
   renderSegments();
 }
 
@@ -213,6 +215,9 @@ export function readForm() {
   const programRest = clampInt(rest, 0, 600);
   const programSwitch = clampInt(switchSec, 0, 600);
   const programTimes = clampInt(times, 1, 99);
+  /** @type {import('./constants.js').SetOrder} */
+  const setOrder =
+    programSetOrderSelect.value === "rounds" ? "rounds" : "consecutive";
 
   const items = draftItems
     .filter((draft) => draft.exerciseId)
@@ -224,6 +229,7 @@ export function readForm() {
     rest: programRest,
     switch: programSwitch,
     times: programTimes,
+    setOrder,
     items,
   };
 }
@@ -234,6 +240,8 @@ export function fillForm(program) {
   programRestInput.value = String(program.rest ?? 15);
   programSwitchInput.value = String(program.switch ?? 15);
   programTimesInput.value = String(program.times ?? 1);
+  programSetOrderSelect.value =
+    program.setOrder === "rounds" ? "rounds" : "consecutive";
   draftItems = program.items
     .map((item) => {
       if (typeof item.exerciseId !== "string" || !item.exerciseId) return null;

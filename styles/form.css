@@ -159,7 +159,8 @@
   color: var(--ink-soft);
 }
 
-.field input {
+.field input,
+.field select.segment-type {
   width: 100%;
   border: 1px solid var(--line);
   background: #fff;
@@ -176,7 +177,15 @@
   scroll-margin-bottom: 8rem;
 }
 
-.field input:focus {
+.field select.segment-type {
+  appearance: none;
+  background: #fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath fill='%233d5648' d='M1.1 1.2 6 6.1l4.9-4.9 1.1 1.1L6 8.3.0 2.3z'/%3E%3C/svg%3E") no-repeat right 0.75rem center;
+  padding-right: 2rem;
+  cursor: pointer;
+}
+
+.field input:focus,
+.field select.segment-type:focus {
   border-color: #2f6b45;
   box-shadow: 0 0 0 3px rgba(47, 107, 69, 0.18);
 }
