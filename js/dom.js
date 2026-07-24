@@ -21,6 +21,7 @@ export const managePanelPrograms = document.getElementById("manage-panel-program
 export const managePanelExercises = document.getElementById("manage-panel-exercises");
 
 export const setupEl = document.getElementById("setup");
+export const addProgramBtn = document.getElementById("add-program-btn");
 export const timerEl = document.getElementById("timer");
 export const timerProgram = document.getElementById("timer-program");
 export const timerName = document.getElementById("timer-name");

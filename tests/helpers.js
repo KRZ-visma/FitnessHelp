@@ -26,6 +26,16 @@ async function openProgramsTab(page) {
   await expect(page.locator("#manage-panel-programs")).toBeVisible();
 }
 
+/** Opent het programmaformulier (nieuw). */
+async function openProgramForm(page) {
+  await openProgramsTab(page);
+  const setup = page.locator("#setup");
+  if (await setup.isHidden()) {
+    await page.click("#add-program-btn");
+  }
+  await expect(setup).toBeVisible();
+}
+
 /**
  * @param {import('@playwright/test').Page} page
  * @param {{ name: string, type?: 'timer'|'reps', sets?: number, duration?: number, reps?: number }} opts
@@ -50,7 +60,7 @@ async function createExercise(page, opts) {
  * @param {string} exerciseName
  */
 async function addExerciseToProgram(page, exerciseName) {
-  await openProgramsTab(page);
+  await openProgramForm(page);
   await page.click("#add-segment-btn");
   await expect(page.locator(".modal-overlay")).toBeVisible();
   await page
@@ -75,7 +85,7 @@ async function createProgram(page, opts) {
   for (const exercise of exercises) {
     await createExercise(page, exercise);
   }
-  await openProgramsTab(page);
+  await openProgramForm(page);
   await page.fill("#program-name", programName);
   await page.fill("#program-rest", String(rest));
   await page.fill("#program-switch", String(switchSec));
@@ -83,6 +93,9 @@ async function createProgram(page, opts) {
     await addExerciseToProgram(page, exercise.name);
   }
   await page.click("#save-btn");
+  await expect(page.locator("#manage")).toBeVisible();
+  await expect(page.locator("#setup")).toBeHidden();
+  await page.click("#manage-done-btn");
   await expect(page.locator("#home")).toBeVisible();
 }
 
@@ -97,6 +110,8 @@ async function startFromHome(page, programName) {
 /** Slaat het formulier op en start het volgende open programma vanaf home. */
 async function saveAndStart(page) {
   await page.click("#save-btn");
+  await expect(page.locator("#manage")).toBeVisible();
+  await page.click("#manage-done-btn");
   await expect(page.locator("#home")).toBeVisible();
   await startFromHome(page);
 }
@@ -111,4 +126,5 @@ module.exports = {
   createProgram,
   startFromHome,
   saveAndStart,
+  openProgramForm,
 };

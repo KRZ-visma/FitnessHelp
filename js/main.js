@@ -1,6 +1,7 @@
 import {
   addSegmentBtn,
   addExerciseBtn,
+  addProgramBtn,
   doneSetBtn,
   exportBtn,
   form,
@@ -31,9 +32,12 @@ import { hooks } from "./hooks.js";
 import {
   closeManage,
   openManage,
+  openProgramEditor,
   renderApp,
+  setEditingProgram,
   setManageTab,
   setManaging,
+  nextOpenProgram,
 } from "./shell.js";
 import { loadPrograms, savePrograms, syncDayOrder } from "./storage.js";
 import {
@@ -63,6 +67,10 @@ addSegmentBtn.addEventListener("click", () => {
   });
 });
 
+addProgramBtn?.addEventListener("click", () => {
+  openProgramEditor();
+});
+
 function saveCurrentProgram() {
   const program = readForm();
   if (!program) return null;
@@ -78,8 +86,12 @@ function saveCurrentProgram() {
   }
   savePrograms(programs);
   syncDayOrder(programs);
-  setManaging(false);
+  // Blijf in beheer; terug naar de programmalijst
+  setManaging(true);
+  setEditingProgram(false);
+  resetDraft();
   renderApp();
+  window.scrollTo({ top: 0, behavior: "smooth" });
   return program;
 }
 

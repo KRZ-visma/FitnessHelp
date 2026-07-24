@@ -106,8 +106,36 @@
           role="tabpanel"
           aria-labelledby="manage-tab-programs"
         >
-          <section class="setup" id="setup" aria-labelledby="setup-title">
-            <h1 id="setup-title" class="visually-hidden">Nieuw trainingsprogramma</h1>
+          <section class="saved" id="saved" aria-labelledby="saved-title">
+            <div class="saved-header">
+              <h2 id="saved-title">Opgeslagen programma's</h2>
+              <div class="saved-transfer">
+                <button type="button" class="btn btn-ghost" id="add-program-btn">
+                  + Programma
+                </button>
+                <button type="button" class="btn btn-ghost" id="export-btn">
+                  Exporteren
+                </button>
+                <button type="button" class="btn btn-ghost" id="import-btn">
+                  Importeren
+                </button>
+                <input
+                  type="file"
+                  id="import-file"
+                  accept="application/json,.json"
+                  hidden
+                />
+              </div>
+            </div>
+            <p class="transfer-status" id="transfer-status" role="status" hidden></p>
+            <p class="saved-hint" id="saved-empty">
+              Nog niets opgeslagen. Tik op + Programma.
+            </p>
+            <ul class="saved-list" id="saved-list"></ul>
+          </section>
+
+          <section class="setup" id="setup" aria-labelledby="setup-title" hidden>
+            <h1 id="setup-title" class="visually-hidden">Trainingsprogramma</h1>
 
             <form id="workout-form" class="workout-form" autocomplete="off">
               <!--
@@ -183,7 +211,6 @@
 
               <div class="segments-header">
                 <h2 class="segments-title">Oefeningen</h2>
-                <p class="segments-hint">Kies uit je oefeningenbibliotheek.</p>
               </div>
 
               <div id="segments" class="segments" aria-live="polite"></div>
@@ -198,31 +225,6 @@
                 </button>
               </div>
             </form>
-          </section>
-
-          <section class="saved" id="saved" aria-labelledby="saved-title">
-            <div class="saved-header">
-              <h2 id="saved-title">Opgeslagen programma's</h2>
-              <div class="saved-transfer">
-                <button type="button" class="btn btn-ghost" id="export-btn">
-                  Exporteren
-                </button>
-                <button type="button" class="btn btn-ghost" id="import-btn">
-                  Importeren
-                </button>
-                <input
-                  type="file"
-                  id="import-file"
-                  accept="application/json,.json"
-                  hidden
-                />
-              </div>
-            </div>
-            <p class="transfer-status" id="transfer-status" role="status" hidden></p>
-            <p class="saved-hint" id="saved-empty">
-              Nog niets opgeslagen. Vul hierboven in en klik Opslaan.
-            </p>
-            <ul class="saved-list" id="saved-list"></ul>
           </section>
         </div>
 
