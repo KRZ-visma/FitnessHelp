@@ -86,11 +86,19 @@ async function createProgram(page, opts) {
   await expect(page.locator("#home")).toBeVisible();
 }
 
+/** Start het eerste open programma vanaf home (per-programma Start-knop). */
+async function startFromHome(page, programName) {
+  const item = programName
+    ? page.locator("#day-list .day-item", { hasText: programName })
+    : page.locator("#day-list .day-item").filter({ has: page.locator(".day-start") }).first();
+  await item.locator(".day-start").click();
+}
+
 /** Slaat het formulier op en start het volgende open programma vanaf home. */
 async function saveAndStart(page) {
   await page.click("#save-btn");
   await expect(page.locator("#home")).toBeVisible();
-  await page.click("#home-start-btn");
+  await startFromHome(page);
 }
 
 module.exports = {
@@ -101,5 +109,6 @@ module.exports = {
   createExercise,
   addExerciseToProgram,
   createProgram,
+  startFromHome,
   saveAndStart,
 };

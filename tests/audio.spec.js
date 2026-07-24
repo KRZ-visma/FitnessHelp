@@ -1,5 +1,5 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, createProgram } = require("./helpers");
+const { clearAndReload, createProgram, startFromHome } = require("./helpers");
 
 test.describe("Audio", () => {
   test.beforeEach(async ({ page }) => {
@@ -16,7 +16,7 @@ test.describe("Audio", () => {
         { name: "Squats", type: "reps", sets: 1, reps: 5 },
       ],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.evaluate(() => {
       window.__fitnessHelpBeeps.length = 0;
     });
@@ -65,7 +65,7 @@ test.describe("Audio", () => {
       rest: 0,
       exercises: [{ name: "Plank", sets: 1, duration: 5 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
 
     await expect
       .poll(() => page.evaluate(() => window.__fitnessHelpAudioSessionType))

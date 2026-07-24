@@ -11,7 +11,6 @@ export const homeEl = document.getElementById("home");
 export const homeName = document.getElementById("home-title");
 export const homeMeta = document.getElementById("home-meta");
 export const dayList = document.getElementById("day-list");
-export const homeStartBtn = document.getElementById("home-start-btn");
 export const manageBtn = document.getElementById("manage-btn");
 export const manageEl = document.getElementById("manage");
 export const manageHeader = document.getElementById("manage-header");

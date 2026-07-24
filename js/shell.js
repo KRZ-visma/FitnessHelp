@@ -4,7 +4,6 @@ import {
   homeEl,
   homeMeta,
   homeName,
-  homeStartBtn,
   manageEl,
   manageHeader,
   managePanelExercises,
@@ -23,7 +22,6 @@ import {
   isProgramDoneToday,
   loadPrograms,
   moveProgramInDay,
-  programSummary,
   savePrograms,
   setProgramDoneToday,
   syncDayOrder,
@@ -152,6 +150,26 @@ export function nextOpenProgram() {
   return programs.find((p) => !isProgramDoneToday(p.id)) ?? null;
 }
 
+/**
+ * @param {import('./constants.js').Program} program
+ * @returns {HTMLUListElement}
+ */
+function buildExerciseList(program) {
+  const list = document.createElement("ul");
+  list.className = "day-exercises";
+  list.setAttribute("aria-label", `Oefeningen in ${program.name}`);
+
+  program.items.forEach((item) => {
+    const resolved = resolveExercise(item, program.rest);
+    if (!resolved) return;
+    const li = document.createElement("li");
+    li.textContent = resolved.name;
+    list.append(li);
+  });
+
+  return list;
+}
+
 export function renderHome() {
   const programs = dayPrograms(loadPrograms());
 
@@ -160,7 +178,6 @@ export function renderHome() {
     homeName.textContent = "Vandaag";
     homeMeta.textContent = "";
     if (dayList) dayList.innerHTML = "";
-    if (homeStartBtn) homeStartBtn.hidden = true;
     if (taglineEl) {
       taglineEl.hidden = false;
       taglineEl.textContent = TAGLINE_EMPTY;
@@ -210,11 +227,7 @@ export function renderHome() {
       label.htmlFor = check.id;
       label.textContent = program.name;
 
-      const meta = document.createElement("p");
-      meta.className = "day-meta";
-      meta.textContent = programSummary(program);
-
-      body.append(label, meta);
+      body.append(label, buildExerciseList(program));
 
       const start = document.createElement("button");
       start.type = "button";
@@ -232,13 +245,7 @@ export function renderHome() {
     });
   }
 
-  const next = nextOpenProgram();
-  if (homeStartBtn) {
-    homeStartBtn.hidden = !next;
-    homeStartBtn.textContent = doneCount === 0 ? "Start dag" : "Volgende";
-  }
-
-  return next;
+  return nextOpenProgram();
 }
 
 /**
