@@ -157,6 +157,9 @@ body {
   padding-right: 0.7rem;
   font-size: 1.15rem;
   line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 400px) {

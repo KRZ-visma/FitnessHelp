@@ -104,7 +104,10 @@ test.describe("Oefeningenbibliotheek", () => {
     await createExercise(page, { name: "Lunges" });
     await openExercisesTab(page);
     await expect(page.locator(".exercise-item")).toHaveCount(1);
-    await page.locator(".exercise-item .btn-danger").click();
+    const remove = page.locator(".exercise-item .btn-danger");
+    await expect(remove).toHaveAttribute("aria-label", "Lunges verwijderen");
+    await expect(remove.locator("svg")).toBeVisible();
+    await remove.click();
 
     await expect(page.locator(".exercise-item")).toHaveCount(0);
     await expect(page.locator("#exercises-empty")).toBeVisible();

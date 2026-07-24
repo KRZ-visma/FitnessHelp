@@ -62,17 +62,30 @@
 
 .exercise-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.65rem;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.exercise-actions .btn {
+  flex: 0 0 auto;
+  min-width: 44px;
+  padding: 0.7rem 0.75rem;
+}
+
+.exercise-actions .btn-icon {
+  padding-left: 0.65rem;
+  padding-right: 0.65rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 @media (max-width: 400px) {
-  .exercise-actions {
-    flex-direction: column;
-  }
-  
-  .exercise-actions .btn {
-    width: 100%;
+  .exercise-actions .btn:not(.btn-icon) {
+    flex: 1 1 auto;
   }
 }
 
