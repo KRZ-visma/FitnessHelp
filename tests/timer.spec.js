@@ -157,7 +157,6 @@ test.describe("Timer", () => {
     );
     expect(names).toEqual(["Plank", "Squats"]);
 
-    await openManage(page);
     await page.click("#manage-done-btn");
     await startFromHome(page);
     await page.click("#skip-btn");

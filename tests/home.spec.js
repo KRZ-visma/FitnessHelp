@@ -102,6 +102,7 @@ test.describe("Home & dagprogramma", () => {
     await addExerciseToProgram(page, "Plank");
     await page.click("#save-btn");
 
+    await page.click("#manage-done-btn");
     await expect(page.locator("#day-list .day-item")).toHaveCount(3);
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
     await expect(
@@ -191,6 +192,7 @@ test.describe("Home & dagprogramma", () => {
     await addExerciseToProgram(page, "Rows");
     await page.click("#save-btn");
 
+    await page.click("#manage-done-btn");
     await expect(page.locator("#day-list .day-item").first()).toContainText("Push");
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(2);
