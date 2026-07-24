@@ -7,30 +7,34 @@ import {
   homeStartBtn,
   manageEl,
   manageHeader,
+  managePanelExercises,
+  managePanelPrograms,
+  manageTabExercises,
+  manageTabPrograms,
   programNameInput,
   savedEmpty,
   savedList,
   taglineEl,
 } from "./dom.js";
-import { fillForm } from "./form.js";
+import { resetDraft } from "./form.js";
 import { hooks } from "./hooks.js";
 import {
   dayPrograms,
   isProgramDoneToday,
-  loadFavoriteId,
   loadPrograms,
+  moveProgramInDay,
   programSummary,
-  resolveFavorite,
-  saveFavoriteId,
   savePrograms,
-  setFavorite,
   setProgramDoneToday,
+  syncDayOrder,
 } from "./storage.js";
 import { resolveExercise } from "./migration.js";
 import { escapeHtml } from "./util.js";
 
 /** Beheer blijft open tot de gebruiker klaar is of opnieuw start vanuit home. */
 let managing = false;
+/** @type {'programs'|'exercises'} */
+let manageTab = "programs";
 
 export function isManaging() {
   return managing;
@@ -40,17 +44,42 @@ export function setManaging(value) {
   managing = Boolean(value);
 }
 
+/** @param {'programs'|'exercises'} tab */
+export function setManageTab(tab) {
+  manageTab = tab === "exercises" ? "exercises" : "programs";
+  updateManageTabs();
+}
+
+export function getManageTab() {
+  return manageTab;
+}
+
+function updateManageTabs() {
+  const isPrograms = manageTab === "programs";
+  if (manageTabPrograms) {
+    manageTabPrograms.setAttribute("aria-selected", isPrograms ? "true" : "false");
+    manageTabPrograms.classList.toggle("is-active", isPrograms);
+  }
+  if (manageTabExercises) {
+    manageTabExercises.setAttribute("aria-selected", isPrograms ? "false" : "true");
+    manageTabExercises.classList.toggle("is-active", !isPrograms);
+  }
+  if (managePanelPrograms) managePanelPrograms.hidden = !isPrograms;
+  if (managePanelExercises) managePanelExercises.hidden = isPrograms;
+}
+
 export function renderSaved() {
   const programs = loadPrograms();
-  const favorite = resolveFavorite(programs);
-  const favoriteId = favorite?.id ?? null;
-  savedList.innerHTML = "";
-  savedEmpty.hidden = programs.length > 0;
+  const order = syncDayOrder(programs);
+  const byId = new Map(programs.map((p) => [p.id, p]));
+  const ordered = order.map((id) => byId.get(id)).filter(Boolean);
 
-  programs.forEach((program) => {
+  savedList.innerHTML = "";
+  savedEmpty.hidden = ordered.length > 0;
+
+  ordered.forEach((program, index) => {
     const li = document.createElement("li");
     li.className = "saved-item";
-    if (program.id === favoriteId) li.classList.add("is-favorite");
 
     const info = document.createElement("div");
     info.className = "saved-info";
@@ -62,9 +91,11 @@ export function renderSaved() {
       })
       .filter(Boolean)
       .join(" · ");
-    const favoriteBadge =
-      program.id === favoriteId ? `<span class="saved-favorite-badge">Favoriet</span>` : "";
-    info.innerHTML = `<strong>${escapeHtml(program.name)}</strong>${favoriteBadge}<span>${program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`} · ${parts}</span>`;
+    const countLabel =
+      program.items.length === 1
+        ? "1 onderdeel"
+        : `${program.items.length} onderdelen`;
+    info.innerHTML = `<strong>${escapeHtml(program.name)}</strong><span>${countLabel}${parts ? ` · ${parts}` : ""}</span>`;
 
     const actions = document.createElement("div");
     actions.className = "saved-actions";
@@ -74,10 +105,27 @@ export function renderSaved() {
     load.className = "btn btn-ghost";
     load.textContent = "Laden";
     load.addEventListener("click", () => {
+      setManageTab("programs");
       hooks.fillForm(program);
       programNameInput.focus();
       window.scrollTo({ top: 0, behavior: "smooth" });
     });
+
+    const upBtn = document.createElement("button");
+    upBtn.type = "button";
+    upBtn.className = "btn btn-ghost saved-move-up";
+    upBtn.textContent = "Omhoog";
+    upBtn.setAttribute("aria-label", `${program.name} omhoog`);
+    upBtn.disabled = index === 0;
+    upBtn.addEventListener("click", () => moveProgramInDay(program.id, -1));
+
+    const downBtn = document.createElement("button");
+    downBtn.type = "button";
+    downBtn.className = "btn btn-ghost saved-move-down";
+    downBtn.textContent = "Omlaag";
+    downBtn.setAttribute("aria-label", `${program.name} omlaag`);
+    downBtn.disabled = index >= ordered.length - 1;
+    downBtn.addEventListener("click", () => moveProgramInDay(program.id, 1));
 
     const remove = document.createElement("button");
     remove.type = "button";
@@ -86,26 +134,10 @@ export function renderSaved() {
     remove.addEventListener("click", () => {
       const next = loadPrograms().filter((p) => p.id !== program.id);
       savePrograms(next);
-      if (loadFavoriteId() === program.id) {
-        saveFavoriteId(next[0]?.id ?? null);
-      }
       hooks.renderApp();
     });
 
-    actions.append(load);
-
-    if (program.id !== favoriteId) {
-      const favoriteBtn = document.createElement("button");
-      favoriteBtn.type = "button";
-      favoriteBtn.className = "btn btn-ghost";
-      favoriteBtn.textContent = "Maak favoriet";
-      favoriteBtn.addEventListener("click", () => {
-        setFavorite(program.id);
-      });
-      actions.append(favoriteBtn);
-    }
-
-    actions.append(remove);
+    actions.append(load, upBtn, downBtn, remove);
     li.append(info, actions);
     savedList.append(li);
   });
@@ -226,12 +258,13 @@ export function updateShell() {
   manageEl.hidden = !showManage;
   manageHeader.hidden = !hasPrograms;
   homeEl.hidden = !hasPrograms || showManage;
+  updateManageTabs();
 }
 
 export function openManage() {
   managing = true;
-  const favorite = resolveFavorite(loadPrograms());
-  if (favorite) fillForm(favorite);
+  manageTab = "programs";
+  resetDraft();
   hooks.renderApp();
   programNameInput.focus();
   window.scrollTo({ top: 0, behavior: "smooth" });

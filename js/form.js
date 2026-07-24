@@ -4,10 +4,11 @@ import {
   programSwitchInput,
   segmentsEl,
 } from "./dom.js";
+import { loadExercises } from "./exercises.js";
 import { resolveExercise } from "./migration.js";
 import { clampInt, uid } from "./util.js";
 
-/** @type {{ type: 'timer'|'reps'|'ref', exerciseType?: 'timer'|'reps', exerciseId?: string, name: string, sets: string, duration: string, reps: string }[]} */
+/** @type {{ exerciseId: string, name: string, exerciseType: 'timer'|'reps', sets: number, duration?: number, reps?: number }[]} */
 let draftItems = [];
 
 /**
@@ -22,44 +23,27 @@ export function guardSafariAutofill(input, token) {
   input.spellcheck = false;
 }
 
-export function defaultDraftItem(type = "timer") {
-  if (type === "reps") {
-    return { type: "reps", name: "", sets: "3", duration: "45", reps: "10" };
-  }
-  return { type: "timer", name: "", sets: "3", duration: "45", reps: "10" };
-}
-
 export function resetDraft() {
-  draftItems = [defaultDraftItem("timer")];
+  draftItems = [];
   programNameInput.value = "";
   programRestInput.value = "15";
   programSwitchInput.value = "15";
   renderSegments();
 }
 
-export function addDraftItem(type = "timer") {
-  draftItems.push(defaultDraftItem(type));
-  renderSegments();
-  const last = segmentsEl.querySelector(".segment:last-child .segment-name");
-  if (last instanceof HTMLInputElement) last.focus();
-}
-
 /**
  * @param {import('./exercises.js').Exercise} exercise
  */
 export function addExerciseToForm(exercise) {
-  const item = {
-    type: "ref",
-    exerciseType: exercise.type,
+  draftItems.push({
     exerciseId: exercise.id,
     name: exercise.name,
-    sets: String(exercise.sets),
-    duration: exercise.type === "timer" ? String(exercise.duration) : "45",
-    reps: exercise.type === "reps" ? String(exercise.reps) : "10",
-  };
-  draftItems.push(item);
+    exerciseType: exercise.type,
+    sets: exercise.sets,
+    duration: exercise.type === "timer" ? exercise.duration : undefined,
+    reps: exercise.type === "reps" ? exercise.reps : undefined,
+  });
   renderSegments();
-  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 export function bindDigits(input) {
@@ -71,87 +55,46 @@ export function bindDigits(input) {
 
 export function renderSegments() {
   segmentsEl.innerHTML = "";
+
+  if (!draftItems.length) {
+    const empty = document.createElement("p");
+    empty.className = "segments-empty";
+    empty.id = "segments-empty";
+    empty.textContent =
+      "Nog geen oefeningen. Voeg er toe uit de bibliotheek.";
+    segmentsEl.append(empty);
+    return;
+  }
+
   draftItems.forEach((item, index) => {
     const article = document.createElement("article");
-    article.className = "segment";
+    article.className = "segment segment-ref";
     article.dataset.index = String(index);
-    article.dataset.type = item.type;
-    
-    const isRef = item.type === "ref";
-    if (isRef) article.classList.add("segment-ref");
+    article.dataset.type = "ref";
 
     const head = document.createElement("div");
     head.className = "segment-head";
 
     const label = document.createElement("p");
     label.className = "segment-label";
-    label.textContent = isRef 
-      ? `Onderdeel ${index + 1} (uit bibliotheek)` 
-      : `Onderdeel ${index + 1}`;
+    label.textContent = `Oefening ${index + 1}`;
 
-    const typeSelect = document.createElement("select");
-    typeSelect.className = "segment-type";
-    typeSelect.setAttribute("aria-label", `Type onderdeel ${index + 1}`);
-    typeSelect.disabled = isRef;
-    
-    const actualType = isRef ? item.exerciseType : item.type;
-    typeSelect.innerHTML = `
-        <option value="timer"${actualType === "timer" ? " selected" : ""}>Timer</option>
-        <option value="reps"${actualType === "reps" ? " selected" : ""}>Sets &amp; keer</option>
-      `;
-    if (!isRef) {
-      typeSelect.addEventListener("change", () => {
-        draftItems[index].type = /** @type {'timer'|'reps'} */ (typeSelect.value);
-        renderSegments();
-      });
-    }
+    const typeBadge = document.createElement("span");
+    typeBadge.className = "segment-type-badge";
+    typeBadge.textContent = item.exerciseType === "reps" ? "Sets & keer" : "Timer";
 
-    head.append(label, typeSelect);
+    head.append(label, typeBadge);
 
-    const nameField = document.createElement("label");
-    nameField.className = "field";
-    nameField.innerHTML = `<span>Oefening</span>`;
-    const nameInput = document.createElement("input");
-    nameInput.type = "text";
-    nameInput.className = "segment-name";
-    nameInput.name = `fh-exercise-${index}`;
-    nameInput.placeholder = "bijv. Push-ups";
-    nameInput.maxLength = 60;
-    nameInput.setAttribute("autocapitalize", "words");
-    nameInput.setAttribute("enterkeyhint", "done");
-    nameInput.required = true;
-    nameInput.value = item.name;
-    nameInput.readOnly = isRef;
-    if (!isRef) {
-      guardSafariAutofill(nameInput, "fh-exercise");
-      nameInput.addEventListener("input", () => {
-        draftItems[index].name = nameInput.value;
-      });
-    }
-    nameField.append(nameInput);
+    const nameEl = document.createElement("p");
+    nameEl.className = "segment-name";
+    nameEl.textContent = item.name;
 
-    const row = document.createElement("div");
-    row.className = "field-row";
-
-    const setsField = makeNumberField("Aantal sets", "segment-sets", item.sets, isRef ? null : (value) => {
-      draftItems[index].sets = value;
-    }, isRef);
-    row.append(setsField);
-
-    const displayType = isRef ? item.exerciseType : item.type;
-    
-    if (displayType === "timer") {
-      row.append(
-        makeNumberField("Duur per set (sec)", "segment-duration", item.duration, isRef ? null : (value) => {
-          draftItems[index].duration = value;
-        }, isRef)
-      );
+    const meta = document.createElement("p");
+    meta.className = "segment-meta";
+    if (item.exerciseType === "timer") {
+      meta.textContent = `${item.sets} sets · ${item.duration} sec`;
     } else {
-      row.append(
-        makeNumberField("Keer per set", "segment-reps", item.reps, isRef ? null : (value) => {
-          draftItems[index].reps = value;
-        }, isRef)
-      );
+      meta.textContent = `${item.sets} sets · ${item.reps} keer`;
     }
 
     const foot = document.createElement("div");
@@ -164,7 +107,7 @@ export function renderSegments() {
     upBtn.type = "button";
     upBtn.className = "btn btn-ghost segment-move-up";
     upBtn.textContent = "Omhoog";
-    upBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omhoog`);
+    upBtn.setAttribute("aria-label", `Oefening ${index + 1} omhoog`);
     upBtn.disabled = index === 0;
     upBtn.addEventListener("click", () => moveSegment(index, -1));
 
@@ -172,7 +115,7 @@ export function renderSegments() {
     downBtn.type = "button";
     downBtn.className = "btn btn-ghost segment-move-down";
     downBtn.textContent = "Omlaag";
-    downBtn.setAttribute("aria-label", `Onderdeel ${index + 1} omlaag`);
+    downBtn.setAttribute("aria-label", `Oefening ${index + 1} omlaag`);
     downBtn.disabled = index >= draftItems.length - 1;
     downBtn.addEventListener("click", () => moveSegment(index, 1));
 
@@ -182,19 +125,13 @@ export function renderSegments() {
     removeBtn.type = "button";
     removeBtn.className = "btn btn-danger";
     removeBtn.textContent = "Verwijder";
-    removeBtn.disabled = draftItems.length <= 1;
     removeBtn.addEventListener("click", () => {
-      if (draftItems.length <= 1) return;
       draftItems.splice(index, 1);
       renderSegments();
     });
-    foot.append(order, removeBtn);
 
-    if (draftItems.length > 1) {
-      article.append(head, nameField, row, foot);
-    } else {
-      article.append(head, nameField, row);
-    }
+    foot.append(order, removeBtn);
+    article.append(head, nameEl, meta, foot);
     segmentsEl.append(article);
   });
 }
@@ -208,26 +145,79 @@ function moveSegment(index, delta) {
   renderSegments();
 }
 
-function makeNumberField(labelText, className, value, onChange, readOnly = false) {
-  const field = document.createElement("label");
-  field.className = "field";
-  const span = document.createElement("span");
-  span.textContent = labelText;
-  const input = document.createElement("input");
-  input.type = "text";
-  input.inputMode = "numeric";
-  input.pattern = "[0-9]*";
-  input.className = className;
-  input.autocomplete = `fh-${className}`;
-  input.required = true;
-  input.value = value;
-  input.readOnly = readOnly;
-  if (!readOnly) {
-    bindDigits(input);
-    if (onChange) input.addEventListener("input", () => onChange(input.value));
+/**
+ * Toont een kiezer om oefeningen uit de bibliotheek toe te voegen.
+ * @param {() => void} [onEmptyLibrary]
+ */
+export function showExercisePicker(onEmptyLibrary) {
+  const exercises = loadExercises();
+  if (!exercises.length) {
+    if (onEmptyLibrary) onEmptyLibrary();
+    return;
   }
-  field.append(span, input);
-  return field;
+
+  const modal = document.createElement("div");
+  modal.className = "modal-overlay";
+  modal.setAttribute("role", "dialog");
+  modal.setAttribute("aria-modal", "true");
+  modal.setAttribute("aria-labelledby", "picker-title");
+
+  const content = document.createElement("div");
+  content.className = "modal-content";
+
+  const title = document.createElement("h2");
+  title.id = "picker-title";
+  title.className = "modal-title";
+  title.textContent = "Oefening toevoegen";
+
+  const list = document.createElement("ul");
+  list.className = "picker-list";
+  list.setAttribute("aria-label", "Oefeningen");
+
+  exercises.forEach((exercise) => {
+    const li = document.createElement("li");
+    li.className = "picker-item";
+
+    const info = document.createElement("div");
+    info.className = "picker-info";
+    const name = document.createElement("p");
+    name.className = "picker-name";
+    name.textContent = exercise.name;
+    const meta = document.createElement("p");
+    meta.className = "picker-meta";
+    meta.textContent =
+      exercise.type === "timer"
+        ? `Timer · ${exercise.sets} sets · ${exercise.duration} sec`
+        : `Sets & keer · ${exercise.sets} sets · ${exercise.reps} keer`;
+    info.append(name, meta);
+
+    const add = document.createElement("button");
+    add.type = "button";
+    add.className = "btn btn-primary";
+    add.textContent = "Toevoegen";
+    add.addEventListener("click", () => {
+      addExerciseToForm(exercise);
+      document.body.removeChild(modal);
+    });
+
+    li.append(info, add);
+    list.append(li);
+  });
+
+  const cancel = document.createElement("button");
+  cancel.type = "button";
+  cancel.className = "btn btn-ghost";
+  cancel.textContent = "Annuleren";
+  cancel.addEventListener("click", () => {
+    document.body.removeChild(modal);
+  });
+
+  content.append(title, list, cancel);
+  modal.append(content);
+  modal.addEventListener("click", (e) => {
+    if (e.target === modal) document.body.removeChild(modal);
+  });
+  document.body.append(modal);
 }
 
 /** @returns {import('./constants.js').Program | null} */
@@ -251,60 +241,10 @@ export function readForm() {
   const programRest = clampInt(rest, 0, 600);
   const programSwitch = clampInt(switchSec, 0, 600);
 
-  /** @type {(import('./constants.js').ProgramItem | import('./constants.js').ProgramExerciseRef)[]} */
-  const items = [];
-  for (let i = 0; i < draftItems.length; i += 1) {
-    const draft = draftItems[i];
-    
-    if (draft.type === "ref" && draft.exerciseId) {
-      items.push({ exerciseId: draft.exerciseId });
-      continue;
-    }
-    
-    const itemName = draft.name.trim();
-    const sets = Number(draft.sets);
-    if (!itemName) {
-      const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-name`);
-      if (input instanceof HTMLInputElement) input.focus();
-      return null;
-    }
-    if (!Number.isFinite(sets) || sets < 1) {
-      const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-sets`);
-      if (input instanceof HTMLInputElement) input.focus();
-      return null;
-    }
+  const items = draftItems
+    .filter((draft) => draft.exerciseId)
+    .map((draft) => ({ exerciseId: draft.exerciseId }));
 
-    if (draft.type === "reps") {
-      const reps = Number(draft.reps);
-      if (!Number.isFinite(reps) || reps < 1) {
-        const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-reps`);
-        if (input instanceof HTMLInputElement) input.focus();
-        return null;
-      }
-      items.push({
-        type: "reps",
-        name: itemName,
-        sets: clampInt(sets, 1, 99),
-        reps: clampInt(reps, 1, 999),
-      });
-    } else {
-      const duration = Number(draft.duration);
-      if (!Number.isFinite(duration) || duration < 1) {
-        const input = segmentsEl.querySelector(`[data-index="${i}"] .segment-duration`);
-        if (input instanceof HTMLInputElement) input.focus();
-        return null;
-      }
-      items.push({
-        type: "timer",
-        name: itemName,
-        sets: clampInt(sets, 1, 99),
-        duration: clampInt(duration, 1, 3600),
-        rest: programRest,
-      });
-    }
-  }
-
-  if (!items.length) return null;
   return { id: uid(), name, rest: programRest, switch: programSwitch, items };
 }
 
@@ -313,37 +253,20 @@ export function fillForm(program) {
   programNameInput.value = program.name;
   programRestInput.value = String(program.rest ?? 15);
   programSwitchInput.value = String(program.switch ?? 15);
-  draftItems = program.items.map((item) => {
-    if ("exerciseId" in item) {
+  draftItems = program.items
+    .map((item) => {
+      if (typeof item.exerciseId !== "string" || !item.exerciseId) return null;
       const resolved = resolveExercise(item, program.rest);
       if (!resolved) return null;
       return {
-        type: "ref",
-        exerciseType: resolved.type,
         exerciseId: item.exerciseId,
         name: resolved.name,
-        sets: String(resolved.sets),
-        duration: resolved.type === "timer" ? String(resolved.duration) : "45",
-        reps: resolved.type === "reps" ? String(resolved.reps) : "10",
+        exerciseType: resolved.type,
+        sets: resolved.sets,
+        duration: resolved.type === "timer" ? resolved.duration : undefined,
+        reps: resolved.type === "reps" ? resolved.reps : undefined,
       };
-    }
-    if (item.type === "reps") {
-      return {
-        type: "reps",
-        name: item.name,
-        sets: String(item.sets),
-        duration: "45",
-        reps: String(item.reps),
-      };
-    }
-    return {
-      type: "timer",
-      name: item.name,
-      sets: String(item.sets),
-      duration: String(item.duration),
-      reps: "10",
-    };
-  }).filter(Boolean);
-  if (!draftItems.length) draftItems = [defaultDraftItem("timer")];
+    })
+    .filter(Boolean);
   renderSegments();
 }

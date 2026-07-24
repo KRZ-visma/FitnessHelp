@@ -9,6 +9,8 @@ import {
   importFile,
   manageBtn,
   manageDoneBtn,
+  manageTabExercises,
+  manageTabPrograms,
   pauseBtn,
   programNameInput,
   programRestInput,
@@ -17,15 +19,25 @@ import {
   stopBtn,
 } from "./dom.js";
 import { APP_VERSION } from "./constants.js";
-import { addDraftItem, addExerciseToForm, bindDigits, fillForm, guardSafariAutofill, readForm, resetDraft } from "./form.js";
-import { hooks } from "./hooks.js";
-import { closeManage, nextOpenProgram, openManage, renderApp, setManaging } from "./shell.js";
 import {
-  loadFavoriteId,
-  loadPrograms,
-  saveFavoriteId,
-  savePrograms,
-} from "./storage.js";
+  addExerciseToForm,
+  bindDigits,
+  fillForm,
+  guardSafariAutofill,
+  readForm,
+  resetDraft,
+  showExercisePicker,
+} from "./form.js";
+import { hooks } from "./hooks.js";
+import {
+  closeManage,
+  nextOpenProgram,
+  openManage,
+  renderApp,
+  setManageTab,
+  setManaging,
+} from "./shell.js";
+import { loadPrograms, savePrograms, syncDayOrder } from "./storage.js";
 import {
   completeRepsSet,
   onVisibilityResume,
@@ -47,7 +59,10 @@ hooks.renderExercises = renderExercises;
 hooks.addExerciseToForm = addExerciseToForm;
 
 addSegmentBtn.addEventListener("click", () => {
-  addDraftItem("timer");
+  showExercisePicker(() => {
+    setManageTab("exercises");
+    window.alert("Maak eerst een oefening aan onder Oefeningen.");
+  });
 });
 
 function saveCurrentProgram() {
@@ -61,13 +76,10 @@ function saveCurrentProgram() {
     program.id = programs[existingIndex].id;
     programs[existingIndex] = program;
   } else {
-    programs.unshift(program);
+    programs.push(program);
   }
   savePrograms(programs);
-  if (!loadFavoriteId() || !programs.some((p) => p.id === loadFavoriteId())) {
-    saveFavoriteId(program.id);
-  }
-  // Na opslaan terug naar home: dagprogramma centraal, beheer op de achtergrond
+  syncDayOrder(programs);
   setManaging(false);
   renderApp();
   return program;
@@ -112,6 +124,14 @@ manageBtn.addEventListener("click", () => {
 
 manageDoneBtn.addEventListener("click", () => {
   closeManage();
+});
+
+manageTabPrograms?.addEventListener("click", () => {
+  setManageTab("programs");
+});
+
+manageTabExercises?.addEventListener("click", () => {
+  setManageTab("exercises");
 });
 
 exportBtn.addEventListener("click", () => {

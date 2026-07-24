@@ -49,7 +49,10 @@ export function loadExercises() {
     if (!raw) return [];
     const data = JSON.parse(raw);
     if (!Array.isArray(data)) return [];
-    return data.map(normalizeExercise).filter(Boolean);
+    return data
+      .map(normalizeExercise)
+      .filter(Boolean)
+      .sort((a, b) => a.name.localeCompare(b.name, "nl", { sensitivity: "base" }));
   } catch {
     return [];
   }

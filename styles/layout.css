@@ -209,6 +209,47 @@ main {
   color: var(--ink);
 }
 
+.manage-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.45rem;
+}
+
+.manage-tab {
+  appearance: none;
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--ink-soft);
+  font: inherit;
+  font-weight: 700;
+  font-size: 0.95rem;
+  min-height: 44px;
+  padding: 0.65rem 0.75rem;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.manage-tab.is-active,
+.manage-tab[aria-selected="true"] {
+  background: rgba(47, 107, 69, 0.12);
+  border-color: #2f6b45;
+  color: var(--ink);
+}
+
+.manage-panel {
+  display: grid;
+  gap: clamp(1.35rem, 3.5vw, 1.85rem);
+}
+
+.manage-panel[hidden] {
+  display: none !important;
+}
+
+.manage .exercises {
+  background: transparent;
+  padding: 0;
+}
+
 .site-footer {
   padding: 0 clamp(1.25rem, 4vw, 2.5rem) 2.25rem;
   max-width: 40rem;

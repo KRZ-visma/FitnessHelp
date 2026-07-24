@@ -100,4 +100,65 @@
   max-height: 90vh;
   overflow-y: auto;
   box-shadow: 0 8px 24px rgba(15, 28, 22, 0.25);
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.3rem;
+}
+
+.exercise-form {
+  display: grid;
+  gap: 1rem;
+}
+
+.modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.picker-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.55rem;
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
+.picker-item {
+  display: grid;
+  gap: 0.55rem;
+  padding: 0.75rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.picker-item:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+@media (min-width: 480px) {
+  .picker-item {
+    grid-template-columns: 1fr auto;
+    align-items: center;
+  }
+}
+
+.picker-name {
+  margin: 0;
+  font-weight: 700;
+}
+
+.picker-meta {
+  margin: 0.2rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
 }

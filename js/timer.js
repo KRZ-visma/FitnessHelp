@@ -76,7 +76,9 @@ export function startSession(program) {
   const resolvedItems = program.items
     .map((item) => resolveExercise(item, program.rest))
     .filter(Boolean);
-  
+
+  if (!resolvedItems.length) return;
+
   session = {
     program: {
       id: program.id,

@@ -5,30 +5,24 @@ import { uid } from "./util.js";
 const MIGRATION_FLAG = "fitnesshelp-migration-v2-done";
 
 /**
- * Migreert bestaande inline oefeningen naar de bibliotheek en
- * vervangt ze door referenties in programma's.
+ * Zet inline programma-items om naar bibliotheek-oefeningen + refs.
+ * @param {import('./constants.js').Program[]} programs
+ * @returns {import('./constants.js').Program[]}
  */
-export function migrateToExerciseLibrary() {
-  if (localStorage.getItem(MIGRATION_FLAG)) {
-    return;
-  }
-
-  const programs = loadPrograms();
+export function convertInlineItemsToRefs(programs) {
   const exercises = loadExercises();
-  
-  /** @type {Map<string, string>} hashcode -> exerciseId */
+
+  /** @type {Map<string, string>} hash -> exerciseId */
   const exerciseMap = new Map();
-  
   exercises.forEach((ex) => {
-    const hash = exerciseHash(ex);
-    exerciseMap.set(hash, ex.id);
+    exerciseMap.set(exerciseHash(ex), ex.id);
   });
 
   const newExercises = [...exercises];
   const updatedPrograms = programs.map((program) => {
     const newItems = program.items.map((item) => {
-      if ("exerciseId" in item) {
-        return item;
+      if (typeof item.exerciseId === "string" && item.exerciseId) {
+        return { exerciseId: item.exerciseId };
       }
 
       const hash = exerciseHash(item);
@@ -36,6 +30,7 @@ export function migrateToExerciseLibrary() {
 
       if (!exerciseId) {
         exerciseId = uid();
+        /** @type {import('./exercises.js').Exercise} */
         const exercise = {
           id: exerciseId,
           name: item.name,
@@ -60,7 +55,28 @@ export function migrateToExerciseLibrary() {
   });
 
   saveExercises(newExercises);
-  savePrograms(updatedPrograms);
+  return updatedPrograms;
+}
+
+/**
+ * Migreert bestaande inline oefeningen naar de bibliotheek en
+ * vervangt ze door referenties in programma's.
+ * Idempotent: blijft ook draaien als er later weer inline items binnenkomen
+ * (bijv. legacy localStorage zonder migratie-flag te wissen).
+ */
+export function migrateToExerciseLibrary() {
+  const programs = loadPrograms();
+  const hasInline = programs.some((program) =>
+    program.items.some(
+      (item) => !(typeof item.exerciseId === "string" && item.exerciseId)
+    )
+  );
+
+  if (hasInline) {
+    const updated = convertInlineItemsToRefs(programs);
+    savePrograms(updated);
+  }
+
   localStorage.setItem(MIGRATION_FLAG, "1");
 }
 
@@ -82,7 +98,7 @@ function exerciseHash(item) {
  * @returns {import('./constants.js').ProgramItem | null}
  */
 export function resolveExercise(item, defaultRest = 15) {
-  if ("exerciseId" in item) {
+  if (typeof item.exerciseId === "string" && item.exerciseId) {
     const exercises = loadExercises();
     const exercise = exercises.find((ex) => ex.id === item.exerciseId);
     if (!exercise) return null;
