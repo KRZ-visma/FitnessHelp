@@ -22,6 +22,8 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#manage-tab-programs")).toBeVisible();
     await expect(page.locator("#manage-tab-exercises")).toBeVisible();
     await expect(page.locator("#saved")).toBeVisible();
+    await expect(page.locator("#saved-title")).toHaveText("Programma’s");
+    await expect(page.locator(".saved-header #add-program-btn")).toBeVisible();
     await expect(page.locator("#add-program-btn")).toBeVisible();
     await expect(page.locator("#setup")).toBeVisible();
     await expect(page.locator("#program-name")).toBeVisible();

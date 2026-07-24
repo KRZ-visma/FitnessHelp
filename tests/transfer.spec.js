@@ -6,7 +6,9 @@ test.describe("Import / export", () => {
     await clearAndReload(page);
   });
 
-  test("toont export- en importknoppen bij Opgeslagen", async ({ page }) => {
+  test("toont export- en importknoppen bij Programma’s", async ({ page }) => {
+    await expect(page.locator("#saved-title")).toHaveText("Programma’s");
+    await expect(page.locator("#add-program-btn")).toBeVisible();
     await expect(page.locator("#export-btn")).toBeVisible();
     await expect(page.locator("#export-btn")).toHaveText("Exporteren");
     await expect(page.locator("#import-btn")).toBeVisible();
