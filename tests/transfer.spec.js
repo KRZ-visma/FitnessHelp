@@ -157,6 +157,8 @@ test.describe("Import / export", () => {
     });
 
     await expect(page.locator("#transfer-status")).toHaveText("1 programma geïmporteerd.");
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#manage-panel-transfer")).toBeVisible();
     await page.click("#manage-tab-programs");
     await expect(page.locator("#saved-list")).toContainText("Burpees");
 

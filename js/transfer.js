@@ -3,6 +3,7 @@ import { transferStatus } from "./dom.js";
 import { loadExercises, normalizeExercise, saveExercises } from "./exercises.js";
 import { hooks } from "./hooks.js";
 import { convertInlineItemsToRefs } from "./migration.js";
+import { setManaging } from "./shell.js";
 import {
   defaultRestFromItems,
   legacyWorkoutToItem,
@@ -236,6 +237,8 @@ export function importProgramsFromFile(file) {
         }
       }
 
+      // Blijf in beheer (ook na import vanuit de lege startstaat).
+      setManaging(true);
       hooks.renderApp();
 
       const count = incoming.length;
