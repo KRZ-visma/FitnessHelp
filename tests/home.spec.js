@@ -112,6 +112,54 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
   });
 
+  test("opent opgeslagen programma via klik op de lijst", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Push",
+      rest: 20,
+      exercises: [{ name: "Push-ups", sets: 4, duration: 40 }],
+    });
+
+    await openManage(page);
+    await page.fill("#program-name", "Nieuw");
+    await page.locator("#saved-list .saved-open", { hasText: "Push" }).click();
+    await expect(page.locator("#program-name")).toHaveValue("Push");
+    await expect(page.locator("#program-rest")).toHaveValue("20");
+    await expect(page.locator(".segment-name")).toHaveText("Push-ups");
+  });
+
+  test("houdt acties op één regel met pijlsymbolen", async ({ page }) => {
+    await createExercise(page, { name: "Push-ups" });
+    await createExercise(page, { name: "Rows" });
+
+    await openProgramsTab(page);
+    await page.fill("#program-name", "Push");
+    await addExerciseToProgram(page, "Push-ups");
+    await page.click("#save-btn");
+
+    await openManage(page);
+    await page.fill("#program-name", "Pull");
+    await addExerciseToProgram(page, "Rows");
+    await page.click("#save-btn");
+
+    await openManage(page);
+    const item = page.locator("#saved-list .saved-item").first();
+    const actions = item.locator(".saved-actions");
+    await expect(actions.locator(".saved-move-up")).toHaveText("↑");
+    await expect(actions.locator(".saved-move-down")).toHaveText("↓");
+    await expect(actions.locator("button", { hasText: "Laden" })).toHaveCount(0);
+
+    const box = await actions.boundingBox();
+    expect(box).toBeTruthy();
+    const buttons = actions.locator("button");
+    await expect(buttons).toHaveCount(3);
+    const first = await buttons.nth(0).boundingBox();
+    const last = await buttons.nth(2).boundingBox();
+    expect(first && last && box).toBeTruthy();
+    // Alle acties op dezelfde horizontale regel
+    expect(Math.abs(first.y - last.y)).toBeLessThan(8);
+    expect(last.x + last.width).toBeLessThanOrEqual(box.x + box.width + 1);
+  });
+
   test("kan volgorde van programma’s wijzigen", async ({ page }) => {
     await createExercise(page, { name: "Push-ups" });
     await createExercise(page, { name: "Rows" });
@@ -132,7 +180,7 @@ test.describe("Home & dagprogramma", () => {
 
     await page
       .locator("#saved-list .saved-item", { hasText: "Pull" })
-      .locator("button", { hasText: "Omhoog" })
+      .locator(".saved-move-up")
       .click();
 
     await page.click("#manage-done-btn");
@@ -188,7 +236,7 @@ test.describe("Home & dagprogramma", () => {
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Mijn training");
-    await page.locator("#saved-list button", { hasText: "Laden" }).click();
+    await page.locator("#saved-list .saved-open", { hasText: "Mijn training" }).click();
     await expect(page.locator("#program-name")).toHaveValue("Mijn training");
     await expect(page.locator("#program-rest")).toHaveValue("5");
     await expect(page.locator("#program-switch")).toHaveValue("15");

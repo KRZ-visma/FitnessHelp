@@ -150,3 +150,17 @@ body {
   color: var(--danger);
   border: 1px solid rgba(232, 93, 59, 0.35);
 }
+
+.btn-icon {
+  min-width: 44px;
+  padding-left: 0.7rem;
+  padding-right: 0.7rem;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+@media (max-width: 400px) {
+  .btn-icon {
+    flex: 0 0 auto;
+  }
+}
