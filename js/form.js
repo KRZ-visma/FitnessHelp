@@ -58,58 +58,24 @@ export function bindDigits(input) {
 export function renderSegments() {
   segmentsEl.innerHTML = "";
 
-  if (!draftItems.length) {
-    const empty = document.createElement("p");
-    empty.className = "segments-empty";
-    empty.id = "segments-empty";
-    empty.textContent =
-      "Nog geen oefeningen. Voeg er toe uit de bibliotheek.";
-    segmentsEl.append(empty);
-    return;
-  }
-
   draftItems.forEach((item, index) => {
     const article = document.createElement("article");
     article.className = "segment segment-ref";
     article.dataset.index = String(index);
     article.dataset.type = "ref";
 
-    const head = document.createElement("div");
-    head.className = "segment-head";
-
-    const label = document.createElement("p");
-    label.className = "segment-label";
-    label.textContent = `Oefening ${index + 1}`;
-
-    const typeBadge = document.createElement("span");
-    typeBadge.className = "segment-type-badge";
-    typeBadge.textContent = item.exerciseType === "reps" ? "Sets & keer" : "Timer";
-
-    head.append(label, typeBadge);
-
-    const nameEl = document.createElement("p");
+    const nameEl = document.createElement("span");
     nameEl.className = "segment-name";
     nameEl.textContent = item.name;
 
-    const meta = document.createElement("p");
-    meta.className = "segment-meta";
-    if (item.exerciseType === "timer") {
-      meta.textContent = `${item.sets} sets · ${item.duration} sec`;
-    } else {
-      meta.textContent = `${item.sets} sets · ${item.reps} keer`;
-    }
-
-    const foot = document.createElement("div");
-    foot.className = "segment-foot";
-
-    const order = document.createElement("div");
-    order.className = "segment-order";
+    const actions = document.createElement("div");
+    actions.className = "segment-actions";
 
     const upBtn = document.createElement("button");
     upBtn.type = "button";
     upBtn.className = "btn btn-ghost btn-icon segment-move-up";
     upBtn.textContent = "↑";
-    upBtn.setAttribute("aria-label", `Oefening ${index + 1} omhoog`);
+    upBtn.setAttribute("aria-label", `${item.name} omhoog`);
     upBtn.disabled = index === 0;
     upBtn.addEventListener("click", () => moveSegment(index, -1));
 
@@ -117,11 +83,9 @@ export function renderSegments() {
     downBtn.type = "button";
     downBtn.className = "btn btn-ghost btn-icon segment-move-down";
     downBtn.textContent = "↓";
-    downBtn.setAttribute("aria-label", `Oefening ${index + 1} omlaag`);
+    downBtn.setAttribute("aria-label", `${item.name} omlaag`);
     downBtn.disabled = index >= draftItems.length - 1;
     downBtn.addEventListener("click", () => moveSegment(index, 1));
-
-    order.append(upBtn, downBtn);
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
@@ -132,8 +96,8 @@ export function renderSegments() {
       renderSegments();
     });
 
-    foot.append(order, removeBtn);
-    article.append(head, nameEl, meta, foot);
+    actions.append(upBtn, downBtn, removeBtn);
+    article.append(nameEl, actions);
     segmentsEl.append(article);
   });
 }

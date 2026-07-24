@@ -13,6 +13,7 @@ import {
   programNameInput,
   savedEmpty,
   savedList,
+  setupEl,
   taglineEl,
 } from "./dom.js";
 import { resetDraft } from "./form.js";
@@ -27,10 +28,11 @@ import {
   syncDayOrder,
 } from "./storage.js";
 import { resolveExercise } from "./migration.js";
-import { escapeHtml } from "./util.js";
 
 /** Beheer blijft open tot de gebruiker klaar is of opnieuw start vanuit home. */
 let managing = false;
+/** Programmaformulier open (nieuw of bewerken). */
+let editing = false;
 /** @type {'programs'|'exercises'} */
 let manageTab = "programs";
 
@@ -40,6 +42,14 @@ export function isManaging() {
 
 export function setManaging(value) {
   managing = Boolean(value);
+}
+
+export function isEditingProgram() {
+  return editing;
+}
+
+export function setEditingProgram(value) {
+  editing = Boolean(value);
 }
 
 /** @param {'programs'|'exercises'} tab */
@@ -66,6 +76,31 @@ function updateManageTabs() {
   if (managePanelExercises) managePanelExercises.hidden = isPrograms;
 }
 
+function updateSetupVisibility() {
+  const hasPrograms = loadPrograms().length > 0;
+  const showSetup = editing || !hasPrograms;
+  if (!hasPrograms) editing = true;
+  if (setupEl) setupEl.hidden = !showSetup;
+}
+
+/**
+ * Opent het programmaformulier voor een nieuw of bestaand programma.
+ * @param {import('./constants.js').Program | null} [program]
+ */
+export function openProgramEditor(program = null) {
+  managing = true;
+  editing = true;
+  manageTab = "programs";
+  if (program) {
+    hooks.fillForm(program);
+  } else {
+    resetDraft();
+  }
+  hooks.renderApp();
+  programNameInput.focus();
+  setupEl?.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
 export function renderSaved() {
   const programs = loadPrograms();
   const order = syncDayOrder(programs);
@@ -79,29 +114,36 @@ export function renderSaved() {
     const li = document.createElement("li");
     li.className = "saved-item";
 
-    const parts = program.items
+    const names = program.items
       .map((item) => {
         const resolved = resolveExercise(item, program.rest);
-        if (!resolved) return null;
-        return `${escapeHtml(resolved.name)} (${resolved.type === "reps" ? "sets & keer" : "timer"})`;
+        return resolved ? resolved.name : null;
       })
-      .filter(Boolean)
-      .join(" · ");
-    const countLabel =
-      program.items.length === 1
-        ? "1 onderdeel"
-        : `${program.items.length} onderdelen`;
+      .filter(Boolean);
 
     const openBtn = document.createElement("button");
     openBtn.type = "button";
     openBtn.className = "saved-open";
     openBtn.setAttribute("aria-label", `${program.name} openen`);
-    openBtn.innerHTML = `<strong class="saved-name">${escapeHtml(program.name)}</strong><span class="saved-meta">${countLabel}${parts ? ` · ${parts}` : ""}</span>`;
+
+    const nameEl = document.createElement("strong");
+    nameEl.className = "saved-name";
+    nameEl.textContent = program.name;
+    openBtn.append(nameEl);
+
+    if (names.length) {
+      const list = document.createElement("ul");
+      list.className = "saved-exercises";
+      names.forEach((name) => {
+        const ex = document.createElement("li");
+        ex.textContent = name;
+        list.append(ex);
+      });
+      openBtn.append(list);
+    }
+
     openBtn.addEventListener("click", () => {
-      setManageTab("programs");
-      hooks.fillForm(program);
-      programNameInput.focus();
-      window.scrollTo({ top: 0, behavior: "smooth" });
+      openProgramEditor(program);
     });
 
     const actions = document.createElement("div");
@@ -256,7 +298,10 @@ export function updateShell() {
   const hasPrograms = programs.length > 0;
   const showManage = !hasPrograms || managing;
 
-  if (!hasPrograms) managing = false;
+  if (!hasPrograms) {
+    managing = false;
+    editing = true;
+  }
 
   document.body.classList.toggle("has-programs", hasPrograms);
   document.body.classList.toggle("is-managing", showManage && hasPrograms);
@@ -265,19 +310,22 @@ export function updateShell() {
   manageHeader.hidden = !hasPrograms;
   homeEl.hidden = !hasPrograms || showManage;
   updateManageTabs();
+  updateSetupVisibility();
 }
 
 export function openManage() {
   managing = true;
+  editing = false;
   manageTab = "programs";
   resetDraft();
   hooks.renderApp();
-  programNameInput.focus();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 export function closeManage() {
   managing = false;
+  editing = false;
+  resetDraft();
   hooks.renderApp();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }

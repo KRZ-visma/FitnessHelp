@@ -5,7 +5,7 @@ const {
   createExercise,
   createProgram,
   openManage,
-  openProgramsTab,
+  openProgramForm,
   startFromHome,
 } = require("./helpers");
 
@@ -86,21 +86,22 @@ test.describe("Home & dagprogramma", () => {
     await createExercise(page, { name: "Squats" });
     await createExercise(page, { name: "Plank" });
 
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Warm-up");
     await addExerciseToProgram(page, "Jumping jacks");
     await page.click("#save-btn");
 
-    await openManage(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Kracht");
     await addExerciseToProgram(page, "Squats");
     await page.click("#save-btn");
 
-    await openManage(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Core");
     await addExerciseToProgram(page, "Plank");
     await page.click("#save-btn");
 
+    await page.click("#manage-done-btn");
     await expect(page.locator("#day-list .day-item")).toHaveCount(3);
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
     await expect(
@@ -133,24 +134,26 @@ test.describe("Home & dagprogramma", () => {
     });
 
     await openManage(page);
-    await page.fill("#program-name", "Nieuw");
+    await expect(page.locator("#setup")).toBeHidden();
     await page.locator("#saved-list .saved-open", { hasText: "Push" }).click();
+    await expect(page.locator("#setup")).toBeVisible();
     await expect(page.locator("#program-name")).toHaveValue("Push");
     await expect(page.locator("#program-rest")).toHaveValue("20");
     await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator(".segment-name")).toHaveText("Push-ups");
+    await expect(page.locator("#saved-list .saved-exercises")).toContainText("Push-ups");
   });
 
   test("houdt acties op één regel met pijlsymbolen", async ({ page }) => {
     await createExercise(page, { name: "Push-ups" });
     await createExercise(page, { name: "Rows" });
 
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Push");
     await addExerciseToProgram(page, "Push-ups");
     await page.click("#save-btn");
 
-    await openManage(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Pull");
     await addExerciseToProgram(page, "Rows");
     await page.click("#save-btn");
@@ -161,6 +164,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(actions.locator(".saved-move-up")).toHaveText("↑");
     await expect(actions.locator(".saved-move-down")).toHaveText("↓");
     await expect(actions.locator("button", { hasText: "Laden" })).toHaveCount(0);
+    await expect(item.locator(".saved-exercises li")).toHaveCount(1);
 
     const box = await actions.boundingBox();
     expect(box).toBeTruthy();
@@ -178,16 +182,17 @@ test.describe("Home & dagprogramma", () => {
     await createExercise(page, { name: "Push-ups" });
     await createExercise(page, { name: "Rows" });
 
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Push");
     await addExerciseToProgram(page, "Push-ups");
     await page.click("#save-btn");
 
-    await openManage(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Pull");
     await addExerciseToProgram(page, "Rows");
     await page.click("#save-btn");
 
+    await page.click("#manage-done-btn");
     await expect(page.locator("#day-list .day-item").first()).toContainText("Push");
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(2);
@@ -251,7 +256,10 @@ test.describe("Home & dagprogramma", () => {
     await openManage(page);
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Mijn training");
+    await expect(page.locator("#saved-list .saved-exercises")).toContainText("Burpees");
+    await expect(page.locator("#saved-list .saved-exercises")).toContainText("Squats");
     await page.locator("#saved-list .saved-open", { hasText: "Mijn training" }).click();
+    await expect(page.locator("#setup")).toBeVisible();
     await expect(page.locator("#program-name")).toHaveValue("Mijn training");
     await expect(page.locator("#program-rest")).toHaveValue("5");
     await expect(page.locator("#program-switch")).toHaveValue("15");

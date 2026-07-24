@@ -5,7 +5,7 @@ const {
   createExercise,
   createProgram,
   openManage,
-  openProgramsTab,
+  openProgramForm,
   startFromHome,
 } = require("./helpers");
 
@@ -138,7 +138,7 @@ test.describe("Timer", () => {
     await createExercise(page, { name: "Plank", sets: 2, duration: 20 });
     await createExercise(page, { name: "Squats", type: "reps", sets: 3, reps: 12 });
 
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Full body");
     await page.fill("#program-rest", "5");
     await addExerciseToProgram(page, "Plank");
@@ -157,7 +157,6 @@ test.describe("Timer", () => {
     );
     expect(names).toEqual(["Plank", "Squats"]);
 
-    await openManage(page);
     await page.click("#manage-done-btn");
     await startFromHome(page);
     await page.click("#skip-btn");

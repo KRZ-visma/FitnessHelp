@@ -4,7 +4,7 @@ const {
   clearAndReload,
   createExercise,
   openExercisesTab,
-  openProgramsTab,
+  openProgramForm,
 } = require("./helpers");
 
 test.describe("Oefeningenbibliotheek", () => {
@@ -86,7 +86,7 @@ test.describe("Oefeningenbibliotheek", () => {
 
   test("wijziging oefening werkt door in programma", async ({ page }) => {
     await createExercise(page, { name: "Plank", sets: 2, duration: 30 });
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await page.fill("#program-name", "Core");
     await addExerciseToProgram(page, "Plank");
     await page.click("#save-btn");
@@ -118,15 +118,15 @@ test.describe("Oefeningenbibliotheek", () => {
       duration: 30,
     });
 
-    await openProgramsTab(page);
+    await openProgramForm(page);
     await addExerciseToProgram(page, "Burpees");
 
     await expect(page.locator(".segment")).toHaveCount(1);
     const segment = page.locator(".segment").first();
     await expect(segment).toHaveClass(/segment-ref/);
     await expect(segment.locator(".segment-name")).toHaveText("Burpees");
-    await expect(segment.locator(".segment-meta")).toContainText("3 sets");
-    await expect(segment.locator(".segment-meta")).toContainText("30 sec");
+    await expect(segment.locator(".segment-actions")).toBeVisible();
+    await expect(segment.locator(".segment-meta")).toHaveCount(0);
   });
 
   test("modal kan worden gesloten met annuleren knop", async ({ page }) => {
