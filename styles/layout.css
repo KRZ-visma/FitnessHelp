@@ -201,9 +201,13 @@ main {
   animation: none;
 }
 
-.manage .saved {
+.manage .setup {
   padding-top: clamp(1.15rem, 3vw, 1.5rem);
   border-top: 1px solid var(--line);
+}
+
+.manage .setup[hidden] {
+  display: none !important;
 }
 
 .manage-header {

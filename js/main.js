@@ -1,6 +1,7 @@
 import {
   addSegmentBtn,
   addExerciseBtn,
+  addProgramBtn,
   doneSetBtn,
   exportBtn,
   form,
@@ -31,9 +32,12 @@ import { hooks } from "./hooks.js";
 import {
   closeManage,
   openManage,
+  openProgramEditor,
   renderApp,
+  setEditingProgram,
   setManageTab,
   setManaging,
+  nextOpenProgram,
 } from "./shell.js";
 import { loadPrograms, savePrograms, syncDayOrder } from "./storage.js";
 import {
@@ -63,6 +67,10 @@ addSegmentBtn.addEventListener("click", () => {
   });
 });
 
+addProgramBtn?.addEventListener("click", () => {
+  openProgramEditor();
+});
+
 function saveCurrentProgram() {
   const program = readForm();
   if (!program) return null;
@@ -78,7 +86,9 @@ function saveCurrentProgram() {
   }
   savePrograms(programs);
   syncDayOrder(programs);
+  setEditingProgram(false);
   setManaging(false);
+  resetDraft();
   renderApp();
   return program;
 }

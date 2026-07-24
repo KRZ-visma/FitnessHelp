@@ -26,6 +26,16 @@ async function openProgramsTab(page) {
   await expect(page.locator("#manage-panel-programs")).toBeVisible();
 }
 
+/** Opent het programmaformulier (nieuw). */
+async function openProgramForm(page) {
+  await openProgramsTab(page);
+  const setup = page.locator("#setup");
+  if (await setup.isHidden()) {
+    await page.click("#add-program-btn");
+  }
+  await expect(setup).toBeVisible();
+}
+
 /**
  * @param {import('@playwright/test').Page} page
  * @param {{ name: string, type?: 'timer'|'reps', sets?: number, duration?: number, reps?: number }} opts
@@ -50,7 +60,7 @@ async function createExercise(page, opts) {
  * @param {string} exerciseName
  */
 async function addExerciseToProgram(page, exerciseName) {
-  await openProgramsTab(page);
+  await openProgramForm(page);
   await page.click("#add-segment-btn");
   await expect(page.locator(".modal-overlay")).toBeVisible();
   await page
@@ -75,7 +85,7 @@ async function createProgram(page, opts) {
   for (const exercise of exercises) {
     await createExercise(page, exercise);
   }
-  await openProgramsTab(page);
+  await openProgramForm(page);
   await page.fill("#program-name", programName);
   await page.fill("#program-rest", String(rest));
   await page.fill("#program-switch", String(switchSec));
@@ -111,4 +121,5 @@ module.exports = {
   createProgram,
   startFromHome,
   saveAndStart,
+  openProgramForm,
 };
