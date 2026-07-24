@@ -149,7 +149,7 @@ test.describe("Timer", () => {
       programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
       exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
     }));
-    expect(stored.programs[0]).toMatchObject({ rest: 5, switch: 15 });
+    expect(stored.programs[0]).toMatchObject({ rest: 5, switch: 15, times: 1 });
     expect(stored.programs[0].items).toHaveLength(2);
     expect(stored.programs[0].items.every((item) => item.exerciseId)).toBe(true);
     const names = stored.programs[0].items.map(
@@ -241,5 +241,58 @@ test.describe("Timer", () => {
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await expect(page.locator("#timer-clock")).toHaveText("10×");
+  });
+
+  test("voert programma meerdere keren uit", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Dubbel",
+      rest: 0,
+      switchSec: 0,
+      times: 2,
+      exercises: [{ name: "Burpees", sets: 1, duration: 5 }],
+    });
+
+    await expect(page.locator("#day-list .day-name")).toContainText("2×");
+
+    await startFromHome(page);
+    await expect(page.locator("#timer-program")).toContainText("keer 1/2");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-name")).toHaveText("Burpees");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-program")).toContainText("keer 2/2");
+    await expect(page.locator("#timer-name")).toHaveText("Burpees");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar");
+    await expect(page.locator("#timer-meta")).toContainText("2×");
+  });
+
+  test("wisselt tussen herhalingen met programma-switch", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Rondes",
+      rest: 0,
+      switchSec: 3,
+      times: 2,
+      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+    });
+    await startFromHome(page);
+    await page.click("#skip-btn");
+    await page.click("#skip-btn");
+
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
+    await expect(page.locator("#timer-phase")).toHaveText("Volgende keer");
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+    await expect(page.locator("#timer-program")).toContainText("keer 2/2");
+    await expect(page.locator("#timer-meta")).toContainText("Keer 2 van 2");
+
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
   });
 });

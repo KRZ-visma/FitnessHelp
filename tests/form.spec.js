@@ -27,6 +27,8 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#program-name")).toBeVisible();
     await expect(page.locator("#program-rest")).toBeVisible();
     await expect(page.locator("#program-switch")).toBeVisible();
+    await expect(page.locator("#program-times")).toBeVisible();
+    await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator("#segments-empty")).toHaveCount(0);
     await expect(page.locator(".segments-hint")).toHaveCount(0);
     await expect(page.locator(".segments-title")).toHaveText("Oefeningen");
@@ -50,12 +52,12 @@ test.describe("Formulier & beheer", () => {
   });
 
   test("nummervelden gebruiken iOS cijferpad-attributen", async ({ page }) => {
-    for (const selector of ["#program-rest", "#program-switch"]) {
+    for (const selector of ["#program-rest", "#program-switch", "#program-times"]) {
       const input = page.locator(selector);
       await expect(input).toHaveAttribute("type", "text");
       await expect(input).toHaveAttribute("inputmode", "numeric");
       await expect(input).toHaveAttribute("pattern", "[0-9]*");
-      await expect(input).toHaveAttribute("autocomplete", /^(fh-rest|fh-switch)$/);
+      await expect(input).toHaveAttribute("autocomplete", /^(fh-rest|fh-switch|fh-times)$/);
     }
   });
 
@@ -141,6 +143,9 @@ test.describe("Formulier & beheer", () => {
 
     await page.fill("#program-switch", "2x5");
     await expect(page.locator("#program-switch")).toHaveValue("25");
+
+    await page.fill("#program-times", "3a");
+    await expect(page.locator("#program-times")).toHaveValue("3");
   });
 
   test("mag programma zonder oefeningen opslaan", async ({ page }) => {

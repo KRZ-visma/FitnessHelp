@@ -77,11 +77,12 @@ async function addExerciseToProgram(page, exerciseName) {
  *   programName: string,
  *   rest?: number,
  *   switchSec?: number,
+ *   times?: number,
  *   exercises: Array<{ name: string, type?: 'timer'|'reps', sets?: number, duration?: number, reps?: number }>
  * }} opts
  */
 async function createProgram(page, opts) {
-  const { programName, rest = 15, switchSec = 15, exercises } = opts;
+  const { programName, rest = 15, switchSec = 15, times = 1, exercises } = opts;
   for (const exercise of exercises) {
     await createExercise(page, exercise);
   }
@@ -89,6 +90,7 @@ async function createProgram(page, opts) {
   await page.fill("#program-name", programName);
   await page.fill("#program-rest", String(rest));
   await page.fill("#program-switch", String(switchSec));
+  await page.fill("#program-times", String(times));
   for (const exercise of exercises) {
     await addExerciseToProgram(page, exercise.name);
   }

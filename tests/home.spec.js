@@ -139,6 +139,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#setup")).toBeVisible();
     await expect(page.locator("#program-name")).toHaveValue("Push");
     await expect(page.locator("#program-rest")).toHaveValue("20");
+    await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator(".segment-name")).toHaveText("Push-ups");
     await expect(page.locator("#saved-list .saved-exercises")).toContainText("Push-ups");
   });
@@ -298,6 +299,7 @@ test.describe("Home & dagprogramma", () => {
       name: "Mijn training",
       rest: 5,
       switch: 15,
+      times: 1,
     });
     expect(stored.programs[0].items).toHaveLength(2);
     expect(stored.programs[0].items.every((item) => item.exerciseId)).toBe(true);
@@ -313,6 +315,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#program-name")).toHaveValue("Mijn training");
     await expect(page.locator("#program-rest")).toHaveValue("5");
     await expect(page.locator("#program-switch")).toHaveValue("15");
+    await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator(".segment")).toHaveCount(2);
     await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText("Burpees");
     await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveText("Squats");

@@ -173,11 +173,17 @@ export function normalizeProgram(raw) {
     switchSec = 15;
   }
 
+  let times = Number(obj.times);
+  if (!Number.isFinite(times) || times < 1) {
+    times = 1;
+  }
+
   return {
     id,
     name,
     rest: clampInt(rest, 0, 600),
     switch: clampInt(switchSec, 0, 600),
+    times: clampInt(times, 1, 99),
     items: /** @type {import('./constants.js').Program['items']} */ (items),
   };
 }
@@ -228,6 +234,7 @@ export function loadPrograms() {
         name: "Mijn training",
         rest: defaultRestFromItems(migratedItems),
         switch: 15,
+        times: 1,
         items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
       });
     }
