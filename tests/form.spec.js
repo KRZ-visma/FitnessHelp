@@ -126,11 +126,13 @@ test.describe("Formulier & beheer", () => {
     expect(names).toEqual(["Push-ups", "Rows", "Squats"]);
   });
 
-  test("Enter slaat op en gaat terug naar home", async ({ page }) => {
+  test("Enter slaat op en blijft in de programmalijst", async ({ page }) => {
     await page.fill("#program-name", "Enter save");
     await page.locator("#program-name").press("Enter");
-    await expect(page.locator("#home")).toBeVisible();
-    await expect(page.locator("#day-list")).toContainText("Enter save");
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#setup")).toBeHidden();
+    await expect(page.locator("#home")).toBeHidden();
+    await expect(page.locator("#saved-list")).toContainText("Enter save");
   });
 
   test("nummervelden filteren niet-cijfers", async ({ page }) => {
@@ -144,6 +146,10 @@ test.describe("Formulier & beheer", () => {
   test("mag programma zonder oefeningen opslaan", async ({ page }) => {
     await page.fill("#program-name", "Leeg schema");
     await page.click("#save-btn");
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#setup")).toBeHidden();
+    await expect(page.locator("#saved-list")).toContainText("Leeg schema");
+    await page.click("#manage-done-btn");
     await expect(page.locator("#home")).toBeVisible();
     await expect(page.locator("#day-list")).toContainText("Leeg schema");
     await expect(page.locator("#day-list .day-exercises li")).toHaveCount(0);

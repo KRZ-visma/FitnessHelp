@@ -93,6 +93,9 @@ async function createProgram(page, opts) {
     await addExerciseToProgram(page, exercise.name);
   }
   await page.click("#save-btn");
+  await expect(page.locator("#manage")).toBeVisible();
+  await expect(page.locator("#setup")).toBeHidden();
+  await page.click("#manage-done-btn");
   await expect(page.locator("#home")).toBeVisible();
 }
 
@@ -107,6 +110,8 @@ async function startFromHome(page, programName) {
 /** Slaat het formulier op en start het volgende open programma vanaf home. */
 async function saveAndStart(page) {
   await page.click("#save-btn");
+  await expect(page.locator("#manage")).toBeVisible();
+  await page.click("#manage-done-btn");
   await expect(page.locator("#home")).toBeVisible();
   await startFromHome(page);
 }

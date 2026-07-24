@@ -86,10 +86,12 @@ function saveCurrentProgram() {
   }
   savePrograms(programs);
   syncDayOrder(programs);
+  // Blijf in beheer; terug naar de programmalijst
+  setManaging(true);
   setEditingProgram(false);
-  setManaging(false);
   resetDraft();
   renderApp();
+  window.scrollTo({ top: 0, behavior: "smooth" });
   return program;
 }
 
