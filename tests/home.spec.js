@@ -143,6 +143,58 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#saved-list .saved-exercises")).toContainText("Push-ups");
   });
 
+  test("hernoemen van programma behoudt oefeningen", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Push",
+      rest: 20,
+      exercises: [
+        { name: "Push-ups", sets: 4, duration: 40 },
+        { name: "Dips", sets: 3, duration: 30 },
+      ],
+    });
+
+    await openManage(page);
+    await page.locator("#saved-list .saved-open", { hasText: "Push" }).click();
+    await expect(page.locator("#setup")).toBeVisible();
+    await expect(page.locator("#program-name")).toHaveValue("Push");
+    await expect(page.locator(".segment")).toHaveCount(2);
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText(
+      "Push-ups"
+    );
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveText("Dips");
+
+    await page.fill("#program-name", "Push day");
+    await page.click("#save-btn");
+
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#setup")).toBeHidden();
+
+    const renamed = page.locator("#saved-list .saved-item", { hasText: "Push day" });
+    await expect(renamed).toBeVisible();
+    await expect(renamed.locator(".saved-exercises li")).toHaveText(["Push-ups", "Dips"]);
+
+    const stored = await page.evaluate(() => ({
+      programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
+      exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
+    }));
+    const pushDay = stored.programs.find((p) => p.name === "Push day");
+    expect(pushDay).toBeTruthy();
+    expect(pushDay.items).toHaveLength(2);
+    const names = pushDay.items.map((item) => {
+      const ex = stored.exercises.find((e) => e.id === item.exerciseId);
+      return ex?.name;
+    });
+    expect(names).toEqual(["Push-ups", "Dips"]);
+
+    await page.locator("#saved-list .saved-open", { hasText: "Push day" }).click();
+    await expect(page.locator("#program-name")).toHaveValue("Push day");
+    await expect(page.locator(".segment")).toHaveCount(2);
+    await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText(
+      "Push-ups"
+    );
+    await expect(page.locator(".segment").nth(1).locator(".segment-name")).toHaveText("Dips");
+  });
+
   test("houdt acties op één regel met pijlsymbolen", async ({ page }) => {
     await createExercise(page, { name: "Push-ups" });
     await createExercise(page, { name: "Rows" });
