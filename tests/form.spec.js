@@ -41,7 +41,8 @@ test.describe("Formulier & beheer", () => {
   test("toont app-versie klein in de footer", async ({ page }) => {
     const version = page.locator("#app-version");
     await expect(version).toBeVisible();
-    await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
+    // Auto-stamp op main: YYYY.MM.DD+shortsha (feature-branches mogen een oudere stamp tonen)
+    await expect(version).toHaveText(/^v\d{4}\.\d{2}\.\d{2}\+[0-9a-f]+$/i);
   });
 
   test("programma-naam heeft geen suggestielijst", async ({ page }) => {

@@ -1,0 +1,56 @@
+name: App version
+
+on:
+  push:
+    branches: [main]
+    # Alleen js/version.js gewijzigd → skip (voorkomt lus na auto-commit)
+    paths-ignore:
+      - "js/version.js"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: app-version-main
+  cancel-in-progress: false
+
+jobs:
+  stamp:
+    name: Stamp APP_VERSION
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Schrijf versie uit commit
+        env:
+          SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          short="${SHA:0:7}"
+          day="$(date -u +%Y.%m.%d)"
+          version="${day}+${short}"
+          {
+            echo "/**"
+            echo " * Zichtbare app-versie (footer)."
+            echo " * Wordt automatisch gezet bij push naar main — niet handmatig bumpen in feature-PRs."
+            echo " * Formaat: YYYY.MM.DD+<shortsha>"
+            echo " */"
+            echo "export const APP_VERSION = \"${version}\";"
+          } > js/version.js
+          echo "APP_VERSION=${version}"
+
+      - name: Commit en push indien gewijzigd
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add js/version.js
+          if git diff --staged --quiet; then
+            echo "Versie ongewijzigd"
+            exit 0
+          fi
+          git commit -m "Stamp APP_VERSION na merge naar main"
+          git push

@@ -12,8 +12,6 @@ export const PREP_SECONDS = 5;
 
 export const EXPORT_APP = "fitnesshelp";
 export const EXPORT_VERSION = 2;
-/** Zichtbare app-versie (footer). Bump bij release / PWA-cache-wijziging. */
-export const APP_VERSION = "1.9.1";
 export const TAGLINE_EMPTY = "Dagprogramma bouwen. Timer of sets & keer. Lokaal bewaard.";
 
 /**
