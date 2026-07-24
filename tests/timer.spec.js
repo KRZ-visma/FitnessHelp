@@ -243,7 +243,7 @@ test.describe("Timer", () => {
     await expect(page.locator("#timer-clock")).toHaveText("10×");
   });
 
-  test("voert programma meerdere keren uit", async ({ page }) => {
+  test("registreert aparte starts voor aantal keer, niet achter elkaar", async ({ page }) => {
     await createProgram(page, {
       programName: "Dubbel",
       rest: 0,
@@ -252,47 +252,61 @@ test.describe("Timer", () => {
       exercises: [{ name: "Burpees", sets: 1, duration: 5 }],
     });
 
-    await expect(page.locator("#day-list .day-name")).toContainText("2×");
+    const item = page.locator("#day-list .day-item", { hasText: "Dubbel" });
+    await expect(item.locator(".day-name")).toHaveText("Dubbel · 0/2");
 
     await startFromHome(page);
-    await expect(page.locator("#timer-program")).toContainText("keer 1/2");
+    await expect(page.locator("#timer-program")).toHaveText("Dubbel");
+    await expect(page.locator("#timer-program")).not.toContainText("keer");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Burpees");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
 
-    await page.click("#skip-btn");
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
-    await expect(page.locator("#timer-program")).toContainText("keer 2/2");
-    await expect(page.locator("#timer-name")).toHaveText("Burpees");
-    await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
-
-    await page.click("#skip-btn");
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-phase")).toHaveText("Klaar");
-    await expect(page.locator("#timer-meta")).toContainText("2×");
+    await expect(page.locator("#timer-meta")).not.toContainText("2×");
+    await page.click("#stop-btn");
+
+    await expect(item).not.toHaveClass(/is-done/);
+    await expect(item.locator(".day-name")).toHaveText("Dubbel · 1/2");
+    await expect(item.locator(".day-start")).toBeVisible();
+    await expect(page.locator("#home-meta")).toContainText("1 programma");
+
+    await startFromHome(page, "Dubbel");
+    await page.click("#skip-btn");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar");
+    await page.click("#stop-btn");
+
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-name")).toHaveText("Dubbel · 2/2");
+    await expect(item.locator(".day-start")).toHaveCount(0);
+    await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
   });
 
-  test("wisselt tussen herhalingen met programma-switch", async ({ page }) => {
+  test("wisselt tussen oefeningen met programma-switch", async ({ page }) => {
     await createProgram(page, {
       programName: "Rondes",
       rest: 0,
       switchSec: 3,
       times: 2,
-      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+      exercises: [
+        { name: "Plank", sets: 1, duration: 5 },
+        { name: "Squats", sets: 1, duration: 5 },
+      ],
     });
     await startFromHome(page);
     await page.click("#skip-btn");
     await page.click("#skip-btn");
 
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
-    await expect(page.locator("#timer-phase")).toHaveText("Volgende keer");
-    await expect(page.locator("#timer-name")).toHaveText("Plank");
-    await expect(page.locator("#timer-program")).toContainText("keer 2/2");
-    await expect(page.locator("#timer-meta")).toContainText("Keer 2 van 2");
+    await expect(page.locator("#timer-phase")).toHaveText("Wisselen");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
+    await expect(page.locator("#timer-program")).toContainText("2/2");
+    await expect(page.locator("#timer-meta")).toContainText("Volgende oefening");
 
     await page.click("#skip-btn");
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
-    await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
+    await expect(page.locator("#timer-name")).toHaveText("Squats");
   });
 });

@@ -32,6 +32,7 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#program-switch")).toBeVisible();
     await expect(page.locator("#program-times")).toBeVisible();
     await expect(page.locator("#program-times")).toHaveValue("1");
+    await expect(page.locator("#program-times-hint")).toContainText("apart starten");
     await expect(page.locator("#segments-empty")).toHaveCount(0);
     await expect(page.locator(".segments-hint")).toHaveCount(0);
     await expect(page.locator(".segments-title")).toHaveText("Oefeningen");
@@ -44,7 +45,8 @@ test.describe("Formulier & beheer", () => {
   test("toont app-versie klein in de footer", async ({ page }) => {
     const version = page.locator("#app-version");
     await expect(version).toBeVisible();
-    await expect(version).toHaveText(/^v\d+\.\d+\.\d+$/);
+    // Auto-stamp op main: YYYY.MM.DD+shortsha (feature-branches mogen een oudere stamp tonen)
+    await expect(version).toHaveText(/^v\d{4}\.\d{2}\.\d{2}\+[0-9a-f]+$/i);
   });
 
   test("programma-naam heeft geen suggestielijst", async ({ page }) => {
@@ -108,6 +110,10 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator(".segment").nth(0).locator(".segment-move-up")).toBeDisabled();
     await expect(page.locator(".segment").nth(2).locator(".segment-move-down")).toBeDisabled();
     await expect(page.locator(".segment").nth(0).locator(".segment-actions")).toBeVisible();
+    await expect(
+      page.locator(".segment").nth(0).locator(".btn-danger")
+    ).toHaveAttribute("aria-label", "Squats verwijderen");
+    await expect(page.locator(".segment").nth(0).locator(".btn-danger svg")).toBeVisible();
 
     await page.locator(".segment").nth(0).locator(".segment-move-down").click();
     await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText("Push-ups");

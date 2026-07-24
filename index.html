@@ -204,7 +204,7 @@
                     value="15"
                   />
                 </label>
-                <label class="field">
+                <label class="field" title="Zo vaak apart starten; niet alles achter elkaar">
                   <span>Aantal keer</span>
                   <input
                     type="text"
@@ -215,9 +215,14 @@
                     autocomplete="fh-times"
                     required
                     value="1"
+                    aria-describedby="program-times-hint"
                   />
                 </label>
               </div>
+
+              <p class="field-hint" id="program-times-hint">
+                Aantal keer: zo vaak apart starten; niet achter elkaar in één sessie.
+              </p>
 
               <div class="segments-header">
                 <h2 class="segments-title">Oefeningen</h2>

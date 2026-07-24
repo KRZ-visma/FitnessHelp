@@ -20,7 +20,7 @@ import {
   skipBtn,
   stopBtn,
 } from "./dom.js";
-import { APP_VERSION } from "./constants.js";
+import { APP_VERSION } from "./version.js";
 import {
   addExerciseToForm,
   bindDigits,

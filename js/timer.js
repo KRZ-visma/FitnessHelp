@@ -17,7 +17,7 @@ import {
   timerProgress,
 } from "./dom.js";
 import { hooks } from "./hooks.js";
-import { markProgramDoneToday } from "./storage.js";
+import { recordProgramCompletion } from "./storage.js";
 import { resolveExercise } from "./migration.js";
 import { formatTime } from "./util.js";
 
@@ -26,12 +26,9 @@ import { formatTime } from "./util.js";
  *   program: import('./constants.js').Program & { items: import('./constants.js').ProgramItem[] },
  *   itemIndex: number,
  *   setIndex: number,
- *   roundIndex: number,
- *   times: number,
  *   isRest: boolean,
  *   isPrep: boolean,
  *   isSwitch: boolean,
- *   isRoundSwitch: boolean,
  *   remaining: number,
  *   total: number,
  *   paused: boolean,
@@ -72,13 +69,10 @@ function currentItem() {
 }
 
 /** @param {import('./constants.js').Program} program */
-function programTitle(program, itemIndex, roundIndex, times) {
+function programTitle(program, itemIndex) {
   const parts = [program.name];
   if (program.items.length > 1) {
     parts.push(`${itemIndex + 1}/${program.items.length}`);
-  }
-  if (times > 1) {
-    parts.push(`keer ${roundIndex}/${times}`);
   }
   return parts.join(" · ");
 }
@@ -107,12 +101,9 @@ export function startSession(program) {
     },
     itemIndex: 0,
     setIndex: 1,
-    roundIndex: 1,
-    times,
     isRest: false,
     isPrep: true,
     isSwitch: false,
-    isRoundSwitch: false,
     remaining: 0,
     total: 1,
     paused: false,
@@ -143,7 +134,6 @@ function beginCurrentItem() {
   session.isRest = false;
   session.isPrep = true;
   session.isSwitch = false;
-  session.isRoundSwitch = false;
   session.paused = false;
   session.remaining = PREP_SECONDS;
   session.total = PREP_SECONDS;
@@ -191,11 +181,13 @@ export function startWorkAfterPrep() {
 export function endSession(finished) {
   stopTick();
   if (finished && session) {
-    markProgramDoneToday(session.program.id);
+    // Voorkom dubbele afronding als een naijle tick nog binnenkomt.
+    if (timerEl.dataset.phase === "done") return;
+    const times = Math.max(1, Number(session.program.times) || 1);
+    recordProgramCompletion(session.program.id, times);
     session.isRest = false;
     session.isPrep = false;
     session.isSwitch = false;
-    session.isRoundSwitch = false;
     session.remaining = 0;
     session.total = 1;
     timerEl.dataset.phase = "done";
@@ -206,11 +198,7 @@ export function endSession(finished) {
     timerClock.classList.remove("is-reps");
     timerBar.style.transform = "scaleX(0)";
     timerProgress.hidden = false;
-    const parts = [`${session.program.items.length} onderdelen afgerond`];
-    if (session.times > 1) {
-      parts.push(`${session.times}×`);
-    }
-    timerMeta.textContent = parts.join(" · ");
+    timerMeta.textContent = `${session.program.items.length} onderdelen afgerond`;
     pauseBtn.hidden = true;
     skipBtn.hidden = true;
     doneSetBtn.hidden = true;
@@ -230,44 +218,29 @@ export function endSession(finished) {
 }
 
 function updateTimerUI() {
-  if (!session) return;
-  const {
-    setIndex,
-    isRest,
-    isPrep,
-    isSwitch,
-    isRoundSwitch,
-    remaining,
-    total,
-    itemIndex,
-    roundIndex,
-    times,
-    program,
-  } = session;
+  if (!session || timerEl.dataset.phase === "done") return;
+  const { setIndex, isRest, isPrep, isSwitch, remaining, total, itemIndex, program } = session;
 
   if (isSwitch) {
-    const next = isRoundSwitch ? program.items[0] : program.items[itemIndex + 1];
+    const next = program.items[itemIndex + 1];
     if (!next) return;
-    const nextItemIndex = isRoundSwitch ? 0 : itemIndex + 1;
-    timerProgram.textContent = programTitle(program, nextItemIndex, roundIndex, times);
+    timerProgram.textContent = programTitle(program, itemIndex + 1);
     timerName.textContent = next.name;
     timerEl.dataset.mode = "timer";
     timerEl.dataset.phase = "switch";
     timerClock.classList.remove("is-reps");
-    timerPhase.textContent = isRoundSwitch ? "Volgende keer" : "Wisselen";
+    timerPhase.textContent = "Wisselen";
     timerClock.textContent = formatTime(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
-    timerMeta.textContent = isRoundSwitch
-      ? `Keer ${roundIndex} van ${times} · daarna starten`
-      : "Volgende oefening · daarna starten";
+    timerMeta.textContent = "Volgende oefening · daarna starten";
     return;
   }
 
   const item = currentItem();
   if (!item) return;
 
-  timerProgram.textContent = programTitle(program, itemIndex, roundIndex, times);
+  timerProgram.textContent = programTitle(program, itemIndex);
   timerName.textContent = item.name;
 
   if (isPrep) {
@@ -326,14 +299,7 @@ function updateTimerUI() {
 
 function finishSwitch() {
   if (!session) return;
-  const roundSwitch = session.isRoundSwitch;
   session.isSwitch = false;
-  session.isRoundSwitch = false;
-  if (roundSwitch) {
-    session.itemIndex = 0;
-    beginCurrentItem();
-    return;
-  }
   session.itemIndex += 1;
   session.setIndex = 1;
   session.isRest = false;
@@ -341,38 +307,9 @@ function finishSwitch() {
   startWorkAfterPrep();
 }
 
-function startNextRound() {
-  if (!session) return;
-  beep("stop");
-  session.roundIndex += 1;
-  const switchSec = session.program.switch;
-  if (switchSec > 0) {
-    session.isSwitch = true;
-    session.isRoundSwitch = true;
-    session.isRest = false;
-    session.isPrep = false;
-    session.paused = false;
-    session.remaining = switchSec;
-    session.total = switchSec;
-    doneSetBtn.hidden = true;
-    pauseBtn.hidden = false;
-    pauseBtn.textContent = "Pauze";
-    timerProgress.hidden = false;
-    updateTimerUI();
-    startTick();
-    return;
-  }
-  session.itemIndex = 0;
-  beginCurrentItem();
-}
-
 function advanceToNextItem() {
   if (!session) return;
   if (session.itemIndex >= session.program.items.length - 1) {
-    if (session.roundIndex < session.times) {
-      startNextRound();
-      return;
-    }
     endSession(true);
     return;
   }
@@ -380,7 +317,6 @@ function advanceToNextItem() {
   const switchSec = session.program.switch;
   if (switchSec > 0) {
     session.isSwitch = true;
-    session.isRoundSwitch = false;
     session.isRest = false;
     session.isPrep = false;
     session.paused = false;
@@ -404,7 +340,6 @@ function enterRestPhase() {
   session.isRest = true;
   session.isPrep = false;
   session.isSwitch = false;
-  session.isRoundSwitch = false;
   session.remaining = rest;
   session.total = rest;
   doneSetBtn.hidden = true;
@@ -445,7 +380,7 @@ function leaveRestPhase() {
 }
 
 export function advancePhase() {
-  if (!session) return;
+  if (!session || timerEl.dataset.phase === "done") return;
   const item = currentItem();
   if (!item) return;
 
@@ -485,14 +420,14 @@ export function advancePhase() {
 }
 
 export function sessionNeedsTick() {
-  if (!session) return false;
+  if (!session || timerEl.dataset.phase === "done") return false;
   if (session.isPrep || session.isSwitch || session.isRest) return true;
   const item = currentItem();
   return item?.type === "timer";
 }
 
 function tick(ts) {
-  if (!session || session.paused) return;
+  if (!session || session.paused || timerEl.dataset.phase === "done") return;
   if (!sessionNeedsTick()) return;
 
   if (session.lastTs == null) session.lastTs = ts;
