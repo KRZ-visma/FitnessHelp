@@ -26,6 +26,13 @@
   opacity: 0;
 }
 
+.field-hint {
+  margin: -0.25rem 0 0;
+  font-size: 0.85rem;
+  line-height: 1.35;
+  color: var(--ink-soft);
+}
+
 .field-row {
   display: grid;
   gap: 0.75rem;
