@@ -223,7 +223,8 @@ export function renderHome() {
       const label = document.createElement("label");
       label.className = "day-name";
       label.htmlFor = check.id;
-      label.textContent = program.name;
+      const times = Math.max(1, Number(program.times) || 1);
+      label.textContent = times > 1 ? `${program.name} · ${times}×` : program.name;
 
       body.append(label, buildExerciseList(program));
 

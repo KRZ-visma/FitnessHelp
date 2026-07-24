@@ -14,6 +14,7 @@ import {
   programNameInput,
   programRestInput,
   programSwitchInput,
+  programTimesInput,
   skipBtn,
   stopBtn,
 } from "./dom.js";
@@ -147,6 +148,7 @@ addExerciseBtn.addEventListener("click", () => {
 resetDraft();
 bindDigits(programRestInput);
 bindDigits(programSwitchInput);
+bindDigits(programTimesInput);
 if (programNameInput instanceof HTMLInputElement) {
   guardSafariAutofill(programNameInput, "fh-program");
 }

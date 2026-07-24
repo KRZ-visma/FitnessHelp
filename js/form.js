@@ -2,6 +2,7 @@ import {
   programNameInput,
   programRestInput,
   programSwitchInput,
+  programTimesInput,
   segmentsEl,
 } from "./dom.js";
 import { loadExercises } from "./exercises.js";
@@ -28,6 +29,7 @@ export function resetDraft() {
   programNameInput.value = "";
   programRestInput.value = "15";
   programSwitchInput.value = "15";
+  programTimesInput.value = "1";
   renderSegments();
 }
 
@@ -230,6 +232,7 @@ export function readForm() {
 
   const rest = Number(programRestInput.value);
   const switchSec = Number(programSwitchInput.value);
+  const times = Number(programTimesInput.value);
   if (!Number.isFinite(rest) || rest < 0) {
     programRestInput.focus();
     return null;
@@ -238,14 +241,26 @@ export function readForm() {
     programSwitchInput.focus();
     return null;
   }
+  if (!Number.isFinite(times) || times < 1) {
+    programTimesInput.focus();
+    return null;
+  }
   const programRest = clampInt(rest, 0, 600);
   const programSwitch = clampInt(switchSec, 0, 600);
+  const programTimes = clampInt(times, 1, 99);
 
   const items = draftItems
     .filter((draft) => draft.exerciseId)
     .map((draft) => ({ exerciseId: draft.exerciseId }));
 
-  return { id: uid(), name, rest: programRest, switch: programSwitch, items };
+  return {
+    id: uid(),
+    name,
+    rest: programRest,
+    switch: programSwitch,
+    times: programTimes,
+    items,
+  };
 }
 
 /** @param {import('./constants.js').Program} program */
@@ -253,6 +268,7 @@ export function fillForm(program) {
   programNameInput.value = program.name;
   programRestInput.value = String(program.rest ?? 15);
   programSwitchInput.value = String(program.switch ?? 15);
+  programTimesInput.value = String(program.times ?? 1);
   draftItems = program.items
     .map((item) => {
       if (typeof item.exerciseId !== "string" || !item.exerciseId) return null;
