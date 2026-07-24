@@ -29,6 +29,7 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator("#program-switch")).toBeVisible();
     await expect(page.locator("#program-times")).toBeVisible();
     await expect(page.locator("#program-times")).toHaveValue("1");
+    await expect(page.locator("#program-times-hint")).toContainText("apart starten");
     await expect(page.locator("#program-set-order")).toBeVisible();
     await expect(page.locator("#program-set-order")).toHaveValue("consecutive");
     await expect(page.locator("#segments-empty")).toHaveCount(0);
