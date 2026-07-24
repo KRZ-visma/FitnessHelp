@@ -12,33 +12,50 @@ export function todayKey() {
 }
 
 /**
- * @returns {{ date: string, done: string[] }}
+ * @returns {{ date: string, done: string[], counts: Record<string, number> }}
  */
 export function loadDayProgress() {
   try {
     const raw = localStorage.getItem(DAY_PROGRESS_KEY);
-    if (!raw) return { date: todayKey(), done: [] };
+    if (!raw) return { date: todayKey(), done: [], counts: {} };
     const data = JSON.parse(raw);
-    if (!data || typeof data !== "object") return { date: todayKey(), done: [] };
+    if (!data || typeof data !== "object") return { date: todayKey(), done: [], counts: {} };
     const date = typeof data.date === "string" ? data.date : todayKey();
     const done = Array.isArray(data.done)
       ? data.done.filter((id) => typeof id === "string")
       : [];
+    /** @type {Record<string, number>} */
+    const counts = {};
+    if (data.counts && typeof data.counts === "object" && !Array.isArray(data.counts)) {
+      for (const [id, value] of Object.entries(data.counts)) {
+        const n = Number(value);
+        if (typeof id === "string" && Number.isFinite(n) && n > 0) {
+          counts[id] = Math.floor(n);
+        }
+      }
+    }
     if (date !== todayKey()) {
-      const fresh = { date: todayKey(), done: [] };
+      const fresh = { date: todayKey(), done: [], counts: {} };
       saveDayProgress(fresh);
       return fresh;
     }
-    return { date, done };
+    return { date, done, counts };
   } catch {
-    return { date: todayKey(), done: [] };
+    return { date: todayKey(), done: [], counts: {} };
   }
 }
 
-/** @param {{ date: string, done: string[] }} progress */
+/** @param {{ date: string, done: string[], counts?: Record<string, number> }} progress */
 export function saveDayProgress(progress) {
   try {
-    localStorage.setItem(DAY_PROGRESS_KEY, JSON.stringify(progress));
+    localStorage.setItem(
+      DAY_PROGRESS_KEY,
+      JSON.stringify({
+        date: progress.date,
+        done: progress.done,
+        counts: progress.counts ?? {},
+      })
+    );
   } catch {
     // ignore
   }
@@ -49,22 +66,61 @@ export function isProgramDoneToday(programId) {
   return loadDayProgress().done.includes(programId);
 }
 
-/** @param {string} programId @param {boolean} done */
-export function setProgramDoneToday(programId, done) {
+/**
+ * Aantal keer dat dit programma vandaag al is afgerond (aparte starts).
+ * @param {string} programId
+ * @returns {number}
+ */
+export function getProgramCompletionsToday(programId) {
+  if (!programId) return 0;
+  const progress = loadDayProgress();
+  if (progress.done.includes(programId)) {
+    const counted = progress.counts[programId] ?? 0;
+    return Math.max(1, counted);
+  }
+  return progress.counts[programId] ?? 0;
+}
+
+/**
+ * @param {string} programId
+ * @param {boolean} done
+ * @param {number} [times=1]
+ */
+export function setProgramDoneToday(programId, done, times = 1) {
   const progress = loadDayProgress();
   const set = new Set(progress.done);
-  if (done) set.add(programId);
-  else set.delete(programId);
-  saveDayProgress({ date: todayKey(), done: [...set] });
+  const counts = { ...progress.counts };
+  const target = Math.max(1, Number(times) || 1);
+  if (done) {
+    set.add(programId);
+    counts[programId] = target;
+  } else {
+    set.delete(programId);
+    delete counts[programId];
+  }
+  saveDayProgress({ date: todayKey(), done: [...set], counts });
   hooks.renderApp();
 }
 
-/** @param {string} programId */
-export function markProgramDoneToday(programId) {
+/**
+ * Registreert één aparte afronding. Pas afgevinkt als count >= times.
+ * @param {string} programId
+ * @param {number} [times=1]
+ */
+export function recordProgramCompletion(programId, times = 1) {
   if (!programId) return;
   const progress = loadDayProgress();
   if (progress.done.includes(programId)) return;
-  saveDayProgress({ date: todayKey(), done: [...progress.done, programId] });
+
+  const target = Math.max(1, Number(times) || 1);
+  const counts = { ...progress.counts };
+  const next = (counts[programId] ?? 0) + 1;
+  counts[programId] = next;
+
+  const done = [...progress.done];
+  if (next >= target) done.push(programId);
+
+  saveDayProgress({ date: todayKey(), done, counts });
 }
 
 /**

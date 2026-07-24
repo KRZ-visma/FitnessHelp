@@ -20,6 +20,7 @@ import { resetDraft } from "./form.js";
 import { hooks } from "./hooks.js";
 import {
   dayPrograms,
+  getProgramCompletionsToday,
   isProgramDoneToday,
   loadPrograms,
   moveProgramInDay,
@@ -257,8 +258,9 @@ export function renderHome() {
       check.checked = done;
       check.id = `day-check-${program.id}`;
       check.setAttribute("aria-label", `${program.name} afvinken`);
+      const times = Math.max(1, Number(program.times) || 1);
       check.addEventListener("change", () => {
-        setProgramDoneToday(program.id, check.checked);
+        setProgramDoneToday(program.id, check.checked, times);
       });
 
       const body = document.createElement("div");
@@ -267,8 +269,14 @@ export function renderHome() {
       const label = document.createElement("label");
       label.className = "day-name";
       label.htmlFor = check.id;
-      const times = Math.max(1, Number(program.times) || 1);
-      label.textContent = times > 1 ? `${program.name} · ${times}×` : program.name;
+      if (times > 1) {
+        const completed = done
+          ? times
+          : Math.min(times, getProgramCompletionsToday(program.id));
+        label.textContent = `${program.name} · ${completed}/${times}`;
+      } else {
+        label.textContent = program.name;
+      }
 
       body.append(label, buildExerciseList(program));
 
