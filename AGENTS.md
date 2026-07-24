@@ -21,7 +21,7 @@ Raak bij een feature **alleen** de relevante module(s). Dat voorkomt merge-confl
 | Opslag / favoriet / migratie | `js/storage.js` | — | `tests/home.spec.js`, `tests/transfer.spec.js` |
 | Formulier / onderdelen / rust+wissel | `js/form.js` | `styles/form.css` | `tests/form.spec.js` |
 | Timer-sessie (prep/rust/wissel) | `js/timer.js` | `styles/timer.css` | `tests/timer.spec.js` |
-| Home / beheer-shell / footer-versie | `js/shell.js`, `js/constants.js` (`APP_VERSION`) | `styles/layout.css` | `tests/home.spec.js`, `tests/form.spec.js` |
+| Home / beheer-shell / footer-versie | `js/shell.js`, `js/version.js` (`APP_VERSION`) | `styles/layout.css` | `tests/home.spec.js`, `tests/form.spec.js` |
 | Import / export | `js/transfer.js` | `styles/saved.css` | `tests/transfer.spec.js` |
 | Geluid | `js/audio.js` | — | `tests/audio.spec.js` |
 | PWA | `sw.js`, `manifest.webmanifest` | — | `tests/pwa.spec.js` |
@@ -45,7 +45,7 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 4. UI-, formulier-, timer- of PWA-wijzigingen: verifieer op **iPhone 16 Pro**-formaat (viewport ≈ 393×852, DPR 3) — layout, touch, Safari-toetsenbord/autofill, safe areas; gebruik waar mogelijk browser-/device-emulatie of handmatige check, en leg in de PR kort vast dat dit is nagelopen
 5. Geen secrets, analytics of externe APIs toevoegen zonder vraag
 6. Commits/PR’s kort en duidelijk; UI-copy altijd Nederlands
-7. Bij user-facing wijzigingen (UI, timer, formulier, opslag-gedrag, PWA): bump `APP_VERSION` in `js/constants.js` (semver: patch = fix, minor = feature). Niet bumpen bij docs-/test-/AGENTS-only. Raak `EXPORT_VERSION` / `STORAGE_KEY` niet aan tenzij het schema echt wijzigt
+7. **Niet** handmatig `APP_VERSION` bumpen in feature-PRs (dat gaf merge-conflicten). `js/version.js` wordt bij push naar `main` automatisch gestempeld (`YYYY.MM.DD+<shortsha>` via `.github/workflows/app-version.yml`). Raak `EXPORT_VERSION` / `STORAGE_KEY` niet aan tenzij het schema echt wijzigt
 8. Bij PWA-assetwijzigingen: `CACHE_NAME` in `sw.js` bump + precache-lijst bijwerken
 9. Start/rebase PR’s vanaf recente `main` vóór merge; parallelle PRs die hetzelfde domein raken serialiseren
 10. Zet de pull request op **ready for review** (niet als draft laten staan) zodra de wijziging klaar is voor review — en wacht tot de Playwright-check groen is
