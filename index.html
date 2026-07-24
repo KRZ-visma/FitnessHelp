@@ -108,24 +108,24 @@
         >
           <section class="saved" id="saved" aria-labelledby="saved-title">
             <div class="saved-header">
-              <h2 id="saved-title">Opgeslagen programma's</h2>
-              <div class="saved-transfer">
-                <button type="button" class="btn btn-ghost" id="add-program-btn">
-                  + Programma
-                </button>
-                <button type="button" class="btn btn-ghost" id="export-btn">
-                  Exporteren
-                </button>
-                <button type="button" class="btn btn-ghost" id="import-btn">
-                  Importeren
-                </button>
-                <input
-                  type="file"
-                  id="import-file"
-                  accept="application/json,.json"
-                  hidden
-                />
-              </div>
+              <h2 id="saved-title">Programma’s</h2>
+              <button type="button" class="btn btn-ghost" id="add-program-btn">
+                + Programma
+              </button>
+            </div>
+            <div class="saved-transfer">
+              <button type="button" class="btn btn-ghost" id="export-btn">
+                Exporteren
+              </button>
+              <button type="button" class="btn btn-ghost" id="import-btn">
+                Importeren
+              </button>
+              <input
+                type="file"
+                id="import-file"
+                accept="application/json,.json"
+                hidden
+              />
             </div>
             <p class="transfer-status" id="transfer-status" role="status" hidden></p>
             <p class="saved-hint" id="saved-empty">
