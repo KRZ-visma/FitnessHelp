@@ -6,6 +6,7 @@ const {
   createProgram,
   openManage,
   openProgramsTab,
+  startFromHome,
 } = require("./helpers");
 
 test.describe("Timer", () => {
@@ -19,7 +20,7 @@ test.describe("Timer", () => {
       rest: 2,
       exercises: [{ name: "Squats", sets: 2, duration: 5 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
 
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
@@ -39,7 +40,7 @@ test.describe("Timer", () => {
       rest: 2,
       exercises: [{ name: "Squats", sets: 2, duration: 5 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.click("#skip-btn");
 
     await expect(page.locator("#timer")).toBeVisible();
@@ -54,7 +55,7 @@ test.describe("Timer", () => {
       rest: 0,
       exercises: [{ name: "Deadlift", type: "reps", sets: 3, reps: 8 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
 
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await page.click("#skip-btn");
@@ -109,7 +110,7 @@ test.describe("Timer", () => {
       rest: 0,
       exercises: [{ name: "Burpees", sets: 1, duration: 8 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
 
     await expect
       .poll(async () => page.evaluate(() => Boolean(window.__wakeLockRequested)))
@@ -122,7 +123,7 @@ test.describe("Timer", () => {
       rest: 0,
       exercises: [{ name: "Burpees", sets: 2, duration: 8 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await expect(page.locator("#timer")).toBeVisible();
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
 
@@ -158,7 +159,7 @@ test.describe("Timer", () => {
 
     await openManage(page);
     await page.click("#manage-done-btn");
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-mode", "timer");
@@ -176,7 +177,7 @@ test.describe("Timer", () => {
         { name: "Squats", sets: 1, duration: 10 },
       ],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
@@ -201,7 +202,7 @@ test.describe("Timer", () => {
       switchSec: 0,
       exercises: [{ name: "Deadlift", type: "reps", sets: 2, reps: 5 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.click("#skip-btn");
 
     await page.click("#done-set-btn");
@@ -227,7 +228,7 @@ test.describe("Timer", () => {
         { name: "Squats", type: "reps", sets: 1, reps: 10 },
       ],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page);
     await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Plank");
 

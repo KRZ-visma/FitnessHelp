@@ -4,7 +4,6 @@ import {
   doneSetBtn,
   exportBtn,
   form,
-  homeStartBtn,
   importBtn,
   importFile,
   manageBtn,
@@ -31,7 +30,6 @@ import {
 import { hooks } from "./hooks.js";
 import {
   closeManage,
-  nextOpenProgram,
   openManage,
   renderApp,
   setManageTab,
@@ -109,13 +107,6 @@ stopBtn.addEventListener("click", () => {
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
   onVisibilityResume();
-});
-
-homeStartBtn.addEventListener("click", () => {
-  const next = nextOpenProgram();
-  if (!next) return;
-  fillForm(next);
-  startSession(next);
 });
 
 manageBtn.addEventListener("click", () => {

@@ -34,18 +34,15 @@
 
     <main>
       <section class="home" id="home" hidden aria-labelledby="home-title">
-        <p class="home-label">Dagprogramma</p>
-        <h1 id="home-title" class="home-name">Vandaag</h1>
-        <p class="home-meta" id="home-meta"></p>
-        <ul class="day-list" id="day-list" aria-label="Programma’s vandaag"></ul>
-        <div class="actions">
-          <button type="button" class="btn btn-primary" id="home-start-btn">
-            Start dag
-          </button>
+        <div class="home-toolbar">
           <button type="button" class="btn btn-ghost" id="manage-btn">
             Beheer
           </button>
         </div>
+        <p class="home-label">Dagprogramma</p>
+        <h1 id="home-title" class="home-name">Vandaag</h1>
+        <p class="home-meta" id="home-meta"></p>
+        <ul class="day-list" id="day-list" aria-label="Programma’s vandaag"></ul>
       </section>
 
       <section class="timer" id="timer" hidden aria-live="polite">

@@ -133,6 +133,6 @@ test.describe("Formulier & beheer", () => {
     await page.click("#save-btn");
     await expect(page.locator("#home")).toBeVisible();
     await expect(page.locator("#day-list")).toContainText("Leeg schema");
-    await expect(page.locator("#day-list")).toContainText("0 onderdelen");
+    await expect(page.locator("#day-list .day-exercises li")).toHaveCount(0);
   });
 });

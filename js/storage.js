@@ -1,7 +1,6 @@
 import { DAY_ORDER_KEY, DAY_PROGRESS_KEY, FAVORITE_KEY, STORAGE_KEY } from "./constants.js";
 import { hooks } from "./hooks.js";
 import { clampInt, uid } from "./util.js";
-import { resolveExercise } from "./migration.js";
 
 /** @returns {string} */
 export function todayKey() {
@@ -343,22 +342,4 @@ export function moveProgramInDay(programId, delta) {
   next.splice(target, 0, id);
   saveDayOrder(next);
   hooks.renderApp();
-}
-
-/**
- * @param {import('./constants.js').Program} program
- * @returns {string}
- */
-export function programSummary(program) {
-  const parts = program.items
-    .map((item) => {
-      const resolved = resolveExercise(item, program.rest);
-      if (!resolved) return null;
-      return resolved.type === "reps" ? `${resolved.name} (sets & keer)` : `${resolved.name} (timer)`;
-    })
-    .filter(Boolean);
-  const count =
-    program.items.length === 1 ? "1 onderdeel" : `${program.items.length} onderdelen`;
-  if (!parts.length) return count;
-  return `${count} · ${parts.join(" · ")}`;
 }

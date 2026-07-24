@@ -1,4 +1,4 @@
-const CACHE_NAME = "fitnesshelp-static-v6";
+const CACHE_NAME = "fitnesshelp-static-v7";
 
 const PRECACHE_URLS = [
   "./",

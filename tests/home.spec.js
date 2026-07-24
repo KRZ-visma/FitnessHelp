@@ -6,6 +6,7 @@ const {
   createProgram,
   openManage,
   openProgramsTab,
+  startFromHome,
 } = require("./helpers");
 
 test.describe("Home & dagprogramma", () => {
@@ -21,13 +22,16 @@ test.describe("Home & dagprogramma", () => {
     });
 
     await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#manage-btn")).toBeVisible();
+    await expect(page.locator(".home-toolbar #manage-btn")).toBeVisible();
     await expect(page.locator(".home-label")).toHaveText("Dagprogramma");
     await expect(page.locator("#home-title")).toHaveText("Vandaag");
     await expect(page.locator("#home-meta")).toContainText("1 programma");
     await expect(page.locator("#day-list .day-item")).toHaveCount(1);
     await expect(page.locator("#day-list")).toContainText("Push");
-    await expect(page.locator("#day-list")).toContainText("Push-ups");
-    await expect(page.locator("#home-start-btn")).toHaveText("Start dag");
+    await expect(page.locator("#day-list .day-exercises li")).toHaveText(["Push-ups"]);
+    await expect(page.locator("#home-start-btn")).toHaveCount(0);
+    await expect(page.locator("#day-list .day-start")).toHaveText("Start");
     await expect(page.locator("#manage")).toBeHidden();
     await expect(page.locator("#tagline")).toBeHidden();
 
@@ -71,7 +75,7 @@ test.describe("Home & dagprogramma", () => {
       exercises: [{ name: "Plank", sets: 3, duration: 30 }],
     });
 
-    await page.click("#home-start-btn");
+    await startFromHome(page, "Core");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await page.click("#skip-btn");
     await expect(page.locator("#timer")).toBeVisible();
@@ -100,12 +104,22 @@ test.describe("Home & dagprogramma", () => {
 
     await expect(page.locator("#day-list .day-item")).toHaveCount(3);
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
+    await expect(
+      page.locator("#day-list .day-item", { hasText: "Warm-up" }).locator(".day-exercises li")
+    ).toHaveText(["Jumping jacks"]);
+    await expect(
+      page.locator("#day-list .day-item", { hasText: "Kracht" }).locator(".day-exercises li")
+    ).toHaveText(["Squats"]);
+    await expect(
+      page.locator("#day-list .day-item", { hasText: "Core" }).locator(".day-exercises li")
+    ).toHaveText(["Plank"]);
 
     const kracht = page.locator("#day-list .day-item", { hasText: "Kracht" });
     await kracht.locator(".day-check").check();
     await expect(kracht).toHaveClass(/is-done/);
     await expect(page.locator("#home-meta")).toContainText("1 van 3 klaar");
-    await expect(page.locator("#home-start-btn")).toHaveText("Volgende");
+    await expect(kracht.locator(".day-start")).toHaveCount(0);
+    await expect(page.locator("#day-list .day-start")).toHaveCount(2);
 
     await kracht.locator(".day-check").uncheck();
     await expect(kracht).not.toHaveClass(/is-done/);
@@ -137,7 +151,7 @@ test.describe("Home & dagprogramma", () => {
 
     await page.click("#manage-done-btn");
     await expect(page.locator("#day-list .day-item").first()).toContainText("Pull");
-    await expect(page.locator("#day-list")).toContainText("Rows");
+    await expect(page.locator("#day-list .day-exercises li")).toHaveText(["Rows", "Push-ups"]);
   });
 
   test("migreert legacy workouts naar programma met bibliotheek-refs", async ({ page }) => {
@@ -167,7 +181,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#home")).toBeVisible();
     await expect(page.locator("#home-title")).toHaveText("Vandaag");
     await expect(page.locator("#day-list")).toContainText("Mijn training");
-    await expect(page.locator("#day-list")).toContainText("2 onderdelen");
+    await expect(page.locator("#day-list .day-exercises li")).toHaveText(["Burpees", "Squats"]);
     await expect(page.locator("#manage")).toBeHidden();
 
     const stored = await page.evaluate(() => ({
@@ -203,7 +217,7 @@ test.describe("Home & dagprogramma", () => {
       rest: 5,
       exercises: [{ name: "Plank", sets: 2, duration: 10 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page, "Core");
     await page.click("#stop-btn");
 
     await expect(page.locator("#timer")).toBeHidden();
@@ -219,7 +233,7 @@ test.describe("Home & dagprogramma", () => {
       switchSec: 0,
       exercises: [{ name: "Plank", sets: 1, duration: 5 }],
     });
-    await page.click("#home-start-btn");
+    await startFromHome(page, "Kort");
     await page.click("#skip-btn");
     await page.click("#skip-btn");
 
@@ -230,6 +244,6 @@ test.describe("Home & dagprogramma", () => {
     await expect(item).toHaveClass(/is-done/);
     await expect(item.locator(".day-check")).toBeChecked();
     await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
-    await expect(page.locator("#home-start-btn")).toBeHidden();
+    await expect(page.locator("#day-list .day-start")).toHaveCount(0);
   });
 });

@@ -44,7 +44,7 @@ test.describe("PWA", () => {
       const res = await fetch("./sw.js", { cache: "no-store" });
       return res.text();
     });
-    expect(swSource).toMatch(/fitnesshelp-static-v6/);
+    expect(swSource).toMatch(/fitnesshelp-static-v7/);
     expect(swSource).toMatch(/fetch\(request\)/);
     expect(swSource).toMatch(/caches\.match\(request\)/);
   });
