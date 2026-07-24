@@ -24,6 +24,7 @@ import {
   addExerciseToForm,
   bindDigits,
   fillForm,
+  getEditingProgramId,
   guardSafariAutofill,
   readForm,
   resetDraft,
@@ -76,14 +77,23 @@ function saveCurrentProgram() {
   const program = readForm();
   if (!program) return null;
   const programs = loadPrograms();
-  const existingIndex = programs.findIndex(
-    (p) => p.name.toLowerCase() === program.name.toLowerCase()
-  );
-  if (existingIndex >= 0) {
-    program.id = programs[existingIndex].id;
-    programs[existingIndex] = program;
+  const editingId = getEditingProgramId();
+  const byId = editingId
+    ? programs.findIndex((p) => p.id === editingId)
+    : -1;
+  if (byId >= 0) {
+    program.id = editingId;
+    programs[byId] = program;
   } else {
-    programs.push(program);
+    const byName = programs.findIndex(
+      (p) => p.name.toLowerCase() === program.name.toLowerCase()
+    );
+    if (byName >= 0) {
+      program.id = programs[byName].id;
+      programs[byName] = program;
+    } else {
+      programs.push(program);
+    }
   }
   savePrograms(programs);
   syncDayOrder(programs);
