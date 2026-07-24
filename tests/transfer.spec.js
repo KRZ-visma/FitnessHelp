@@ -191,6 +191,7 @@ test.describe("Import / export", () => {
     await page.locator("#saved-list .saved-open").first().click();
     await expect(page.locator("#program-rest")).toHaveValue("22");
     await expect(page.locator("#program-switch")).toHaveValue("15");
+    await expect(page.locator("#program-times")).toHaveValue("1");
     await expect(page.locator(".segment-name")).toHaveText("Plank");
   });
 });

@@ -234,6 +234,7 @@ export function loadPrograms() {
         name: "Mijn training",
         rest: defaultRestFromItems(migratedItems),
         switch: 15,
+        times: 1,
         items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
       });
     }
