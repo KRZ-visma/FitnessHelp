@@ -10,7 +10,7 @@ import {
 } from "./exercises.js";
 import { hooks } from "./hooks.js";
 import { loadPrograms, savePrograms } from "./storage.js";
-import { clampInt, uid } from "./util.js";
+import { clampInt, createTrashIcon, uid } from "./util.js";
 
 export function renderExercises() {
   const exercises = loadExercises();
@@ -51,8 +51,9 @@ export function renderExercises() {
 
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "btn btn-danger";
-    remove.textContent = "Verwijder";
+    remove.className = "btn btn-danger btn-icon";
+    remove.setAttribute("aria-label", `${exercise.name} verwijderen`);
+    remove.append(createTrashIcon());
     remove.addEventListener("click", () => {
       const used = loadPrograms().some((program) =>
         program.items.some(

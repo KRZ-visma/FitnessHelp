@@ -7,7 +7,7 @@ import {
 } from "./dom.js";
 import { loadExercises } from "./exercises.js";
 import { resolveExercise } from "./migration.js";
-import { clampInt, uid } from "./util.js";
+import { clampInt, createTrashIcon, uid } from "./util.js";
 
 /** @type {{ exerciseId: string, name: string, exerciseType: 'timer'|'reps', sets: number, duration?: number, reps?: number }[]} */
 let draftItems = [];
@@ -89,8 +89,9 @@ export function renderSegments() {
 
     const removeBtn = document.createElement("button");
     removeBtn.type = "button";
-    removeBtn.className = "btn btn-danger";
-    removeBtn.textContent = "Verwijder";
+    removeBtn.className = "btn btn-danger btn-icon";
+    removeBtn.setAttribute("aria-label", `${item.name} verwijderen`);
+    removeBtn.append(createTrashIcon());
     removeBtn.addEventListener("click", () => {
       draftItems.splice(index, 1);
       renderSegments();
