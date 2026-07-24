@@ -107,6 +107,10 @@ test.describe("Formulier & beheer", () => {
     await expect(page.locator(".segment").nth(0).locator(".segment-move-up")).toBeDisabled();
     await expect(page.locator(".segment").nth(2).locator(".segment-move-down")).toBeDisabled();
     await expect(page.locator(".segment").nth(0).locator(".segment-actions")).toBeVisible();
+    await expect(
+      page.locator(".segment").nth(0).locator(".btn-danger")
+    ).toHaveAttribute("aria-label", "Squats verwijderen");
+    await expect(page.locator(".segment").nth(0).locator(".btn-danger svg")).toBeVisible();
 
     await page.locator(".segment").nth(0).locator(".segment-move-down").click();
     await expect(page.locator(".segment").nth(0).locator(".segment-name")).toHaveText("Push-ups");

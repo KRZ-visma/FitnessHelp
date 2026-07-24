@@ -28,6 +28,7 @@ import {
   syncDayOrder,
 } from "./storage.js";
 import { resolveExercise } from "./migration.js";
+import { createTrashIcon } from "./util.js";
 
 /** Beheer blijft open tot de gebruiker klaar is of opnieuw start vanuit home. */
 let managing = false;
@@ -167,8 +168,9 @@ export function renderSaved() {
 
     const remove = document.createElement("button");
     remove.type = "button";
-    remove.className = "btn btn-danger";
-    remove.textContent = "Verwijder";
+    remove.className = "btn btn-danger btn-icon";
+    remove.setAttribute("aria-label", `${program.name} verwijderen`);
+    remove.append(createTrashIcon());
     remove.addEventListener("click", () => {
       const next = loadPrograms().filter((p) => p.id !== program.id);
       savePrograms(next);

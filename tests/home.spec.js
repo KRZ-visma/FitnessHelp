@@ -215,6 +215,11 @@ test.describe("Home & dagprogramma", () => {
     const actions = item.locator(".saved-actions");
     await expect(actions.locator(".saved-move-up")).toHaveText("↑");
     await expect(actions.locator(".saved-move-down")).toHaveText("↓");
+    await expect(actions.locator(".btn-danger")).toHaveAttribute(
+      "aria-label",
+      "Push verwijderen"
+    );
+    await expect(actions.locator(".btn-danger svg")).toBeVisible();
     await expect(actions.locator("button", { hasText: "Laden" })).toHaveCount(0);
     await expect(item.locator(".saved-exercises li")).toHaveCount(1);
 
