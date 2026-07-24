@@ -10,6 +10,8 @@ import { clampInt, uid } from "./util.js";
 
 /** @type {{ exerciseId: string, name: string, exerciseType: 'timer'|'reps', sets: number, duration?: number, reps?: number }[]} */
 let draftItems = [];
+/** Id van het programma dat wordt bewerkt; null bij een nieuw programma. */
+let editingProgramId = null;
 
 /**
  * Safari negeert autocomplete="off" en kiest dan zelf contact-/adresvelden.
@@ -25,10 +27,16 @@ export function guardSafariAutofill(input, token) {
 
 export function resetDraft() {
   draftItems = [];
+  editingProgramId = null;
   programNameInput.value = "";
   programRestInput.value = "15";
   programSwitchInput.value = "15";
   renderSegments();
+}
+
+/** @returns {string | null} */
+export function getEditingProgramId() {
+  return editingProgramId;
 }
 
 /**
@@ -209,11 +217,18 @@ export function readForm() {
     .filter((draft) => draft.exerciseId)
     .map((draft) => ({ exerciseId: draft.exerciseId }));
 
-  return { id: uid(), name, rest: programRest, switch: programSwitch, items };
+  return {
+    id: editingProgramId || uid(),
+    name,
+    rest: programRest,
+    switch: programSwitch,
+    items,
+  };
 }
 
 /** @param {import('./constants.js').Program} program */
 export function fillForm(program) {
+  editingProgramId = typeof program.id === "string" ? program.id : null;
   programNameInput.value = program.name;
   programRestInput.value = String(program.rest ?? 15);
   programSwitchInput.value = String(program.switch ?? 15);

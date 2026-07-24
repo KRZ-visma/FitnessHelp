@@ -153,6 +153,12 @@ test.describe("Home & dagprogramma", () => {
       ],
     });
 
+    const originalId = await page.evaluate(() => {
+      const programs = JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]");
+      return programs.find((p) => p.name === "Push")?.id ?? null;
+    });
+    expect(originalId).toBeTruthy();
+
     await openManage(page);
     await page.locator("#saved-list .saved-open", { hasText: "Push" }).click();
     await expect(page.locator("#setup")).toBeVisible();
@@ -168,6 +174,8 @@ test.describe("Home & dagprogramma", () => {
 
     await expect(page.locator("#manage")).toBeVisible();
     await expect(page.locator("#setup")).toBeHidden();
+    await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
+    await expect(page.locator("#saved-list .saved-name")).toHaveText("Push day");
 
     const renamed = page.locator("#saved-list .saved-item", { hasText: "Push day" });
     await expect(renamed).toBeVisible();
@@ -177,10 +185,14 @@ test.describe("Home & dagprogramma", () => {
       programs: JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]"),
       exercises: JSON.parse(localStorage.getItem("fitnesshelp-exercises-v1") || "[]"),
     }));
-    const pushDay = stored.programs.find((p) => p.name === "Push day");
-    expect(pushDay).toBeTruthy();
-    expect(pushDay.items).toHaveLength(2);
-    const names = pushDay.items.map((item) => {
+    expect(stored.programs).toHaveLength(1);
+    expect(stored.programs[0]).toMatchObject({
+      id: originalId,
+      name: "Push day",
+      rest: 20,
+    });
+    expect(stored.programs[0].items).toHaveLength(2);
+    const names = stored.programs[0].items.map((item) => {
       const ex = stored.exercises.find((e) => e.id === item.exerciseId);
       return ex?.name;
     });
