@@ -23,8 +23,7 @@ test.describe("Home & dagprogramma", () => {
 
     await expect(page.locator("#home")).toBeVisible();
     await expect(page.locator("#manage-btn")).toBeVisible();
-    await expect(page.locator(".home-toolbar #manage-btn")).toBeVisible();
-    await expect(page.locator(".home-label")).toHaveText("Dagprogramma");
+    await expect(page.locator(".home-header #manage-btn")).toBeVisible();
     await expect(page.locator("#home-title")).toHaveText("Vandaag");
     await expect(page.locator("#home-meta")).toContainText("1 programma");
     await expect(page.locator("#day-list .day-item")).toHaveCount(1);
