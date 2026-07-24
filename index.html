@@ -98,6 +98,16 @@
           >
             Oefeningen
           </button>
+          <button
+            type="button"
+            class="manage-tab"
+            role="tab"
+            id="manage-tab-transfer"
+            aria-controls="manage-panel-transfer"
+            aria-selected="false"
+          >
+            Import/export
+          </button>
         </div>
 
         <div
@@ -109,25 +119,12 @@
           <section class="saved" id="saved" aria-labelledby="saved-title">
             <div class="saved-header">
               <h2 id="saved-title">Opgeslagen programma's</h2>
-              <div class="saved-transfer">
+              <div class="saved-actions-bar">
                 <button type="button" class="btn btn-ghost" id="add-program-btn">
                   + Programma
                 </button>
-                <button type="button" class="btn btn-ghost" id="export-btn">
-                  Exporteren
-                </button>
-                <button type="button" class="btn btn-ghost" id="import-btn">
-                  Importeren
-                </button>
-                <input
-                  type="file"
-                  id="import-file"
-                  accept="application/json,.json"
-                  hidden
-                />
               </div>
             </div>
-            <p class="transfer-status" id="transfer-status" role="status" hidden></p>
             <p class="saved-hint" id="saved-empty">
               Nog niets opgeslagen. Tik op + Programma.
             </p>
@@ -264,6 +261,39 @@
               Nog geen oefeningen. Maak oefeningen aan om ze in programma’s te gebruiken.
             </p>
             <ul class="exercises-list" id="exercises-list"></ul>
+          </section>
+        </div>
+
+        <div
+          class="manage-panel"
+          id="manage-panel-transfer"
+          role="tabpanel"
+          aria-labelledby="manage-tab-transfer"
+          hidden
+        >
+          <section class="transfer" id="transfer" aria-labelledby="transfer-title">
+            <div class="transfer-header">
+              <h2 id="transfer-title">Import / export</h2>
+            </div>
+            <p class="transfer-hint">
+              Exporteer je programma’s en oefeningen als JSON-bestand, of importeer een eerder
+              exportbestand.
+            </p>
+            <div class="transfer-actions">
+              <button type="button" class="btn btn-ghost" id="export-btn">
+                Exporteren
+              </button>
+              <button type="button" class="btn btn-ghost" id="import-btn">
+                Importeren
+              </button>
+              <input
+                type="file"
+                id="import-file"
+                accept="application/json,.json"
+                hidden
+              />
+            </div>
+            <p class="transfer-status" id="transfer-status" role="status" hidden></p>
           </section>
         </div>
       </div>

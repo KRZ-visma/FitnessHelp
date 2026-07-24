@@ -223,7 +223,7 @@ main {
 
 .manage-tabs {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr 1fr 1fr;
   gap: 0.45rem;
 }
 
@@ -234,11 +234,12 @@ main {
   color: var(--ink-soft);
   font: inherit;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 0.88rem;
   min-height: 44px;
-  padding: 0.65rem 0.75rem;
+  padding: 0.55rem 0.4rem;
   cursor: pointer;
   touch-action: manipulation;
+  line-height: 1.2;
 }
 
 .manage-tab.is-active,
@@ -257,7 +258,8 @@ main {
   display: none !important;
 }
 
-.manage .exercises {
+.manage .exercises,
+.manage .transfer {
   background: transparent;
   padding: 0;
 }

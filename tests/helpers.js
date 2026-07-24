@@ -26,6 +26,12 @@ async function openProgramsTab(page) {
   await expect(page.locator("#manage-panel-programs")).toBeVisible();
 }
 
+async function openTransferTab(page) {
+  await openManage(page);
+  await page.click("#manage-tab-transfer");
+  await expect(page.locator("#manage-panel-transfer")).toBeVisible();
+}
+
 /** Opent het programmaformulier (nieuw). */
 async function openProgramForm(page) {
   await openProgramsTab(page);
@@ -123,6 +129,7 @@ module.exports = {
   clearAndReload,
   openExercisesTab,
   openProgramsTab,
+  openTransferTab,
   createExercise,
   addExerciseToProgram,
   createProgram,

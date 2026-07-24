@@ -1,16 +1,24 @@
 const { test, expect } = require("@playwright/test");
-const { clearAndReload, createProgram, openManage } = require("./helpers");
+const { clearAndReload, createProgram, openManage, openTransferTab } = require("./helpers");
 
 test.describe("Import / export", () => {
   test.beforeEach(async ({ page }) => {
     await clearAndReload(page);
   });
 
-  test("toont export- en importknoppen bij Opgeslagen", async ({ page }) => {
+  test("toont export- en importknoppen op eigen beheer-tab", async ({ page }) => {
+    await expect(page.locator("#manage-tab-transfer")).toBeVisible();
+    await expect(page.locator("#manage-tab-transfer")).toHaveText("Import/export");
+    await expect(page.locator("#export-btn")).toBeHidden();
+    await expect(page.locator("#import-btn")).toBeHidden();
+
+    await openTransferTab(page);
+    await expect(page.locator("#transfer-title")).toHaveText("Import / export");
     await expect(page.locator("#export-btn")).toBeVisible();
     await expect(page.locator("#export-btn")).toHaveText("Exporteren");
     await expect(page.locator("#import-btn")).toBeVisible();
     await expect(page.locator("#import-btn")).toHaveText("Importeren");
+    await expect(page.locator("#add-program-btn")).toBeHidden();
   });
 
   test("exporteert programma’s, oefeningen en dagvolgorde als JSON", async ({ page }) => {
@@ -20,7 +28,7 @@ test.describe("Import / export", () => {
       exercises: [{ name: "Lunges", sets: 3, duration: 30 }],
     });
 
-    await openManage(page);
+    await openTransferTab(page);
     const downloadPromise = page.waitForEvent("download");
     await page.click("#export-btn");
     const download = await downloadPromise;
@@ -60,7 +68,7 @@ test.describe("Import / export", () => {
       exercises: [{ name: "Plank", sets: 2, duration: 20 }],
     });
 
-    await openManage(page);
+    await openTransferTab(page);
 
     const payload = {
       version: 2,
@@ -106,6 +114,8 @@ test.describe("Import / export", () => {
     });
 
     await expect(page.locator("#transfer-status")).toHaveText("2 programma’s geïmporteerd.");
+
+    await page.click("#manage-tab-programs");
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(2);
     await expect(page.locator("#saved-list")).toContainText("Import nieuw");
     await expect(page.locator("#saved-list")).toContainText("Curl");
@@ -125,7 +135,7 @@ test.describe("Import / export", () => {
   });
 
   test("importeert legacy inline items naar bibliotheek-refs", async ({ page }) => {
-    await openManage(page);
+    await openTransferTab(page);
     const payload = {
       version: 1,
       app: "fitnesshelp",
@@ -147,6 +157,9 @@ test.describe("Import / export", () => {
     });
 
     await expect(page.locator("#transfer-status")).toHaveText("1 programma geïmporteerd.");
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#manage-panel-transfer")).toBeVisible();
+    await page.click("#manage-tab-programs");
     await expect(page.locator("#saved-list")).toContainText("Burpees");
 
     const stored = await page.evaluate(() => ({
@@ -163,6 +176,7 @@ test.describe("Import / export", () => {
   });
 
   test("toont fout bij ongeldige import", async ({ page }) => {
+    await openTransferTab(page);
     await page.setInputFiles("#import-file", {
       name: "kapot.json",
       mimeType: "application/json",

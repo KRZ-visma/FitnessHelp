@@ -15,18 +15,46 @@
   letter-spacing: -0.02em;
 }
 
-.saved-transfer {
+.saved-actions-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.transfer {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.transfer-header h2 {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.2rem;
+  letter-spacing: -0.02em;
+}
+
+.transfer-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+  font-weight: 500;
+  max-width: 28rem;
+  line-height: 1.4;
+}
+
+.transfer-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
 }
 
 @media (max-width: 400px) {
-  .saved-transfer {
+  .transfer-actions {
     width: 100%;
   }
 
-  .saved-transfer .btn {
+  .transfer-actions .btn {
     flex: 1 1 auto;
     min-width: 0;
     padding-left: 0.75rem;
@@ -35,7 +63,7 @@
 }
 
 .transfer-status {
-  margin: 0 0 0.65rem;
+  margin: 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
   font-weight: 500;

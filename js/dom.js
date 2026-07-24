@@ -18,8 +18,10 @@ export const manageHeader = document.getElementById("manage-header");
 export const manageDoneBtn = document.getElementById("manage-done-btn");
 export const manageTabPrograms = document.getElementById("manage-tab-programs");
 export const manageTabExercises = document.getElementById("manage-tab-exercises");
+export const manageTabTransfer = document.getElementById("manage-tab-transfer");
 export const managePanelPrograms = document.getElementById("manage-panel-programs");
 export const managePanelExercises = document.getElementById("manage-panel-exercises");
+export const managePanelTransfer = document.getElementById("manage-panel-transfer");
 
 export const setupEl = document.getElementById("setup");
 export const addProgramBtn = document.getElementById("add-program-btn");

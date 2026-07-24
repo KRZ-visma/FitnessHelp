@@ -8,8 +8,10 @@ import {
   manageHeader,
   managePanelExercises,
   managePanelPrograms,
+  managePanelTransfer,
   manageTabExercises,
   manageTabPrograms,
+  manageTabTransfer,
   programNameInput,
   savedEmpty,
   savedList,
@@ -35,7 +37,7 @@ import { createTrashIcon } from "./util.js";
 let managing = false;
 /** Programmaformulier open (nieuw of bewerken). */
 let editing = false;
-/** @type {'programs'|'exercises'} */
+/** @type {'programs'|'exercises'|'transfer'} */
 let manageTab = "programs";
 
 export function isManaging() {
@@ -54,9 +56,11 @@ export function setEditingProgram(value) {
   editing = Boolean(value);
 }
 
-/** @param {'programs'|'exercises'} tab */
+/** @param {'programs'|'exercises'|'transfer'} tab */
 export function setManageTab(tab) {
-  manageTab = tab === "exercises" ? "exercises" : "programs";
+  if (tab === "exercises") manageTab = "exercises";
+  else if (tab === "transfer") manageTab = "transfer";
+  else manageTab = "programs";
   updateManageTabs();
 }
 
@@ -66,16 +70,24 @@ export function getManageTab() {
 
 function updateManageTabs() {
   const isPrograms = manageTab === "programs";
+  const isExercises = manageTab === "exercises";
+  const isTransfer = manageTab === "transfer";
+
   if (manageTabPrograms) {
     manageTabPrograms.setAttribute("aria-selected", isPrograms ? "true" : "false");
     manageTabPrograms.classList.toggle("is-active", isPrograms);
   }
   if (manageTabExercises) {
-    manageTabExercises.setAttribute("aria-selected", isPrograms ? "false" : "true");
-    manageTabExercises.classList.toggle("is-active", !isPrograms);
+    manageTabExercises.setAttribute("aria-selected", isExercises ? "true" : "false");
+    manageTabExercises.classList.toggle("is-active", isExercises);
+  }
+  if (manageTabTransfer) {
+    manageTabTransfer.setAttribute("aria-selected", isTransfer ? "true" : "false");
+    manageTabTransfer.classList.toggle("is-active", isTransfer);
   }
   if (managePanelPrograms) managePanelPrograms.hidden = !isPrograms;
-  if (managePanelExercises) managePanelExercises.hidden = isPrograms;
+  if (managePanelExercises) managePanelExercises.hidden = !isExercises;
+  if (managePanelTransfer) managePanelTransfer.hidden = !isTransfer;
 }
 
 function updateSetupVisibility() {
