@@ -11,6 +11,7 @@ import {
   manageDoneBtn,
   manageTabExercises,
   manageTabPrograms,
+  manageTabTransfer,
   pauseBtn,
   programNameInput,
   programRestInput,
@@ -136,6 +137,10 @@ manageTabPrograms?.addEventListener("click", () => {
 
 manageTabExercises?.addEventListener("click", () => {
   setManageTab("exercises");
+});
+
+manageTabTransfer?.addEventListener("click", () => {
+  setManageTab("transfer");
 });
 
 exportBtn.addEventListener("click", () => {
