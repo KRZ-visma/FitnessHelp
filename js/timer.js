@@ -181,6 +181,8 @@ export function startWorkAfterPrep() {
 export function endSession(finished) {
   stopTick();
   if (finished && session) {
+    // Voorkom dubbele afronding als een naijle tick nog binnenkomt.
+    if (timerEl.dataset.phase === "done") return;
     const times = Math.max(1, Number(session.program.times) || 1);
     recordProgramCompletion(session.program.id, times);
     session.isRest = false;
@@ -216,7 +218,7 @@ export function endSession(finished) {
 }
 
 function updateTimerUI() {
-  if (!session) return;
+  if (!session || timerEl.dataset.phase === "done") return;
   const { setIndex, isRest, isPrep, isSwitch, remaining, total, itemIndex, program } = session;
 
   if (isSwitch) {
@@ -378,7 +380,7 @@ function leaveRestPhase() {
 }
 
 export function advancePhase() {
-  if (!session) return;
+  if (!session || timerEl.dataset.phase === "done") return;
   const item = currentItem();
   if (!item) return;
 
@@ -418,14 +420,14 @@ export function advancePhase() {
 }
 
 export function sessionNeedsTick() {
-  if (!session) return false;
+  if (!session || timerEl.dataset.phase === "done") return false;
   if (session.isPrep || session.isSwitch || session.isRest) return true;
   const item = currentItem();
   return item?.type === "timer";
 }
 
 function tick(ts) {
-  if (!session || session.paused) return;
+  if (!session || session.paused || timerEl.dataset.phase === "done") return;
   if (!sessionNeedsTick()) return;
 
   if (session.lastTs == null) session.lastTs = ts;
