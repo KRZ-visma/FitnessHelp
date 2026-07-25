@@ -141,8 +141,10 @@ test.describe("Statistics", () => {
     await page.reload();
     await page.click("#statistics-btn");
     
-    // Click on program
-    await page.click(".statistics-program-link");
+    // Wait for statistics to render and click on program
+    const programLink = page.locator(".statistics-program-link");
+    await expect(programLink).toBeVisible();
+    await programLink.click();
     
     // Check detail view
     const programTitle = page.locator(".statistics-program-title");
@@ -188,7 +190,11 @@ test.describe("Statistics", () => {
     
     await page.reload();
     await page.click("#statistics-btn");
-    await page.click(".statistics-program-link");
+    
+    // Wait for program link and click
+    const programLink = page.locator(".statistics-program-link");
+    await expect(programLink).toBeVisible();
+    await programLink.click();
     
     // Should be in detail view
     await expect(page.locator(".statistics-program-title")).toBeVisible();
@@ -229,7 +235,11 @@ test.describe("Statistics", () => {
     
     await page.reload();
     await page.click("#statistics-btn");
-    await page.click(".statistics-program-link");
+    
+    // Wait for program link and click
+    const programLink = page.locator(".statistics-program-link");
+    await expect(programLink).toBeVisible();
+    await programLink.click();
     
     const activityDays = page.locator(".statistics-activity-day");
     await expect(activityDays).toHaveCount(30);
