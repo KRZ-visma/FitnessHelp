@@ -18,6 +18,7 @@ import {
 } from "./dom.js";
 import { hooks } from "./hooks.js";
 import { recordProgramCompletion } from "./storage.js";
+import { recordProgramInHistory } from "./statistics.js";
 import { resolveExercise } from "./migration.js";
 import { formatTime } from "./util.js";
 
@@ -254,6 +255,7 @@ export function endSession(finished) {
     if (timerEl.dataset.phase === "done") return;
     const times = Math.max(1, Number(session.program.times) || 1);
     recordProgramCompletion(session.program.id, times);
+    recordProgramInHistory(session.program.id);
     session.isRest = false;
     session.isPrep = false;
     session.isSwitch = false;

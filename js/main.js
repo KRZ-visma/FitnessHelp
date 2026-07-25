@@ -19,6 +19,8 @@ import {
   programTimesInput,
   skipBtn,
   stopBtn,
+  statisticsBtn,
+  statisticsEl,
 } from "./dom.js";
 import { APP_VERSION } from "./version.js";
 import {
@@ -53,6 +55,7 @@ import {
 import { exportPrograms, importProgramsFromFile } from "./transfer.js";
 import { renderExercises, showExerciseModal } from "./exercises-ui.js";
 import { migrateToExerciseLibrary } from "./migration.js";
+import { renderStatisticsOverview } from "./statistics-ui.js";
 
 migrateToExerciseLibrary();
 
@@ -61,6 +64,16 @@ hooks.fillForm = fillForm;
 hooks.startSession = startSession;
 hooks.renderExercises = renderExercises;
 hooks.addExerciseToForm = addExerciseToForm;
+hooks.openStatistics = () => {
+  document.body.classList.add("is-statistics");
+  statisticsEl.hidden = false;
+  renderStatisticsOverview(statisticsEl);
+};
+hooks.closeStatistics = () => {
+  document.body.classList.remove("is-statistics");
+  statisticsEl.hidden = true;
+  renderApp();
+};
 
 addSegmentBtn.addEventListener("click", () => {
   showExercisePicker(() => {
@@ -160,6 +173,10 @@ importFile.addEventListener("change", () => {
 
 addExerciseBtn.addEventListener("click", () => {
   showExerciseModal();
+});
+
+statisticsBtn.addEventListener("click", () => {
+  hooks.openStatistics();
 });
 
 resetDraft();

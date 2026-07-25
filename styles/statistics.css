@@ -1,0 +1,256 @@
+.statistics {
+  background: var(--surface);
+  backdrop-filter: blur(10px);
+  padding: clamp(1.25rem, 3vw, 1.75rem);
+  animation: rise 0.8s var(--ease) both;
+  animation-delay: 0.08s;
+}
+
+.statistics[hidden] {
+  display: none;
+}
+
+.statistics-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.statistics-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.85rem, 6vw, 2.75rem);
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+}
+
+.statistics-overview,
+.statistics-detail {
+  display: grid;
+  gap: clamp(1.5rem, 4vw, 2rem);
+}
+
+.statistics-section {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.statistics-section-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+  color: var(--ink-soft);
+}
+
+.statistics-program-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(1.5rem, 5vw, 2rem);
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.statistics-big-number {
+  margin: 0;
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: clamp(2.5rem, 8vw, 3.5rem);
+  letter-spacing: -0.04em;
+  line-height: 1;
+}
+
+.statistics-unit {
+  font-family: var(--font-body);
+  font-weight: 600;
+  font-size: clamp(1.1rem, 3vw, 1.35rem);
+  color: var(--ink-soft);
+}
+
+.statistics-week-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.65rem;
+}
+
+.statistics-week-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.statistics-week-day-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+}
+
+.statistics-week-day-dot {
+  width: 0.85rem;
+  height: 0.85rem;
+  border-radius: 50%;
+  background: rgba(18, 32, 24, 0.12);
+  display: block;
+}
+
+.statistics-week-day.is-active .statistics-week-day-dot {
+  background: #2f6b45;
+}
+
+.statistics-program-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.statistics-program-item {
+  border-top: 1px solid var(--line);
+  padding: 0;
+}
+
+.statistics-program-item:first-child {
+  border-top: 0;
+}
+
+.statistics-program-link {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.75rem 0;
+  cursor: pointer;
+  text-align: left;
+  touch-action: manipulation;
+  transition: opacity 0.15s ease;
+}
+
+.statistics-program-link:hover {
+  opacity: 0.75;
+}
+
+.statistics-program-link:active {
+  opacity: 0.6;
+}
+
+.statistics-program-name {
+  font-weight: 600;
+  font-size: 1rem;
+  line-height: 1.3;
+}
+
+.statistics-program-count {
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  flex-shrink: 0;
+}
+
+.statistics-stats-list {
+  margin: 0;
+  display: grid;
+  gap: 0.75rem;
+}
+
+.statistics-stats-item {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.statistics-stats-item dt {
+  font-weight: 500;
+  color: var(--ink-soft);
+  font-size: 0.95rem;
+}
+
+.statistics-stats-item dd {
+  margin: 0;
+  font-weight: 700;
+  font-size: 1rem;
+  text-align: right;
+}
+
+.statistics-activity-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 0.35rem;
+}
+
+.statistics-activity-day {
+  aspect-ratio: 1;
+  border-radius: 0.2rem;
+  background: rgba(18, 32, 24, 0.08);
+}
+
+.statistics-activity-day.is-active {
+  background: #2f6b45;
+}
+
+.statistics-exercise-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.15rem;
+}
+
+.statistics-exercise-item {
+  border-top: 1px solid var(--line);
+  padding: 0.75rem 0;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.75rem;
+  align-items: baseline;
+}
+
+.statistics-exercise-item:first-child {
+  border-top: 0;
+}
+
+.statistics-exercise-name {
+  font-weight: 600;
+  font-size: 0.95rem;
+  line-height: 1.3;
+}
+
+.statistics-exercise-detail {
+  font-weight: 500;
+  font-size: 0.88rem;
+  color: var(--ink-soft);
+  text-align: right;
+}
+
+body.is-statistics .home,
+body.is-statistics .manage,
+body.is-statistics .timer {
+  display: none;
+}
+
+body.is-statistics .site-header {
+  padding-top: clamp(1.1rem, 3.5vw, 1.75rem);
+  padding-bottom: 0;
+}
+
+body.is-statistics .brand {
+  font-size: clamp(1.65rem, 5.5vw, 2.35rem);
+  line-height: 1;
+}
+
+body.is-statistics .tagline {
+  display: none;
+}
