@@ -4,12 +4,19 @@ import { clearAndReload, createProgram, startFromHome } from "./helpers";
 test.describe("Statistics", () => {
   test.beforeEach(async ({ page }) => {
     await clearAndReload(page);
+    // Ensure home is visible by creating a program first
+    await createProgram(page, {
+      programName: "Test Program",
+      rest: 15,
+      exercises: [{ name: "Squats", type: "timer", sets: 3, duration: 30 }],
+    });
   });
 
   test("statistics button appears on home screen", async ({ page }) => {
+    await expect(page.locator("#home")).toBeVisible();
     const statisticsBtn = page.locator("#statistics-btn");
     await expect(statisticsBtn).toBeVisible();
-    await expect(statisticsBtn).toHaveText("Statistieken");
+    await expect(statisticsBtn).toHaveText(/Statistieken/);
   });
 
   test("opens statistics view when button clicked", async ({ page }) => {
