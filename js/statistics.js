@@ -276,8 +276,8 @@ export function formatRelativeDate(dateStr) {
   if (dateStr === yesterday) return "gisteren";
 
   const date = parseDate(dateStr);
-  const todayDate = parseDate(today);
-  const diffTime = todayDate.getTime() - date.getTime();
+  const todayParsed = parseDate(today);
+  const diffTime = todayParsed.getTime() - date.getTime();
   const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
   if (diffDays < 7) return `${diffDays} dagen geleden`;
