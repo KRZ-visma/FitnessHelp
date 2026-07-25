@@ -14,10 +14,11 @@ test.describe("Timer", () => {
     await clearAndReload(page);
   });
 
-  test("start met 5 seconden klaarmaken vóór de set", async ({ page }) => {
+  test("start met wissel-tijd klaarmaken vóór de set", async ({ page }) => {
     await createProgram(page, {
       programName: "Been dag",
       rest: 2,
+      switchSec: 10,
       exercises: [{ name: "Squats", sets: 2, duration: 5 }],
     });
     await startFromHome(page);
@@ -26,7 +27,7 @@ test.describe("Timer", () => {
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await expect(page.locator("#timer-phase")).toHaveText("Klaar maken");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
-    await expect(page.locator("#timer-clock")).toHaveText("0:05");
+    await expect(page.locator("#timer-clock")).toHaveText("0:10");
     await expect(page.locator("body")).toHaveClass(/is-running/);
 
     await page.click("#skip-btn");
@@ -202,7 +203,6 @@ test.describe("Timer", () => {
       exercises: [{ name: "Deadlift", type: "reps", sets: 2, reps: 5 }],
     });
     await startFromHome(page);
-    await page.click("#skip-btn");
 
     await page.click("#done-set-btn");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "rest");
@@ -258,7 +258,6 @@ test.describe("Timer", () => {
     await startFromHome(page);
     await expect(page.locator("#timer-program")).toHaveText("Dubbel");
     await expect(page.locator("#timer-program")).not.toContainText("keer");
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Burpees");
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "work");
 
@@ -273,7 +272,6 @@ test.describe("Timer", () => {
     await expect(page.locator("#home-meta")).toContainText("1 programma");
 
     await startFromHome(page, "Dubbel");
-    await page.click("#skip-btn");
     await page.click("#skip-btn");
     await expect(page.locator("#timer-phase")).toHaveText("Klaar");
     await page.click("#stop-btn");
@@ -322,28 +320,20 @@ test.describe("Timer", () => {
       ],
     });
     await startFromHome(page);
-    await page.click("#skip-btn");
 
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
     await page.click("#done-set-btn");
 
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
-    await expect(page.locator("#timer-name")).toHaveText("Push-ups");
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Push-ups");
     await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 2");
     await page.click("#done-set-btn");
 
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 2");
     await page.click("#done-set-btn");
 
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
     await expect(page.locator("#timer-name")).toHaveText("Push-ups");
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 2");
     await page.click("#done-set-btn");
 
@@ -394,16 +384,13 @@ test.describe("Timer", () => {
       ],
     });
     await startFromHome(page);
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await page.click("#done-set-btn");
 
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Push-ups");
     await expect(page.locator("#timer-phase")).toHaveText("Set 1 van 1");
     await page.click("#done-set-btn");
 
-    await page.click("#skip-btn");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
     await expect(page.locator("#timer-phase")).toHaveText("Set 2 van 3");
     await page.click("#done-set-btn");
