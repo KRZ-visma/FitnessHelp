@@ -13,4 +13,8 @@ export const hooks = {
   renderExercises: () => {},
   /** @param {import('./exercises.js').Exercise} exercise */
   addExerciseToForm: (_exercise) => {},
+  /** @type {() => void} */
+  openStatistics: () => {},
+  /** @type {() => void} */
+  closeStatistics: () => {},
 };
