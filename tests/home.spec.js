@@ -350,7 +350,6 @@ test.describe("Home & dagprogramma", () => {
     });
     await startFromHome(page, "Kort");
     await page.click("#skip-btn");
-    await page.click("#skip-btn");
 
     await expect(page.locator("#timer")).toHaveAttribute("data-phase", "done");
     await page.click("#stop-btn");

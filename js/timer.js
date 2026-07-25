@@ -201,12 +201,18 @@ function beginPrep() {
     return;
   }
 
+  const prepTime = session.program.switch;
+  if (prepTime === 0) {
+    startWorkAfterPrep();
+    return;
+  }
+
   session.isRest = false;
   session.isPrep = true;
   session.isSwitch = false;
   session.paused = false;
-  session.remaining = PREP_SECONDS;
-  session.total = PREP_SECONDS;
+  session.remaining = prepTime;
+  session.total = prepTime;
   pauseBtn.textContent = "Pauze";
   doneSetBtn.hidden = true;
   pauseBtn.hidden = false;

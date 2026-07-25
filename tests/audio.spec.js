@@ -10,7 +10,7 @@ test.describe("Audio", () => {
     await createProgram(page, {
       programName: "Geluid",
       rest: 0,
-      switchSec: 0,
+      switchSec: 5,
       exercises: [
         { name: "Plank", sets: 1, duration: 5 },
         { name: "Squats", type: "reps", sets: 1, reps: 5 },
@@ -30,7 +30,7 @@ test.describe("Audio", () => {
       "start",
       "stop",
     ]);
-    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "prep");
+    await expect(page.locator("#timer")).toHaveAttribute("data-phase", "switch");
     await expect(page.locator("#timer-name")).toHaveText("Squats");
 
     await page.click("#skip-btn");
