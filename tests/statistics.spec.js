@@ -1,10 +1,9 @@
 import { test, expect } from "@playwright/test";
+import { clearAndReload, createProgram, startFromHome } from "./helpers";
 
 test.describe("Statistics", () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto("http://localhost:8080");
-    await page.evaluate(() => localStorage.clear());
-    await page.reload();
+    await clearAndReload(page);
   });
 
   test("statistics button appears on home screen", async ({ page }) => {
@@ -52,31 +51,18 @@ test.describe("Statistics", () => {
   });
 
   test("shows completed program in statistics after workout", async ({ page }) => {
-    // Create a program
-    await page.click("#manage-btn");
-    await page.click("#add-program-btn");
-    await page.fill("#program-name", "Test Workout");
-    await page.fill("#program-rest", "10");
-    await page.fill("#program-switch", "10");
-    
-    // Add an exercise via picker
-    await page.click("#add-segment-btn");
-    await page.click(".exercise-picker-add");
-    await page.fill(".modal input[placeholder*=\"Squats\"]", "Push-ups");
-    await page.click(".modal .segment-type");
-    await page.selectOption(".modal .segment-type", "reps");
-    await page.fill(".modal input[inputmode=\"numeric\"]", "3");
-    const repsInput = page.locator(".modal .segment-reps");
-    await repsInput.fill("10");
-    await page.click(".modal .btn-primary");
-    
-    // Save program
-    await page.click("#save-btn");
-    await page.click("#manage-done-btn");
+    // Create a program with exercises
+    await createProgram(page, {
+      programName: "Test Workout",
+      rest: 10,
+      switchSec: 10,
+      exercises: [
+        { name: "Push-ups", type: "reps", sets: 3, reps: 10 },
+      ],
+    });
     
     // Start and complete workout
-    const startBtn = page.locator(".day-start").first();
-    await startBtn.click();
+    await startFromHome(page, "Test Workout");
     
     // Skip prep
     await page.click("#skip-btn");
