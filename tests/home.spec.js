@@ -353,6 +353,33 @@ test.describe("Home & dagprogramma", () => {
     await expect(item.locator(".day-check")).toBeDisabled();
     await expect(item.locator(".day-check")).toBeChecked();
     await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
-    await expect(page.locator("#day-list .day-start")).toHaveCount(0);
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+  });
+
+  test("kan afgevinkt programma opnieuw starten", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Extra",
+      rest: 0,
+      switchSec: 0,
+      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+    });
+    await startFromHome(page, "Extra");
+    await page.click("#skip-btn");
+    await page.click("#stop-btn");
+
+    const item = page.locator("#day-list .day-item", { hasText: "Extra" });
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+
+    await startFromHome(page, "Extra");
+    await expect(page.locator("#timer")).toBeVisible();
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+    await page.click("#skip-btn");
+    await page.click("#stop-btn");
+
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-check")).toBeChecked();
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+    await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
   });
 });

@@ -283,9 +283,7 @@ export function renderHome() {
       name.className = "day-name";
       name.id = `day-name-${program.id}`;
       if (times > 1) {
-        const completed = done
-          ? times
-          : Math.min(times, getProgramCompletionsToday(program.id));
+        const completed = getProgramCompletionsToday(program.id);
         name.textContent = `${program.name} · ${completed}/${times}`;
       } else {
         name.textContent = program.name;
@@ -296,15 +294,13 @@ export function renderHome() {
       const start = document.createElement("button");
       start.type = "button";
       start.className = "btn btn-primary day-start";
-      start.textContent = "Start";
-      start.hidden = done;
+      start.textContent = done ? "Nog een keer" : "Start";
       start.addEventListener("click", () => {
         hooks.fillForm(program);
         hooks.startSession(program);
       });
 
-      li.append(check, body);
-      if (!done) li.append(start);
+      li.append(check, body, start);
       dayList.append(li);
     });
   }

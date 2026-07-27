@@ -161,8 +161,9 @@ main {
 }
 
 .day-start {
-  min-width: 4.5rem;
+  min-width: 5.75rem;
   align-self: center;
+  white-space: nowrap;
 }
 
 @media (max-width: 360px) {
