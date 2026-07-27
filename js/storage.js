@@ -82,28 +82,8 @@ export function getProgramCompletionsToday(programId) {
 }
 
 /**
- * @param {string} programId
- * @param {boolean} done
- * @param {number} [times=1]
- */
-export function setProgramDoneToday(programId, done, times = 1) {
-  const progress = loadDayProgress();
-  const set = new Set(progress.done);
-  const counts = { ...progress.counts };
-  const target = Math.max(1, Number(times) || 1);
-  if (done) {
-    set.add(programId);
-    counts[programId] = target;
-  } else {
-    set.delete(programId);
-    delete counts[programId];
-  }
-  saveDayProgress({ date: todayKey(), done: [...set], counts });
-  hooks.renderApp();
-}
-
-/**
- * Registreert één aparte afronding. Pas afgevinkt als count >= times.
+ * Registreert één aparte afronding (na starten én voltooien van een sessie).
+ * Pas afgevinkt als count >= times.
  * @param {string} programId
  * @param {number} [times=1]
  */
