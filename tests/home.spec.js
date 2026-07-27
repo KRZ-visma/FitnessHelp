@@ -81,7 +81,7 @@ test.describe("Home & dagprogramma", () => {
     await expect(page.locator("#timer-name")).toHaveText("Plank");
   });
 
-  test("toont meerdere programma’s en laat ze afvinken", async ({ page }) => {
+  test("toont meerdere programma’s zonder handmatig afvinken", async ({ page }) => {
     await createExercise(page, { name: "Jumping jacks" });
     await createExercise(page, { name: "Squats" });
     await createExercise(page, { name: "Plank" });
@@ -115,15 +115,9 @@ test.describe("Home & dagprogramma", () => {
     ).toHaveText(["Plank"]);
 
     const kracht = page.locator("#day-list .day-item", { hasText: "Kracht" });
-    await kracht.locator(".day-check").check();
-    await expect(kracht).toHaveClass(/is-done/);
-    await expect(page.locator("#home-meta")).toContainText("1 van 3 klaar");
-    await expect(kracht.locator(".day-start")).toHaveCount(0);
-    await expect(page.locator("#day-list .day-start")).toHaveCount(2);
-
-    await kracht.locator(".day-check").uncheck();
+    await expect(kracht.locator(".day-check")).toBeDisabled();
     await expect(kracht).not.toHaveClass(/is-done/);
-    await expect(page.locator("#home-meta")).toContainText("3 programma’s");
+    await expect(page.locator("#day-list .day-start")).toHaveCount(3);
   });
 
   test("opent opgeslagen programma via klik op de lijst", async ({ page }) => {
@@ -356,6 +350,7 @@ test.describe("Home & dagprogramma", () => {
 
     const item = page.locator("#day-list .day-item", { hasText: "Kort" });
     await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-check")).toBeDisabled();
     await expect(item.locator(".day-check")).toBeChecked();
     await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
     await expect(page.locator("#day-list .day-start")).toHaveCount(0);
