@@ -115,6 +115,12 @@ main {
   margin: 0.2rem 0 0;
   accent-color: #2f6b45;
   flex-shrink: 0;
+  pointer-events: none;
+}
+
+.day-check:disabled {
+  opacity: 1;
+  cursor: default;
 }
 
 .day-body {
@@ -128,7 +134,6 @@ main {
   font-size: 1.1rem;
   letter-spacing: -0.02em;
   line-height: 1.15;
-  cursor: pointer;
 }
 
 .day-exercises {

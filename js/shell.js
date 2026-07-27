@@ -27,7 +27,6 @@ import {
   loadPrograms,
   moveProgramInDay,
   savePrograms,
-  setProgramDoneToday,
   syncDayOrder,
 } from "./storage.js";
 import { resolveExercise } from "./migration.js";
@@ -268,27 +267,29 @@ export function renderHome() {
       check.type = "checkbox";
       check.className = "day-check";
       check.checked = done;
+      check.disabled = true;
+      check.tabIndex = -1;
       check.id = `day-check-${program.id}`;
-      check.setAttribute("aria-label", `${program.name} afvinken`);
+      check.setAttribute(
+        "aria-label",
+        done ? `${program.name} afgerond` : `${program.name} nog niet afgerond`
+      );
       const times = Math.max(1, Number(program.times) || 1);
-      check.addEventListener("change", () => {
-        setProgramDoneToday(program.id, check.checked, times);
-      });
 
       const body = document.createElement("div");
       body.className = "day-body";
 
-      const label = document.createElement("label");
-      label.className = "day-name";
-      label.htmlFor = check.id;
+      const name = document.createElement("div");
+      name.className = "day-name";
+      name.id = `day-name-${program.id}`;
       if (times > 1) {
         const completed = getProgramCompletionsToday(program.id);
-        label.textContent = `${program.name} · ${completed}/${times}`;
+        name.textContent = `${program.name} · ${completed}/${times}`;
       } else {
-        label.textContent = program.name;
+        name.textContent = program.name;
       }
 
-      body.append(label, buildExerciseList(program));
+      body.append(name, buildExerciseList(program));
 
       const start = document.createElement("button");
       start.type = "button";
