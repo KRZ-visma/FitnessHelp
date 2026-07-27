@@ -103,24 +103,24 @@ export function setProgramDoneToday(programId, done, times = 1) {
 }
 
 /**
- * Registreert één aparte afronding. Pas afgevinkt als count >= times.
+ * Registreert één aparte afronding. Afgevinkt vanaf count >= times;
+ * extra sessies daarna blijven meetellen.
  * @param {string} programId
  * @param {number} [times=1]
  */
 export function recordProgramCompletion(programId, times = 1) {
   if (!programId) return;
   const progress = loadDayProgress();
-  if (progress.done.includes(programId)) return;
 
   const target = Math.max(1, Number(times) || 1);
   const counts = { ...progress.counts };
   const next = (counts[programId] ?? 0) + 1;
   counts[programId] = next;
 
-  const done = [...progress.done];
-  if (next >= target) done.push(programId);
+  const done = new Set(progress.done);
+  if (next >= target) done.add(programId);
 
-  saveDayProgress({ date: todayKey(), done, counts });
+  saveDayProgress({ date: todayKey(), done: [...done], counts });
 }
 
 /**

@@ -278,8 +278,17 @@ test.describe("Timer", () => {
 
     await expect(item).toHaveClass(/is-done/);
     await expect(item.locator(".day-name")).toHaveText("Dubbel · 2/2");
-    await expect(item.locator(".day-start")).toHaveCount(0);
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
     await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
+
+    await startFromHome(page, "Dubbel");
+    await page.click("#skip-btn");
+    await expect(page.locator("#timer-phase")).toHaveText("Klaar");
+    await page.click("#stop-btn");
+
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-name")).toHaveText("Dubbel · 3/2");
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
   });
 
   test("wisselt tussen oefeningen met programma-switch", async ({ page }) => {

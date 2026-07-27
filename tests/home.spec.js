@@ -118,11 +118,12 @@ test.describe("Home & dagprogramma", () => {
     await kracht.locator(".day-check").check();
     await expect(kracht).toHaveClass(/is-done/);
     await expect(page.locator("#home-meta")).toContainText("1 van 3 klaar");
-    await expect(kracht.locator(".day-start")).toHaveCount(0);
-    await expect(page.locator("#day-list .day-start")).toHaveCount(2);
+    await expect(kracht.locator(".day-start")).toHaveText("Nog een keer");
+    await expect(page.locator("#day-list .day-start")).toHaveCount(3);
 
     await kracht.locator(".day-check").uncheck();
     await expect(kracht).not.toHaveClass(/is-done/);
+    await expect(kracht.locator(".day-start")).toHaveText("Start");
     await expect(page.locator("#home-meta")).toContainText("3 programma’s");
   });
 
@@ -358,6 +359,33 @@ test.describe("Home & dagprogramma", () => {
     await expect(item).toHaveClass(/is-done/);
     await expect(item.locator(".day-check")).toBeChecked();
     await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
-    await expect(page.locator("#day-list .day-start")).toHaveCount(0);
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+  });
+
+  test("kan afgevinkt programma opnieuw starten", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Extra",
+      rest: 0,
+      switchSec: 0,
+      exercises: [{ name: "Plank", sets: 1, duration: 5 }],
+    });
+    await startFromHome(page, "Extra");
+    await page.click("#skip-btn");
+    await page.click("#stop-btn");
+
+    const item = page.locator("#day-list .day-item", { hasText: "Extra" });
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+
+    await startFromHome(page, "Extra");
+    await expect(page.locator("#timer")).toBeVisible();
+    await expect(page.locator("#timer-name")).toHaveText("Plank");
+    await page.click("#skip-btn");
+    await page.click("#stop-btn");
+
+    await expect(item).toHaveClass(/is-done/);
+    await expect(item.locator(".day-check")).toBeChecked();
+    await expect(item.locator(".day-start")).toHaveText("Nog een keer");
+    await expect(page.locator("#home-meta")).toHaveText("Alles afgevinkt");
   });
 });
