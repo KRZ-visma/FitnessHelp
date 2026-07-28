@@ -247,4 +247,93 @@ test.describe("Statistics", () => {
     const activeDays = page.locator(".statistics-activity-day.is-active");
     await expect(activeDays).toHaveCount(3);
   });
+
+  test("counts multiple same-day completions separately", async ({ page }) => {
+    await page.evaluate(() => {
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const y = yesterday.getFullYear();
+      const m = String(yesterday.getMonth() + 1).padStart(2, "0");
+      const d = String(yesterday.getDate()).padStart(2, "0");
+      const yesterdayKey = `${y}-${m}-${d}`;
+
+      localStorage.setItem(
+        "fitnesshelp-workouts-v1",
+        JSON.stringify([
+          {
+            id: "prog-1",
+            name: "Triple Set",
+            rest: 15,
+            switch: 10,
+            times: 3,
+            setOrder: "consecutive",
+            items: [{ exerciseId: "ex-1" }],
+          },
+        ])
+      );
+      localStorage.setItem(
+        "fitnesshelp-exercises-v1",
+        JSON.stringify([
+          {
+            id: "ex-1",
+            name: "Lunges",
+            type: "reps",
+            sets: 2,
+            reps: 10,
+          },
+        ])
+      );
+      // 2 afrondingen op dezelfde dag (van de 3 geplande keren)
+      localStorage.setItem(
+        "fitnesshelp-history-v1",
+        JSON.stringify([
+          { date: yesterdayKey, programIds: ["prog-1", "prog-1"] },
+        ])
+      );
+    });
+
+    await page.reload();
+    await page.click("#statistics-btn");
+
+    const bigNumber = page.locator(".statistics-big-number");
+    await expect(bigNumber).toContainText("2");
+
+    const programCount = page.locator(".statistics-program-count");
+    await expect(programCount).toHaveText("2×");
+
+    await page.locator(".statistics-program-link").click();
+    const completedStat = page.locator(".statistics-stats-item").filter({
+      hasText: "keer",
+    });
+    await expect(completedStat.locator("dd")).toHaveText("2 keer");
+
+    // Activiteitsgrid: één actieve dag (niet twee)
+    const activeDays = page.locator(".statistics-activity-day.is-active");
+    await expect(activeDays).toHaveCount(1);
+  });
+
+  test("records each completion when finishing the same program twice", async ({
+    page,
+  }) => {
+    await createProgram(page, {
+      programName: "Dubbel",
+      rest: 10,
+      switchSec: 10,
+      times: 2,
+      exercises: [{ name: "Burpees", type: "reps", sets: 1, reps: 5 }],
+    });
+
+    for (let i = 0; i < 2; i += 1) {
+      await startFromHome(page, "Dubbel");
+      await page.click("#skip-btn");
+      await page.click("#done-set-btn");
+      await expect(page.locator(".timer-phase")).toHaveText("Klaar");
+      await page.click("#stop-btn");
+      await expect(page.locator("#home")).toBeVisible();
+    }
+
+    await page.click("#statistics-btn");
+    await expect(page.locator(".statistics-big-number")).toContainText("2");
+    await expect(page.locator(".statistics-program-count")).toHaveText("2×");
+  });
 });
