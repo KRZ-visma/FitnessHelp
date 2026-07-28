@@ -6,6 +6,8 @@ const HISTORY_KEY = "fitnesshelp-history-v1";
 const HISTORY_DAYS = 90;
 
 /**
+ * Per dag: lijst van afgeronde programma’s.
+ * Dezelfde programId mag meerdere keren voorkomen (één entry per afronding).
  * @typedef {{
  *   date: string,
  *   programIds: string[]
@@ -89,9 +91,11 @@ export function saveHistory(history) {
 }
 
 /**
+ * Registreert één afronding. Meerdere afrondingen op dezelfde dag tellen apart.
  * @param {string} programId
  */
 export function recordProgramInHistory(programId) {
+  if (!programId || typeof programId !== "string") return;
   const today = todayDate();
   const history = loadHistory();
   let dayRecord = history.find((entry) => entry.date === today);
@@ -99,9 +103,7 @@ export function recordProgramInHistory(programId) {
     dayRecord = { date: today, programIds: [] };
     history.push(dayRecord);
   }
-  if (!dayRecord.programIds.includes(programId)) {
-    dayRecord.programIds.push(programId);
-  }
+  dayRecord.programIds.push(programId);
   saveHistory(history);
 }
 
@@ -116,21 +118,30 @@ export function getRecentHistory(days) {
 }
 
 /**
+ * Aantal afgeronde trainingen (elke programma-afronding telt apart).
  * @param {number} days
  * @returns {number}
  */
 export function getWorkoutCount(days) {
-  return getRecentHistory(days).length;
+  return getRecentHistory(days).reduce(
+    (total, entry) => total + entry.programIds.length,
+    0
+  );
 }
 
 /**
+ * Aantal keer dat dit programma is afgerond (meerdere keren per dag tellen apart).
  * @param {string} programId
  * @param {number} [days]
  * @returns {number}
  */
 export function getProgramCompletionCount(programId, days) {
   const history = days ? getRecentHistory(days) : loadHistory();
-  return history.filter((entry) => entry.programIds.includes(programId)).length;
+  return history.reduce(
+    (total, entry) =>
+      total + entry.programIds.filter((id) => id === programId).length,
+    0
+  );
 }
 
 /**
@@ -225,9 +236,12 @@ export function getExerciseStats() {
   const result = [];
 
   stats.forEach(({ name, sets, programIds }) => {
-    const usageCount = history.filter((entry) =>
-      entry.programIds.some((id) => programIds.has(id))
-    ).length;
+    let usageCount = 0;
+    history.forEach((entry) => {
+      entry.programIds.forEach((id) => {
+        if (programIds.has(id)) usageCount += 1;
+      });
+    });
     result.push({ name, sets: sets * usageCount, programId: "" });
   });
 
