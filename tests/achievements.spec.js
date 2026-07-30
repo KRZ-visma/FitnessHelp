@@ -37,11 +37,11 @@ test.describe("Achievements", () => {
     const lockedBadges = page.locator(".achievement-badge.is-locked");
     const unlockedBadges = page.locator(".achievement-badge.is-unlocked");
 
-    await expect(lockedBadges).toHaveCount(10);
+    await expect(lockedBadges).toHaveCount(11);
     await expect(unlockedBadges).toHaveCount(0);
 
     const progress = page.locator(".achievements-progress");
-    await expect(progress).toContainText("0 van 10");
+    await expect(progress).toContainText("0 van 11");
     await expect(progress).toContainText("0%");
   });
 
@@ -75,7 +75,7 @@ test.describe("Achievements", () => {
     );
 
     const progress = page.locator(".achievements-progress");
-    await expect(progress).toContainText("1 van 10");
+    await expect(progress).toContainText("1 van 11");
   });
 
   test("displays badges in categories", async ({ page }) => {
@@ -153,7 +153,7 @@ test.describe("Achievements", () => {
     expect(titles).toContain("Doorzetter");
 
     const progress = page.locator(".achievements-progress");
-    await expect(progress).toContainText("3 van 10");
+    await expect(progress).toContainText("3 van 11");
   });
 
   test("unlocks 3-day streak badge", async ({ page }) => {
