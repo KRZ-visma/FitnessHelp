@@ -12,11 +12,14 @@ import {
 } from "./statistics.js";
 import { hooks } from "./hooks.js";
 import { renderAchievements } from "./achievements-ui.js";
+import { checkAndUnlockAchievements } from "./achievements.js";
 
 /**
  * @param {HTMLElement} container
  */
 export function renderStatisticsOverview(container) {
+  checkAndUnlockAchievements();
+  
   const programs = loadPrograms();
   const today30 = getWorkoutCount(30);
   const activityMap7 = getActivityMap(7);

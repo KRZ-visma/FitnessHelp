@@ -107,14 +107,6 @@ const BADGE_DEFINITIONS = [
     category: "dedication",
     check: () => checkFullWeek(),
   },
-  {
-    id: "morning-hero",
-    title: "Ochtendmens",
-    description: "5 trainingen voor 09:00 gestart",
-    icon: "🌅",
-    category: "dedication",
-    check: () => false,
-  },
 ];
 
 /**
