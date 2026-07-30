@@ -11,6 +11,7 @@ import {
   formatRelativeDate,
 } from "./statistics.js";
 import { hooks } from "./hooks.js";
+import { renderAchievements } from "./achievements-ui.js";
 
 /**
  * @param {HTMLElement} container
@@ -63,6 +64,8 @@ export function renderStatisticsOverview(container) {
   });
   section7.appendChild(weekGrid);
   overview.appendChild(section7);
+
+  renderAchievements(overview);
 
   if (topPrograms.length) {
     const sectionPrograms = document.createElement("section");

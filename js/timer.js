@@ -21,6 +21,8 @@ import { recordProgramCompletion } from "./storage.js";
 import { recordProgramInHistory } from "./statistics.js";
 import { resolveExercise } from "./migration.js";
 import { formatTime } from "./util.js";
+import { checkAndUnlockAchievements } from "./achievements.js";
+import { showAchievementNotifications } from "./notifications.js";
 
 /**
  * @typedef {{ itemIndex: number, setIndex: number }} ScheduleEntry
@@ -262,6 +264,14 @@ export function endSession(finished) {
     const times = Math.max(1, Number(session.program.times) || 1);
     recordProgramCompletion(session.program.id, times);
     recordProgramInHistory(session.program.id);
+    
+    const newAchievements = checkAndUnlockAchievements();
+    if (newAchievements.length) {
+      setTimeout(() => {
+        showAchievementNotifications(newAchievements);
+      }, 1000);
+    }
+    
     session.isRest = false;
     session.isPrep = false;
     session.isSwitch = false;
