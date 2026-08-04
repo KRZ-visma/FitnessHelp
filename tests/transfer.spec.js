@@ -132,8 +132,57 @@ test.describe("Import / export", () => {
     expect(stored.programs).toHaveLength(2);
     const replaced = stored.programs.find((p) => p.name === "Bestaand");
     expect(replaced.items[0]).toMatchObject({ exerciseId: "ex_burpees" });
-    expect(replaced).toMatchObject({ rest: 15, switch: 6, times: 1, setOrder: "consecutive" });
+    expect(replaced).toMatchObject({
+      rest: 15,
+      switch: 6,
+      times: 1,
+      setOrder: "consecutive",
+      active: true,
+    });
     expect(stored.exercises.some((ex) => ex.name === "Burpees")).toBe(true);
+  });
+
+  test("behoudt actief-status bij import", async ({ page }) => {
+    await openTransferTab(page);
+    const payload = {
+      version: 2,
+      app: "fitnesshelp",
+      exercises: [
+        {
+          id: "ex_run",
+          name: "Hardlopen",
+          type: "timer",
+          sets: 1,
+          duration: 60,
+        },
+      ],
+      programs: [
+        {
+          id: "inactive_prog",
+          name: "Herstel",
+          rest: 10,
+          switch: 5,
+          active: false,
+          items: [{ exerciseId: "ex_run" }],
+        },
+      ],
+    };
+
+    await page.setInputFiles("#import-file", {
+      name: "inactive.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(payload)),
+    });
+
+    await expect(page.locator("#transfer-status")).toHaveText("1 programma geïmporteerd.");
+    await page.click("#manage-tab-programs");
+    const item = page.locator("#saved-list .saved-item", { hasText: "Herstel" });
+    await expect(item).toHaveClass(/is-inactive/);
+    await expect(item.locator(".saved-active-toggle")).toHaveText("Uit");
+
+    await page.click("#manage-done-btn");
+    await expect(page.locator("#home-meta")).toHaveText("Geen actieve programma’s");
+    await expect(page.locator("#day-list .day-item")).toHaveCount(0);
   });
 
   test("importeert legacy inline items naar bibliotheek-refs", async ({ page }) => {
