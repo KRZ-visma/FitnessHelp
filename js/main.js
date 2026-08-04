@@ -95,8 +95,10 @@ function saveCurrentProgram() {
   );
   if (existingIndex >= 0) {
     program.id = programs[existingIndex].id;
+    program.active = programs[existingIndex].active;
     programs[existingIndex] = program;
   } else {
+    program.active = true;
     programs.push(program);
   }
   savePrograms(programs);

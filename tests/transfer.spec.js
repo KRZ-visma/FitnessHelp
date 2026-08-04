@@ -51,6 +51,7 @@ test.describe("Import / export", () => {
       switch: 15,
       times: 1,
       setOrder: "consecutive",
+      active: true,
     });
     expect(payload.programs[0].items[0]).toHaveProperty("exerciseId");
     expect(payload.exercises[0]).toMatchObject({

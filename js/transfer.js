@@ -95,6 +95,7 @@ export function programsFromEntries(entries) {
       switch: 15,
       times: 1,
       setOrder: "consecutive",
+      active: true,
       items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
     });
   }

@@ -13,6 +13,7 @@ import {
   manageTabPrograms,
   manageTabTransfer,
   programNameInput,
+  savedActiveHint,
   savedEmpty,
   savedList,
   setupEl,
@@ -27,6 +28,7 @@ import {
   loadPrograms,
   moveProgramInDay,
   savePrograms,
+  setProgramActive,
   syncDayOrder,
 } from "./storage.js";
 import { resolveExercise } from "./migration.js";
@@ -122,10 +124,25 @@ export function renderSaved() {
 
   savedList.innerHTML = "";
   savedEmpty.hidden = ordered.length > 0;
+  if (savedActiveHint) savedActiveHint.hidden = ordered.length === 0;
 
   ordered.forEach((program, index) => {
     const li = document.createElement("li");
     li.className = "saved-item";
+    if (!program.active) li.classList.add("is-inactive");
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "btn btn-ghost saved-active-toggle";
+    toggle.setAttribute("aria-pressed", program.active ? "true" : "false");
+    toggle.textContent = program.active ? "Aan" : "Uit";
+    toggle.setAttribute(
+      "aria-label",
+      program.active ? `${program.name} deactiveren` : `${program.name} activeren`
+    );
+    toggle.addEventListener("click", () => {
+      setProgramActive(program.id, !program.active);
+    });
 
     const names = program.items
       .map((item) => {
@@ -190,7 +207,7 @@ export function renderSaved() {
     });
 
     actions.append(upBtn, downBtn, remove);
-    li.append(openBtn, actions);
+    li.append(toggle, openBtn, actions);
     savedList.append(li);
   });
 }
@@ -225,9 +242,10 @@ function buildExerciseList(program) {
 }
 
 export function renderHome() {
-  const programs = dayPrograms(loadPrograms());
+  const allPrograms = loadPrograms();
+  const programs = dayPrograms(allPrograms);
 
-  if (!programs.length) {
+  if (!allPrograms.length) {
     homeEl.hidden = true;
     homeName.textContent = "Vandaag";
     homeMeta.textContent = "";
@@ -242,6 +260,20 @@ export function renderHome() {
   homeEl.hidden = false;
   homeName.textContent = "Vandaag";
 
+  if (taglineEl) taglineEl.hidden = true;
+
+  if (!programs.length) {
+    homeMeta.textContent = "Geen actieve programma’s";
+    if (dayList) {
+      dayList.innerHTML = "";
+      const empty = document.createElement("li");
+      empty.className = "day-empty";
+      empty.textContent = "Zet in Beheer programma’s aan om ze hier te tonen.";
+      dayList.append(empty);
+    }
+    return null;
+  }
+
   const doneCount = programs.filter((p) => isProgramDoneToday(p.id)).length;
   const total = programs.length;
   homeMeta.textContent =
@@ -252,8 +284,6 @@ export function renderHome() {
       : doneCount === total
         ? "Alles afgevinkt"
         : `${doneCount} van ${total} klaar`;
-
-  if (taglineEl) taglineEl.hidden = true;
 
   if (dayList) {
     dayList.innerHTML = "";

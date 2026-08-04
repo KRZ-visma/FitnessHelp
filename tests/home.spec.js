@@ -45,6 +45,7 @@ test.describe("Home & dagprogramma", () => {
       name: "Push",
       rest: 20,
       switch: 15,
+      active: true,
     });
     expect(stored.programs[0].items).toHaveLength(1);
     expect(stored.programs[0].items[0]).toHaveProperty("exerciseId");
@@ -58,13 +59,90 @@ test.describe("Home & dagprogramma", () => {
     expect(stored.favorite).toBeNull();
 
     await openManage(page);
+    await expect(page.locator("#saved-title")).toHaveText("Programma’s beheren");
+    await expect(page.locator("#saved-active-hint")).toBeVisible();
+    await expect(page.locator("#saved-active-hint")).toContainText("actieve");
     await expect(page.locator("#saved-list .saved-item")).toHaveCount(1);
     await expect(page.locator("#saved-list")).toContainText("Push");
+    await expect(page.locator("#saved-list .saved-active-toggle")).toHaveText("Aan");
+    await expect(page.locator("#saved-list .saved-active-toggle")).toHaveAttribute(
+      "aria-pressed",
+      "true"
+    );
     await expect(page.locator("#saved-list")).not.toContainText("Favoriet");
     await expect(
       page.locator("#saved-list .saved-item").locator("button", { hasText: "Favoriet" })
     ).toHaveCount(0);
     await expect(page.locator("body")).toHaveClass(/is-managing/);
+  });
+
+  test("kan programma’s activeren en deactiveren voor Vandaag", async ({ page }) => {
+    await createExercise(page, { name: "Jumping jacks" });
+    await createExercise(page, { name: "Squats" });
+
+    await openProgramForm(page);
+    await page.fill("#program-name", "Warm-up");
+    await addExerciseToProgram(page, "Jumping jacks");
+    await page.click("#save-btn");
+
+    await openProgramForm(page);
+    await page.fill("#program-name", "Kracht");
+    await addExerciseToProgram(page, "Squats");
+    await page.click("#save-btn");
+
+    await page.click("#manage-done-btn");
+    await expect(page.locator("#day-list .day-item")).toHaveCount(2);
+
+    await openManage(page);
+    const kracht = page.locator("#saved-list .saved-item", { hasText: "Kracht" });
+    await expect(kracht.locator(".saved-active-toggle")).toHaveText("Aan");
+    await kracht.locator(".saved-active-toggle").click();
+    await expect(kracht).toHaveClass(/is-inactive/);
+    await expect(kracht.locator(".saved-active-toggle")).toHaveText("Uit");
+    await expect(kracht.locator(".saved-active-toggle")).toHaveAttribute(
+      "aria-pressed",
+      "false"
+    );
+
+    const stored = await page.evaluate(() =>
+      JSON.parse(localStorage.getItem("fitnesshelp-workouts-v1") || "[]")
+    );
+    expect(stored.find((p) => p.name === "Kracht").active).toBe(false);
+    expect(stored.find((p) => p.name === "Warm-up").active).toBe(true);
+
+    await page.click("#manage-done-btn");
+    await expect(page.locator("#day-list .day-item")).toHaveCount(1);
+    await expect(page.locator("#day-list")).toContainText("Warm-up");
+    await expect(page.locator("#day-list")).not.toContainText("Kracht");
+    await expect(page.locator("#home-meta")).toContainText("1 programma");
+
+    await openManage(page);
+    await page
+      .locator("#saved-list .saved-item", { hasText: "Warm-up" })
+      .locator(".saved-active-toggle")
+      .click();
+    await page
+      .locator("#saved-list .saved-item", { hasText: "Kracht" })
+      .locator(".saved-active-toggle")
+      .click();
+    await page.click("#manage-done-btn");
+
+    await expect(page.locator("#day-list .day-item")).toHaveCount(1);
+    await expect(page.locator("#day-list")).toContainText("Kracht");
+    await expect(page.locator("#day-list")).not.toContainText("Warm-up");
+
+    await openManage(page);
+    await page
+      .locator("#saved-list .saved-item", { hasText: "Kracht" })
+      .locator(".saved-active-toggle")
+      .click();
+    await page.click("#manage-done-btn");
+
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#home-meta")).toHaveText("Geen actieve programma’s");
+    await expect(page.locator("#day-list .day-empty")).toContainText("Beheer");
+    await expect(page.locator("#day-list .day-item")).toHaveCount(0);
+    await expect(page.locator("#manage-btn")).toBeVisible();
   });
 
   test("start programma vanaf home", async ({ page }) => {
@@ -299,6 +377,7 @@ test.describe("Home & dagprogramma", () => {
       rest: 5,
       switch: 15,
       times: 1,
+      active: true,
     });
     expect(stored.programs[0].items).toHaveLength(2);
     expect(stored.programs[0].items.every((item) => item.exerciseId)).toBe(true);

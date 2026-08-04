@@ -20,5 +20,5 @@ export const TAGLINE_EMPTY = "Dagprogramma bouwen. Timer of sets & keer. Lokaal 
  * @typedef {TimerItem | RepsItem} ProgramItem
  * @typedef {{ exerciseId: string }} ProgramExerciseRef
  * @typedef {'consecutive' | 'rounds'} SetOrder
- * @typedef {{ id: string, name: string, rest: number, switch: number, times: number, setOrder: SetOrder, items: ProgramExerciseRef[] }} Program
+ * @typedef {{ id: string, name: string, rest: number, switch: number, times: number, setOrder: SetOrder, active: boolean, items: ProgramExerciseRef[] }} Program
  */
