@@ -39,6 +39,19 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 
 ## Werkwijze
 
+### Idee → goedkeuring → bouw
+
+1. **Eerst een kort idee tonen** — wat je wilt doen, waarom, welke modules/bestanden, en eventuele risico’s (storage, timer, PWA, schema). Geen code, geen branch, geen commit/PR in deze fase.
+2. **Stoppen en wachten** op expliciet akkoord van de gebruiker, bijvoorbeeld: **“ja bouwen”**, “bouw het”, “go”, “akkoord”.
+3. **Pas daarna bouwen** — zonder die bevestiging niet implementeren, ook niet “even voorbereiden”.
+4. **Uitzonderingen:**
+   - Pure vragen / uitleg → alleen antwoorden, geen bouw.
+   - Expliciet “bouw direct …” in dezelfde opdracht → mag meteen.
+   - **Finetuning** van een al goedgekeurd idee (kleine bijstelling binnen dezelfde scope) → mag door zonder nieuwe goedkeuring.
+   - Alles wat effectief een **nieuw idee** is (andere richting, extra feature, ander domein, andere aanpak) → opnieuw idee tonen en wachten op goedkeuring.
+
+### Uitvoering (na goedkeuring)
+
 1. Kleine, gerichte diffs — alleen wat de taak vraagt; **één feature = bij voorkeur één domein-module**
 2. Wijzigingen aan timer/formulier/localStorage → Playwright-tests in `tests/` updaten of uitbreiden (juiste `*.spec.js`)
 3. Voor PR: `npm ci && npx playwright install chromium && npm test` moet **slagen**. De GitHub Action **Playwright** op de PR is verplicht groen vóór merge; bij falen eerst fixen en opnieuw pushen
@@ -52,6 +65,7 @@ Entry: `index.html` → `js/main.js`. `styles.css` importeert alleen de CSS-modu
 
 ## Niet doen
 
+- Code wijzigen zonder voorafgaand idee én expliciete goedkeuring (“ja bouwen” e.d.), tenzij een uitzondering hierboven geldt
 - Dependencies of een bundler toevoegen “voor later”
 - Alles weer terugzetten in één `app.js`
 - localStorage-schema stilzwijgend wijzigen
