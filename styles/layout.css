@@ -166,6 +166,17 @@ main {
   white-space: nowrap;
 }
 
+.day-empty {
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0.85rem 0 0.25rem;
+  color: var(--ink-soft);
+  font-size: 0.98rem;
+  font-weight: 500;
+  line-height: 1.4;
+  border-top: 1px solid var(--line);
+}
+
 @media (max-width: 360px) {
   .day-item {
     grid-template-columns: auto 1fr;

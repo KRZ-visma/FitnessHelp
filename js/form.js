@@ -230,6 +230,7 @@ export function readForm() {
     switch: programSwitch,
     times: programTimes,
     setOrder,
+    active: true,
     items,
   };
 }

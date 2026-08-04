@@ -216,6 +216,8 @@ export function normalizeProgram(raw) {
   /** @type {import('./constants.js').SetOrder} */
   const setOrder = obj.setOrder === "rounds" ? "rounds" : "consecutive";
 
+  const active = typeof obj.active === "boolean" ? obj.active : true;
+
   return {
     id,
     name,
@@ -223,6 +225,7 @@ export function normalizeProgram(raw) {
     switch: clampInt(switchSec, 0, 600),
     times: clampInt(times, 1, 99),
     setOrder,
+    active,
     items: /** @type {import('./constants.js').Program['items']} */ (items),
   };
 }
@@ -275,6 +278,7 @@ export function loadPrograms() {
         switch: 15,
         times: 1,
         setOrder: "consecutive",
+        active: true,
         items: /** @type {import('./constants.js').Program['items']} */ (migratedItems),
       });
     }
@@ -362,7 +366,7 @@ export function syncDayOrder(programs) {
 }
 
 /**
- * Programma’s in oefendag-volgorde.
+ * Actieve programma’s in oefendag-volgorde (voor Vandaag).
  * @param {import('./constants.js').Program[]} programs
  * @returns {import('./constants.js').Program[]}
  */
@@ -370,7 +374,21 @@ export function dayPrograms(programs) {
   if (!programs.length) return [];
   const order = syncDayOrder(programs);
   const byId = new Map(programs.map((p) => [p.id, p]));
-  return order.map((id) => byId.get(id)).filter(Boolean);
+  return order.map((id) => byId.get(id)).filter((p) => p && p.active);
+}
+
+/**
+ * @param {string} programId
+ * @param {boolean} active
+ */
+export function setProgramActive(programId, active) {
+  if (!programId) return;
+  const programs = loadPrograms();
+  const index = programs.findIndex((p) => p.id === programId);
+  if (index < 0) return;
+  programs[index] = { ...programs[index], active: Boolean(active) };
+  savePrograms(programs);
+  hooks.renderApp();
 }
 
 /**

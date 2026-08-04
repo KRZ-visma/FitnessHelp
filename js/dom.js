@@ -40,6 +40,7 @@ export const skipBtn = document.getElementById("skip-btn");
 export const stopBtn = document.getElementById("stop-btn");
 
 export const savedEmpty = document.getElementById("saved-empty");
+export const savedActiveHint = document.getElementById("saved-active-hint");
 export const savedList = document.getElementById("saved-list");
 export const exportBtn = document.getElementById("export-btn");
 export const importBtn = document.getElementById("import-btn");
