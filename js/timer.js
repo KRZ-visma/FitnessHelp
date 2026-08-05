@@ -10,17 +10,15 @@ import {
   timerBar,
   timerClock,
   timerEl,
-  timerMeta,
   timerName,
   timerPhase,
-  timerProgram,
   timerProgress,
 } from "./dom.js";
 import { hooks } from "./hooks.js";
 import { recordProgramCompletion } from "./storage.js";
 import { recordProgramInHistory } from "./statistics.js";
 import { resolveExercise } from "./migration.js";
-import { formatTime } from "./util.js";
+import { formatSeconds } from "./util.js";
 
 /**
  * @typedef {{ itemIndex: number, setIndex: number }} ScheduleEntry
@@ -128,15 +126,6 @@ function goToScheduleIndex(index) {
   session.scheduleIndex = index;
   session.itemIndex = entry.itemIndex;
   session.setIndex = entry.setIndex;
-}
-
-/** @param {import('./constants.js').Program} program */
-function programTitle(program, itemIndex) {
-  const parts = [program.name];
-  if (program.items.length > 1) {
-    parts.push(`${itemIndex + 1}/${program.items.length}`);
-  }
-  return parts.join(" · ");
 }
 
 /** @param {import('./constants.js').Program} program */
@@ -269,13 +258,11 @@ export function endSession(finished) {
     session.total = 1;
     timerEl.dataset.phase = "done";
     timerEl.dataset.mode = "done";
-    timerProgram.textContent = session.program.name;
     timerPhase.textContent = "Klaar";
-    timerClock.textContent = "0:00";
+    timerClock.textContent = "0";
     timerClock.classList.remove("is-reps");
     timerBar.style.transform = "scaleX(0)";
     timerProgress.hidden = false;
-    timerMeta.textContent = `${session.program.items.length} onderdelen afgerond`;
     pauseBtn.hidden = true;
     skipBtn.hidden = true;
     doneSetBtn.hidden = true;
@@ -296,30 +283,27 @@ export function endSession(finished) {
 
 function updateTimerUI() {
   if (!session || timerEl.dataset.phase === "done") return;
-  const { setIndex, isRest, isPrep, isSwitch, remaining, total, itemIndex, program } = session;
+  const { setIndex, isRest, isPrep, isSwitch, remaining, total, program } = session;
 
   if (isSwitch) {
     const nextEntry = nextScheduleEntry();
     if (!nextEntry) return;
     const next = program.items[nextEntry.itemIndex];
     if (!next) return;
-    timerProgram.textContent = programTitle(program, nextEntry.itemIndex);
     timerName.textContent = next.name;
     timerEl.dataset.mode = "timer";
     timerEl.dataset.phase = "switch";
     timerClock.classList.remove("is-reps");
     timerPhase.textContent = "Wisselen";
-    timerClock.textContent = formatTime(remaining);
+    timerClock.textContent = formatSeconds(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
-    timerMeta.textContent = `Volgende: ${next.name} · set ${nextEntry.setIndex}`;
     return;
   }
 
   const item = currentItem();
   if (!item) return;
 
-  timerProgram.textContent = programTitle(program, itemIndex);
   timerName.textContent = item.name;
 
   if (isPrep) {
@@ -327,28 +311,20 @@ function updateTimerUI() {
     timerEl.dataset.phase = "prep";
     timerClock.classList.remove("is-reps");
     timerPhase.textContent = "Klaar maken";
-    timerClock.textContent = formatTime(remaining);
+    timerClock.textContent = formatSeconds(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
-    timerMeta.textContent =
-      item.type === "reps"
-        ? `Daarna: set ${setIndex} · ${item.reps}×`
-        : `Daarna: set ${setIndex} · ${item.duration}s`;
     return;
   }
 
   if (isRest) {
-    const next = nextScheduleEntry();
     timerEl.dataset.mode = item.type === "reps" ? "reps" : "timer";
     timerEl.dataset.phase = "rest";
     timerClock.classList.remove("is-reps");
     timerPhase.textContent = `Rust · na set ${setIndex}`;
-    timerClock.textContent = formatTime(remaining);
+    timerClock.textContent = formatSeconds(remaining);
     const ratio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
     timerBar.style.transform = `scaleX(${ratio})`;
-    timerMeta.textContent = next
-      ? `Volgende: set ${next.setIndex}`
-      : `Volgende: set ${setIndex + 1}`;
     return;
   }
 
@@ -359,10 +335,6 @@ function updateTimerUI() {
     timerClock.textContent = `${item.reps}×`;
     timerClock.classList.add("is-reps");
     timerBar.style.transform = "scaleX(1)";
-    timerMeta.textContent =
-      program.rest > 0
-        ? `${item.sets} sets · ${item.reps} keer · rust ${program.rest}s`
-        : `${item.sets} sets · ${item.reps} keer`;
     return;
   }
 
@@ -370,13 +342,9 @@ function updateTimerUI() {
   timerClock.classList.remove("is-reps");
   timerEl.dataset.phase = "work";
   timerPhase.textContent = `Set ${setIndex} van ${item.sets}`;
-  timerClock.textContent = formatTime(remaining);
+  timerClock.textContent = formatSeconds(remaining);
   const workRatio = total > 0 ? Math.max(0, Math.min(1, remaining / total)) : 0;
   timerBar.style.transform = `scaleX(${workRatio})`;
-  timerMeta.textContent =
-    program.rest > 0
-      ? `Duur ${item.duration}s · rust ${program.rest}s`
-      : `Duur ${item.duration}s`;
 }
 
 function finishSwitch() {
