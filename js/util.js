@@ -6,11 +6,9 @@ export function clampInt(value, min, max) {
   return Math.min(max, Math.max(min, Math.floor(value)));
 }
 
-export function formatTime(totalSeconds) {
-  const s = Math.max(0, Math.ceil(totalSeconds));
-  const m = Math.floor(s / 60);
-  const r = s % 60;
-  return `${m}:${String(r).padStart(2, "0")}`;
+/** Toont resterende tijd als geheel aantal seconden (zoals ingevuld in het formulier). */
+export function formatSeconds(totalSeconds) {
+  return String(Math.max(0, Math.ceil(totalSeconds)));
 }
 
 export function escapeHtml(value) {

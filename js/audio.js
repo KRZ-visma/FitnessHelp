@@ -39,7 +39,7 @@ export function beep(kind = "tick") {
     const now = ctx.currentTime;
 
     /** @param {number} freq @param {number} startAt @param {number} duration @param {number} [volume] */
-    const playTone = (freq, startAt, duration, volume = 0.06) => {
+    const playTone = (freq, startAt, duration, volume = 0.22) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.connect(gain);
@@ -70,10 +70,10 @@ export function beep(kind = "tick") {
       return;
     }
     if (kind === "rest") {
-      playTone(440, now, 0.16, 0.045);
+      playTone(440, now, 0.16, 0.18);
       return;
     }
-    playTone(520, now, 0.12, 0.04);
+    playTone(520, now, 0.12, 0.16);
   } catch {
     // Audio optional
   }
