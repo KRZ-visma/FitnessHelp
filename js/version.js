@@ -3,4 +3,4 @@
  * Wordt automatisch gezet bij push naar main — niet handmatig bumpen in feature-PRs.
  * Formaat: YYYY.MM.DD+<shortsha>
  */
-export const APP_VERSION = "2026.08.04+bf44a53";
+export const APP_VERSION = "2026.08.05+bb576a6";
