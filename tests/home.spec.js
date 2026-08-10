@@ -14,6 +14,41 @@ test.describe("Home & dagprogramma", () => {
     await clearAndReload(page);
   });
 
+  test("toont boot-loading tot de app klaar is, geen lege data-flash", async ({ page }) => {
+    await expect(page.locator("body")).not.toHaveClass(/is-booting/);
+    await expect(page.locator("#boot")).toBeHidden();
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#saved-empty")).toBeVisible();
+
+    // CSS-contract: tijdens boot blijft de lege Beheer-shell verborgen
+    await page.evaluate(() => {
+      document.body.classList.add("is-booting");
+      document.body.setAttribute("aria-busy", "true");
+      const boot = document.getElementById("boot");
+      if (boot) boot.hidden = false;
+    });
+    await expect(page.locator("#boot")).toBeVisible();
+    await expect(page.locator("#boot")).toContainText("Laden");
+    await expect(page.locator("#manage")).toBeHidden();
+    await expect(page.locator("#saved-empty")).toBeHidden();
+    await expect(page.locator(".brand")).toBeVisible();
+  });
+
+  test("na herladen met data geen lege Beheer-flash", async ({ page }) => {
+    await createProgram(page, {
+      programName: "Boot check",
+      exercises: [{ name: "Squats", sets: 2, duration: 30 }],
+    });
+    await expect(page.locator("#home")).toBeVisible();
+
+    await page.reload();
+    await expect(page.locator("body")).not.toHaveClass(/is-booting/);
+    await expect(page.locator("#boot")).toBeHidden();
+    await expect(page.locator("#home")).toBeVisible();
+    await expect(page.locator("#manage")).toBeHidden();
+    await expect(page.locator("#day-list")).toContainText("Boot check");
+  });
+
   test("slaat programma op en toont dagprogramma op home", async ({ page }) => {
     await createProgram(page, {
       programName: "Push",

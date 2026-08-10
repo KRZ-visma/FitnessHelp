@@ -199,6 +199,13 @@ if (programNameInput instanceof HTMLInputElement) {
 }
 renderApp();
 
+document.body.classList.remove("is-booting");
+document.body.removeAttribute("aria-busy");
+const bootEl = document.getElementById("boot");
+if (bootEl) {
+  bootEl.hidden = true;
+}
+
 const appVersionEl = document.getElementById("app-version");
 if (appVersionEl) {
   appVersionEl.textContent = `v${APP_VERSION}`;
