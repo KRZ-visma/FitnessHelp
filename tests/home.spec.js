@@ -14,6 +14,26 @@ test.describe("Home & dagprogramma", () => {
     await clearAndReload(page);
   });
 
+  test("toont boot-loading tot de app klaar is, geen lege data-flash", async ({ page }) => {
+    await page.route("**/js/main.js", async (route) => {
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      await route.continue();
+    });
+
+    const navigation = page.goto("/");
+    await expect(page.locator("#boot")).toBeVisible({ timeout: 5000 });
+    await expect(page.locator("#boot")).toContainText("Laden");
+    await expect(page.locator("body")).toHaveClass(/is-booting/);
+    await expect(page.locator("#manage")).toBeHidden();
+    await expect(page.locator("#saved-empty")).toBeHidden();
+
+    await navigation;
+    await expect(page.locator("body")).not.toHaveClass(/is-booting/);
+    await expect(page.locator("#boot")).toBeHidden();
+    await expect(page.locator("#manage")).toBeVisible();
+    await expect(page.locator("#saved-empty")).toBeVisible();
+  });
+
   test("slaat programma op en toont dagprogramma op home", async ({ page }) => {
     await createProgram(page, {
       programName: "Push",

@@ -12,6 +12,8 @@ async function clearAndReload(page) {
   await page.goto("/");
   await page.evaluate(() => localStorage.clear());
   await page.reload();
+  await expect(page.locator("body")).not.toHaveClass(/is-booting/);
+  await expect(page.locator("#boot")).toBeHidden();
 }
 
 async function openExercisesTab(page) {
